@@ -1,0 +1,541 @@
+"use client";
+
+/**
+ * The feed — the screen the portal opens on.
+ *
+ * One column of posts, read the way a feed is read: who is speaking, the
+ * picture, and the caption under it trailing off into "… ещё". Nothing about a
+ * post costs a page load until she asks for it — the listing carries summaries
+ * only, and the article is fetched the first time a post is opened.
+ *
+ * It is public on purpose. A visitor reads the same feed she will keep reading
+ * once she registers, so the first screen after sign-up is something she
+ * recognises rather than an empty cabinet with a 0% profile bar in it.
+ *
+ * What she is not shown is decided on the server: adult health posts are
+ * filtered out for a minor and for a reader whose age is not known, so an
+ * age-inappropriate post never reaches this component to be hidden by CSS.
+ *
+ * Above the feed sits "For you", which is a different kind of thing and is
+ * kept visibly separate for that reason. It ranks the same posts by how much
+ * they are for this reader — her age bracket and the subjects she ticked — and
+ * hides none of them. Everything it puts last is still in the feed below, in
+ * its section and in the search, which is why the feed now carries a heading
+ * of its own: the two lists answer different questions and she should be able
+ * to tell which one she is reading.
+ */
+
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { getAccessToken } from "@/services/api";
+import {
+  portal,
+  type ForYouFeed,
+  type NewsDetail,
+  type NewsPost,
+  type NewsPreferences,
+  type PersonalisedNewsPost,
+} from "@/services/portal";
+import { NewsBody } from "@/components/NewsBody";
+import { Empty, ErrorNote, Loading } from "@/components/ui";
+import { useI18n } from "@/i18n";
+import { newsCategoryKey, newsTopicKey, timeAgo } from "@/utils/format";
+
+/** Section order, not alphabetical: what she came to read comes before what
+ *  the portal wants to tell her. Announcements sit last for that reason. */
+const SECTIONS = [
+  "",
+  "health",
+  "medicine",
+  "science",
+  "career",
+  "success_story",
+  "announcement",
+] as const;
+
+const PAGE_SIZE = 12;
+
+/** How much of the caption is shown before "… ещё".
+ *
+ *  Counted in characters rather than clamped in CSS because the cut has to end
+ *  *inside* the line the button sits on — that is what makes it read as one
+ *  sentence trailing off, instead of a paragraph with a control under it. */
+const CAPTION_LIMIT = 150;
+
+/** Why a card is in the personalised section, as labels rather than numbers.
+ *
+ *  Section 10 of the brief is explicit that the scoring is not a user-facing
+ *  thing — but an unexplained recommendation is not something this portal
+ *  ships either, so the reader gets the reason and not the arithmetic. The
+ *  server sends i18n keys (`interest:science`, `age`, `important`) because the
+ *  feed is read in three languages. */
+function Reasons({ reasons }: { reasons: string[] }) {
+  const { t } = useI18n();
+  if (!reasons.length) return null;
+
+  return (
+    <p className="news-why">
+      {reasons.map((reason) => {
+        const [kind, value] = reason.split(":");
+        const label =
+          kind === "interest" && value
+            ? t(newsTopicKey(value))
+            : kind === "age"
+              ? t("news.why.age")
+              : kind === "important"
+                ? t("news.why.important")
+                : null;
+        return label ? (
+          <span key={reason} className="news-why-chip">
+            {label}
+          </span>
+        ) : null;
+      })}
+    </p>
+  );
+}
+
+function Post({ post, reasons }: { post: NewsPost; reasons?: string[] }) {
+  const { t, tx, locale } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [full, setFull] = useState<NewsDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  /** The body is only fetched once, and only if she opens the post. Shipping
+   *  every article to draw a feed is what makes a feed slow on a regional
+   *  connection. */
+  const expand = useCallback(() => {
+    setOpen(true);
+    if (full || loading) return;
+    setLoading(true);
+    setFailed(false);
+    portal
+      .newsPost(post.slug)
+      .then(setFull)
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
+  }, [full, loading, post.slug]);
+
+  const title = tx(post.title_i18n);
+  const summary = tx(post.summary_i18n);
+  const clipped = !open && summary.length > CAPTION_LIMIT;
+
+  return (
+    <article className="news-post">
+      {/* Who is speaking and when — the line every feed opens a post with.
+          The section stands in for the account name on purpose: naming the
+          source here instead would read as the World Health Organization
+          posting to this portal, which is not what happened. Its attribution
+          belongs in the article, and that is where it is. */}
+      <header className="news-post-head">
+        <span className={`news-avatar news-cover-${post.cover_tone}`} aria-hidden="true">
+          {post.cover_emblem}
+        </span>
+        <span className="news-author">{t(newsCategoryKey(post.category))}</span>
+        <span className="news-dot" aria-hidden="true">·</span>
+        <span className="news-time">{timeAgo(post.published_at, locale)}</span>
+        {post.is_pinned && <span className="badge badge-gold">{t("news.pinned")}</span>}
+      </header>
+
+      {/* The headline is set on the picture, the way a news account posts one,
+          and the description goes underneath. That is also what rescues the
+          drawn cover: a tint with a glyph on it says nothing, a tint with the
+          headline on it is the post.
+
+          A photograph goes behind the same card when the editor has attached
+          one — see the note in globals.css for why the fallback is drawn
+          rather than fetched. */}
+      <div
+        className={
+          post.cover_url
+            ? "news-photo news-photo-shot"
+            : `news-photo news-cover-${post.cover_tone}`
+        }
+      >
+        {post.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="news-photo-img" src={post.cover_url} alt="" loading="lazy" />
+        )}
+        <span className="news-emblem" aria-hidden="true">{post.cover_emblem}</span>
+        {/* The headline itself, not a decoration: it is what a screen reader
+            should read here, so it is real text rather than an aria-label. */}
+        <h2 className="news-headline">{title}</h2>
+      </div>
+
+      <div className="news-caption">
+        {reasons && <Reasons reasons={reasons} />}
+        <p className="news-cap-text">
+          {clipped ? `${summary.slice(0, CAPTION_LIMIT).trimEnd()}…` : summary}
+          {clipped && (
+            <>
+              {" "}
+              <button type="button" className="news-inline-more" onClick={expand}>
+                {t("news.moreInline")}
+              </button>
+            </>
+          )}
+        </p>
+
+        {open && loading && <Loading rows={1} />}
+        {open && failed && <ErrorNote message={t("common.error")} />}
+        {open && full && <NewsBody post={full} />}
+
+        <div className="news-actions">
+          {open ? (
+            <>
+              <button type="button" className="news-plain" onClick={() => setOpen(false)}>
+                {t("news.collapse")}
+              </button>
+              {/* A permalink, so a post can be sent to somebody. */}
+              <Link href={`/yangiliklar/${post.slug}`} className="news-plain">
+                {t("news.openPage")} ↗
+              </Link>
+            </>
+          ) : (
+            <button type="button" className="news-plain" onClick={expand} aria-expanded={false}>
+              {t("news.readMore")}
+            </button>
+          )}
+          {post.reading_minutes && (
+            <span className="faint news-readtime">
+              {post.reading_minutes} {t("news.minutes")}
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** The news-preferences screen: an age and a list of subjects.
+ *
+ *  Nothing here shows a score. She is setting what she is interested in; how
+ *  heavily that weighs against freshness and importance is our problem.
+ *
+ *  The age is chosen as a bracket rather than typed as a number. Only the
+ *  bracket is stored, so a free number field would take "15", save it, and
+ *  read back "13" — the form losing her answer in front of her. Six buttons
+ *  cannot do that, and the brackets are what the ranking actually uses.
+ *
+ *  A real date of birth on her profile wins over anything set here — the
+ *  server prefers it and says so through `age_source` — so in that case the
+ *  age is shown as a fact rather than as a control offering to overwrite it
+ *  with something less precise. */
+function PreferencesPanel({ onSaved }: { onSaved: () => void }) {
+  const { t } = useI18n();
+
+  const [prefs, setPrefs] = useState<NewsPreferences | null>(null);
+  const [group, setGroup] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    portal
+      .newsPreferences()
+      .then((loaded) => {
+        if (cancelled) return;
+        setPrefs(loaded);
+        setGroup(loaded.age_group);
+        setChosen(loaded.interests);
+      })
+      .catch(() => !cancelled && setFailed(true));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggle = (topic: string) => {
+    setSaved(false);
+    setChosen((prev) =>
+      prev.includes(topic) ? prev.filter((one) => one !== topic) : [...prev, topic],
+    );
+  };
+
+  const save = () => {
+    setSaving(true);
+    setFailed(false);
+    portal
+      .saveNewsPreferences({
+        // The bracket's lower bound: the server stores the bracket an age
+        // falls in, so sending "25" for 25-34 round-trips exactly.
+        age: group ? Number.parseInt(group, 10) : null,
+        interests: chosen,
+      })
+      .then((updated) => {
+        setPrefs(updated);
+        setGroup(updated.age_group);
+        setSaved(true);
+        onSaved();
+      })
+      .catch(() => setFailed(true))
+      .finally(() => setSaving(false));
+  };
+
+  if (failed && !prefs) return <ErrorNote message={t("common.error")} />;
+  if (!prefs) return <Loading rows={1} />;
+
+  const fromBirthDate = prefs.age_source === "birth_date";
+
+  return (
+    <div className="news-prefs">
+      <p className="faint news-prefs-lead">{t("news.prefsLead")}</p>
+
+      <div className="news-prefs-age">
+        <span className="eyebrow">{t("news.prefsAge")}</span>
+        {fromBirthDate ? (
+          <p className="news-prefs-derived">
+            {prefs.age} <span className="faint">· {t("news.prefsAgeAuto")}</span>
+          </p>
+        ) : (
+          <div className="cat-filters">
+            {prefs.available_age_groups.map((bracket) => (
+              <button
+                key={bracket}
+                type="button"
+                aria-pressed={group === bracket}
+                className={group === bracket ? "chip chip-on" : "chip"}
+                onClick={() => {
+                  setSaved(false);
+                  setGroup((current) => (current === bracket ? null : bracket));
+                }}
+              >
+                {bracket}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <fieldset className="news-prefs-topics">
+        <legend className="eyebrow">{t("news.prefsInterests")}</legend>
+        <div className="cat-filters">
+          {prefs.available_interests.map((topic) => (
+            <button
+              key={topic}
+              type="button"
+              aria-pressed={chosen.includes(topic)}
+              className={chosen.includes(topic) ? "chip chip-on" : "chip"}
+              onClick={() => toggle(topic)}
+            >
+              {t(newsTopicKey(topic))}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="news-prefs-actions">
+        <button type="button" className="btn btn-primary" onClick={save} disabled={saving}>
+          {saving ? t("common.loading") : t("news.prefsSave")}
+        </button>
+        {saved && <span className="faint">{t("news.prefsSaved")}</span>}
+        {failed && <ErrorNote message={t("common.error")} />}
+      </div>
+    </div>
+  );
+}
+
+export default function NewsFeedPage() {
+  const { t } = useI18n();
+
+  const [posts, setPosts] = useState<NewsPost[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
+  // What is actually asked of the server — typing a word should not fire a
+  // request per keystroke and make the feed flicker under her hands.
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [authed, setAuthed] = useState(false);
+  // The sections open under the search field rather than sitting above the
+  // feed permanently: they are a way of narrowing what she is reading, and a
+  // reader who has not asked to narrow anything does not need seven chips
+  // between her and the first post.
+  const [browsing, setBrowsing] = useState(false);
+
+  const [forYou, setForYou] = useState<ForYouFeed | null>(null);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  // Bumped when she saves, to re-rank the section against what she just
+  // chose — otherwise the panel would close onto the ordering it replaced.
+  const [prefsVersion, setPrefsVersion] = useState(0);
+
+  useEffect(() => setAuthed(Boolean(getAccessToken())), []);
+
+  // Signed in only. The endpoint answers a visitor too, but the ranking it
+  // returns then rests on nothing she told us, and a section called "For you"
+  // over that is a promise the data does not keep.
+  useEffect(() => {
+    if (!authed) return;
+    let cancelled = false;
+    portal
+      .newsForYou(6)
+      .then((result) => !cancelled && setForYou(result))
+      .catch(() => !cancelled && setForYou(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [authed, prefsVersion]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // A new filter is a new feed, not more of the old one.
+  useEffect(() => setPage(1), [category, query]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    portal
+      .news({ category: category || undefined, search: query || undefined, size: PAGE_SIZE, page })
+      .then((result) => {
+        if (cancelled) return;
+        setPosts((prev) => (page === 1 ? result.items : [...prev, ...result.items]));
+        setTotal(result.total);
+        setError(null);
+      })
+      .catch(() => !cancelled && setError(t("common.error")))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [category, query, page, t]);
+
+  // The chip counts come from the same age filter as the feed, so a chip never
+  // promises eleven posts and then opens on nine.
+  useEffect(() => {
+    portal.newsCounts().then(setCounts).catch(() => undefined);
+  }, []);
+
+  // Once she has narrowed the feed the chips have to stay: they are the only
+  // thing on screen explaining why she is seeing four posts instead of
+  // fourteen, and the only way back to all of them.
+  const filtersOpen = browsing || Boolean(category) || Boolean(search);
+  const hasMore = posts.length < total;
+
+  return (
+    <main className="wrap page news-page">
+      <header
+        className="news-search"
+        // Focus, not click: the panel has to stay open while she tabs from the
+        // field onto a chip, and close when focus leaves the group entirely.
+        // Blur fires before click, so hiding on blur alone would swallow the
+        // very tap it exists to receive.
+        onFocus={() => setBrowsing(true)}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setBrowsing(false);
+          }
+        }}
+      >
+        <input
+          className="input input-lg"
+          placeholder={t("news.search")}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          type="search"
+          aria-label={t("news.search")}
+        />
+
+        {filtersOpen && (
+          <div className="cat-filters news-sections">
+            {SECTIONS.map((key) => {
+              const count = key ? counts[key] : Object.values(counts).reduce((a, b) => a + b, 0);
+              // A section with nothing in it is a chip that opens on an empty
+              // screen. Hide it rather than let her find that out by tapping.
+              if (key && !count) return null;
+              return (
+                <button
+                  key={key || "all"}
+                  onClick={() => setCategory(key)}
+                  className={category === key ? "chip chip-on" : "chip"}
+                >
+                  {key ? t(newsCategoryKey(key)) : t("news.cat.all")}
+                  {count ? <span className="chip-count">{count}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </header>
+
+      {authed && (
+        <section className="news-foryou">
+          <header className="news-section-head">
+            <div>
+              <h2 className="eyebrow">{t("news.forYou")}</h2>
+              <p className="faint">{t("news.forYouLead")}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-quiet"
+              aria-expanded={prefsOpen}
+              onClick={() => setPrefsOpen((open) => !open)}
+            >
+              {prefsOpen ? t("news.prefsClose") : t("news.prefs")}
+            </button>
+          </header>
+
+          {prefsOpen && (
+            <PreferencesPanel onSaved={() => setPrefsVersion((version) => version + 1)} />
+          )}
+
+          {forYou?.personalised && forYou.items.length > 0 ? (
+            forYou.items.map((item: PersonalisedNewsPost) => (
+              <Post key={item.id} post={item} reasons={item.reasons} />
+            ))
+          ) : (
+            <p className="faint news-foryou-empty">{t("news.forYouEmpty")}</p>
+          )}
+        </section>
+      )}
+
+      <header className="news-section-head">
+        <div>
+          <h2 className="eyebrow">{t("news.latest")}</h2>
+          <p className="faint">{t("news.latestLead")}</p>
+        </div>
+      </header>
+
+      <div className="news-feed">
+        {error && <ErrorNote message={error} />}
+
+        {!loading && posts.length === 0 && !error && (
+          <Empty title={t("news.empty")} hint={t("news.emptyHint")} />
+        )}
+
+        {posts.map((post) => (
+          <Post key={post.id} post={post} />
+        ))}
+
+        {loading && <Loading rows={posts.length ? 1 : 2} />}
+
+        {!loading && hasMore && (
+          <button className="btn btn-quiet news-more" onClick={() => setPage((n) => n + 1)}>
+            {t("news.more")}
+          </button>
+        )}
+
+        {/* One invitation at the end of the feed rather than a banner above it:
+            she gets to read first and is asked afterwards. Signed in, the
+            assessment is already in her navigation and this would be noise. */}
+        {!authed && !loading && posts.length > 0 && (
+          <aside className="news-invite">
+            <span className="eyebrow">{t("news.next")}</span>
+            <p>{t("news.nextLead")}</p>
+            <Link href="/login" className="btn btn-primary">
+              {t("nav.getStarted")}
+            </Link>
+          </aside>
+        )}
+      </div>
+    </main>
+  );
+}

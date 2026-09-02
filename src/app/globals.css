@@ -1,0 +1,3030 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap');
+
+/* ============================================================
+   WomanUP — Ayol-qizlarni rivojlantirish milliy dasturi
+
+   Design language: warm paper. A cream page the sakura branch is
+   drawn on, near-black display serif set in sentence case, dusty
+   rose for anything that invites an action, and one near-black
+   pill for the single commitment on a screen. Cards are a shade
+   lighter than the page and outlined rather than shadowed, so the
+   branch behind them is never in competition with a drop shadow.
+   Light (default) + dark theme.
+   ============================================================ */
+
+/* --navy / --gold keep their names: they are the two brand roles (link and
+   accent colour), not literal hues — the palette moved from plum to rose but
+   every call site still asks for them by the old name. */
+:root,
+[data-theme="light"] {
+  --navy:          #7a4a55;
+  --navy-2:        #8d5a65;
+  --navy-3:        #a06e79;
+  --gold:          #9c5666;
+  --gold-soft:     #d3949e;
+
+  /* Warm paper, edge to edge. The branch is painted on the page itself, so
+     the page cannot be the darkest surface here — everything a card carries
+     sits a shade *lighter* than the ground instead of a shade darker. */
+  --bg:            #fdf5f5;
+  /* Hover states and inset panels: the first step down from the page. */
+  --bg-2:          #f9ecec;
+  /* The alternating full-width band. Suppressed on the landing page, where an
+     opaque band would wipe the branch off every second screen. */
+  --band:          #faeeee;
+  --surface:       #fffbfb;
+  --surface-2:     #f7eaea;
+  /* Controls sitting *on* a card: inputs, chips, outline buttons. */
+  --control:       #ffffff;
+  --border:        #efdddf;
+  --border-strong: #e0c8cb;
+  /* The profile card's glass. Kept well short of transparent on purpose: the
+     branch behind it is bright, and a pane you can read the garden through is
+     a pane you cannot read text on. */
+  --pane:          rgba(255, 252, 250, .86);
+  --pane-edge:     rgba(255, 255, 255, .9);
+  --pane-inner:    rgba(255, 255, 255, .58);
+  --pane-shadow:   0 24px 60px -28px rgba(120, 70, 80, .30);
+
+  --text:          #4b463d;
+  --ink:           #1d1a15;
+  /* Measured against the page cream, which is the lightest thing secondary
+     copy ever lands on — 5.1:1 there, and more on anything tinted. */
+  --text-dim:      #6e685c;
+  /* 4.5:1 on the page cream. Anything paler failed on a card. */
+  --text-faint:    #78715f;
+
+  --danger:        #b8453f;
+  --warning:       #a8626f;
+  --success:       #2f6f4f;
+  --on-gold:       #ffffff;
+  /* Dusty rose, dark enough to carry white button text at 4.5:1. The pale
+     rose of the mock-up is kept for decoration only — --gold-soft. */
+  --primary:       #a8626f;
+  --primary-hover: #92505d;
+  --on-primary:    #ffffff;
+  /* The near-black pill. One per screen: the single thing we want pressed. */
+  --contrast:      #1d1a15;
+  --on-contrast:   #faf6ee;
+  --strip-bg:      #1d1a15;
+  --strip-fg:      rgba(250,246,238,.86);
+
+  --grad:          linear-gradient(135deg, #a8626f 0%, #d3949e 130%);
+  --grad-soft:     linear-gradient(135deg, rgba(168,98,111,.09), rgba(211,148,158,.16));
+  --glow:          0 12px 26px -14px rgba(80,46,54,.45);
+  --shadow-sm:     0 1px 2px rgba(60,48,36,.05);
+  --card-lift:     0 2px 10px -3px rgba(120,70,80,.15), 0 1px 3px rgba(120,70,80,.09);
+  --shadow:        0 18px 44px -26px rgba(60,48,36,.34);
+
+  --radius:        18px;
+  --radius-sm:     12px;
+  --radius-lg:     28px;
+  /* Translucent: the header floats over the page rather than cutting a bar
+     across it, which is what keeps the branch continuous behind it. */
+  --header-bg:     rgba(253,245,245,.84);
+  --petal-peak:    .55;
+  /* Focus ring. A gradient is not a valid box-shadow colour. */
+  --ring:          rgba(168,98,111,.20);
+
+  /* Display face. Playfair first, Source Serif behind it — Uzbek's oʻ/gʻ use a
+     modifier letter that not every display face carries, and per-glyph
+     fallback covers it without changing the rest of the setting. */
+  --font-display:  'Playfair Display', 'Source Serif 4', Georgia, serif;
+}
+
+/* ------------------------------------------------------------------
+   Dark theme — "Sakura at night"
+
+   Not the light page turned down. A Japanese garden after dark: the
+   light comes off the blossom, the type is warm ivory, the surfaces are
+   glass rather than paper, and the radius is tighter so the whole thing
+   reads as an instrument rather than a leaflet.
+
+   The ground is a dusk plum, not the near-black the concept started at.
+   At #0b0a0c every surface collapsed into the same void and the page read
+   as one black slab — and a near-black page is a wall to look at for the
+   length of a portal session, not an atmosphere. The set below keeps the
+   mood and puts four legible steps between the page and a raised control.
+   ------------------------------------------------------------------ */
+[data-theme="dark"] {
+  --navy:          #e9a7b5;
+  --navy-2:        #f2bcc7;
+  --navy-3:        #f7d0d8;
+  --gold:          #e9a7b5;
+  --gold-soft:     #b86b7d;
+  /* The two colours that only exist after dark: the burgundy the night is
+     lit from underneath with, and the champagne a highlight is struck in. */
+  --deep:          #542936;
+  --champagne:     #d9c4a5;
+
+  --bg:            #211e29;
+  --bg-2:          #2a2634;
+  --band:          #2a2634;
+  --surface:       #383243;
+  --surface-2:     #393343;
+  --control:       #363042;
+  --border:        #453e51;
+  --border-strong: #5b5369;
+  --pane:          rgba(58, 52, 72, .82);
+  --pane-edge:     rgba(245, 241, 238, .16);
+  --pane-inner:    rgba(245, 241, 238, .10);
+  --pane-shadow:   0 28px 70px -30px rgba(0, 0, 0, .85);
+  /* A card was a pane over the garden — translucent, so the branch behind it
+     showed through. That worked while the branch was far off in a corner; once
+     it came in bright along the left edge, the cards on that side had blossom
+     visible through them and the ones on the right did not, so a row of
+     identical cards no longer looked identical. Same colour, no alpha: it is
+     exactly --surface, so nothing about the palette moves. */
+  --glass:         #383243;
+  --hairline:      inset 0 1px 0 rgba(245, 241, 238, .06);
+
+  --text:          #e2dce4;
+  --ink:           #f8f5f8;
+  --text-dim:      #b9b0be;
+  /* 5:1 on a card, which is the lightest surface it lands on. */
+  --text-faint:    #a29aa9;
+
+  --danger:        #ef8279;
+  --warning:       #e9a7b5;
+  --success:       #5fd0a2;
+  --on-gold:       #211e29;
+  --primary:       #e9a7b5;
+  --primary-hover: #f2bcc7;
+  --on-primary:    #211e29;
+  /* Inverted with everything else: after dark the one loud button is ivory. */
+  --contrast:      #f8f5f8;
+  --on-contrast:   #211e29;
+  --strip-bg:      #383243;
+  --strip-fg:      #e9a7b5;
+
+  --grad:          linear-gradient(135deg, #b86b7d 0%, #e9a7b5 130%);
+  --grad-soft:     linear-gradient(135deg, rgba(233,167,181,.13), rgba(84,41,54,.30));
+  --glow:          0 14px 40px -18px rgba(233,167,181,.30);
+  --shadow-sm:     0 1px 2px rgba(0,0,0,.55);
+  --card-lift:     0 2px 12px -3px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.45);
+  --shadow:        0 24px 60px -30px rgba(0,0,0,.85);
+
+  /* Tighter than on paper. Large radii read as soft and friendly; this
+     version is meant to read as precise. */
+  --radius:        14px;
+  --radius-sm:     10px;
+  --radius-lg:     20px;
+  --header-bg:     rgba(33, 30, 41, .78);
+  --ring:          rgba(233,167,181,.22);
+  --petal-peak:    .42;
+}
+
+/* ---------- Reset ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  transition: background .35s ease, color .35s ease;
+  overflow-x: hidden;
+}
+
+/* ---------- Sakura ----------
+   One branch, drawn as an SVG in <Sakura />. The viewBox spans the hero's full
+   width (x 0..1000) and its height (y 0..308), so the composition holds the
+   shape of the sketch at any window size. Pure texture: pointer-events:none,
+   behind every element, and masked where copy lives. */
+:root, [data-theme="light"] {
+  --bark:        #2d1c14;
+  --bark-soft:   #5b3d2e;
+  --bark-grain:  #17100b;
+  --bloom-core:  #fffbfc;
+  --bloom-mid:   #f7d2dd;
+  --bloom-edge:  #e7a5b8;
+  --bloom-deep:  #d2809a;
+  --bloom-line:  #c9829a;
+  --bloom-heart: #b96b84;
+  --bloom-bud:   #dd93a8;
+  --bloom-wash:  #efc0d0;
+  /* By day it is the sun, not a dimmed moon — a crescent hanging over an
+     afternoon is a mistake rather than a mood. Taken from the reference: a
+     pale peach disc under a rose glow, the low sun of that painting rather
+     than a gold coin. Amber read as a lamp bulb and, worse, as the only
+     yellow on a page that is otherwise entirely rose.
+
+     It has to sit a shade *deeper* than the paper to exist at all: the page
+     is already near-white, so a sun brighter than its sky is not available
+     here the way it is over water. */
+  --sky-body:    #eab3a1;
+  --sky-core:    rgba(240, 178, 170, .48);
+  --sky-glow:    rgba(234, 166, 170, .23);
+  --sky-haze:    rgba(228, 166, 180, .085);
+  /* The same three colours at zero alpha. Fading a gradient to the keyword
+     `transparent` fades it toward transparent *black*, which on a light page
+     draws a grey ring at every stop; fading to the same hue does not. */
+  --sky-core-0:  rgba(242, 184, 178, 0);
+  --sky-glow-0:  rgba(236, 172, 176, 0);
+  --sky-haze-0:  rgba(228, 166, 180, 0);
+}
+/* Night values for the same drawing — the geometry is untouched, only what
+   it is painted in. Wood goes to a dark burgundy-brown so the limb reads as
+   a silhouette; the blossom keeps its own light and is the brightest thing
+   on the screen after the headline. */
+[data-theme="dark"] {
+  --bark:        #4a3038;
+  --bark-soft:   #6b4a52;
+  --bark-grain:  #2a1a20;
+  --bloom-core:  #fdeef2;
+  --bloom-mid:   #f2c3ce;
+  --bloom-edge:  #e9a7b5;
+  --bloom-deep:  #c98496;
+  --bloom-line:  #b86b7d;
+  --bloom-heart: #ffe3ea;
+  --bloom-bud:   #d1899b;
+  --bloom-wash:  #70404f;
+  /* The one cool thing on a warm page. Moonlight is not lamplight: a rose
+     glow around the moon read as a lamp hung in the corner, where a white
+     with the faintest blue in it reads as sky. Three widening stops, each
+     weaker than the last, so the light has no edge anywhere. */
+  --sky-body:    #f2f0ea;
+  --sky-core:    rgba(233, 240, 250, .40);
+  --sky-glow:    rgba(200, 216, 240, .17);
+  --sky-haze:    rgba(168, 190, 224, .075);
+  /* The moon is drawn, so its own palette lives here. Moonlight is not
+     lamplight: ivory with the faintest cool in it, never the buttery yellow a
+     moon icon usually ships as — that would fight the cool halo around it and
+     be the one cartoon note on the page. */
+  --moon-lit:    #f3eee3;
+  --moon-limb:   #cfc6b6;
+  --moon-mare:   #8f8676;
+  --moon-crater: #a89e8c;
+  --sky-core-0:  rgba(233, 240, 250, 0);
+  --sky-glow-0:  rgba(200, 216, 240, 0);
+  --sky-haze-0:  rgba(168, 190, 224, 0);
+}
+
+.sakura { pointer-events: none; }
+
+/* Fades out as it drops past the fold, so the tail leaves the hero rather
+   than stopping dead at the border. */
+.sakura-anchor {
+  display: block;
+  -webkit-mask-image: linear-gradient(to bottom, #000 84%, rgba(0,0,0,.5) 92%, rgba(0,0,0,.12) 98%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 84%, rgba(0,0,0,.5) 92%, rgba(0,0,0,.12) 98%, transparent 100%);
+}
+
+/* The anchor holds the position; the svg inside holds the wind, so the
+   animation never fights the placement. */
+.sakura-branch {
+  display: block; width: 100%; height: auto;
+  transform-box: view-box;
+  /* Hinged where the limb disappears behind the header, the way a real branch
+     bends from its join rather than from its middle. */
+  transform-origin: 44% 0%;
+  animation: sakura-sway 13s ease-in-out infinite alternate;
+  will-change: transform;
+}
+/* The colour wash is softer than the wood, so it lags behind it — two speeds
+   is what stops the sway reading as a rigid tilt. */
+.sakura-branch .sakura-wash {
+  animation: sakura-drift 17s ease-in-out infinite alternate-reverse;
+  transform-origin: 50% 0%;
+}
+
+@keyframes sakura-sway {
+  from { transform: rotate(-.7deg) translateY(-2px); }
+  to   { transform: rotate(.7deg)  translateY(2px); }
+}
+@keyframes sakura-drift {
+  from { transform: translate3d(-5px, 2px, 0) rotate(-.5deg); }
+  to   { transform: translate3d(5px, -2px, 0) rotate(.5deg); }
+}
+
+/* --- on the landing page: pinned to the viewport, so the page scrolls over
+   the branch instead of carrying it off the top. The layer is the window and
+   clips sideways, which is what keeps a 1685px artwork from widening the page
+   on a phone. --- */
+.sakura-hero {
+  position: fixed; inset: 0; z-index: -1;
+  overflow: hidden;
+}
+[data-theme="dark"] .sakura-hero { opacity: .8; }
+.sakura-hero .sakura-anchor {
+  position: absolute;
+  /* Fixed artwork size with a width-tracking anchor. The corridor the branch
+     drops through — between the headline and the pull quote — sits at a
+     constant fraction of the width, while the quote itself sits at a constant
+     height. Pinning the scale and sliding the layer sideways satisfies both;
+     scaling the layer with the width cannot. */
+  top: 0;
+  /* Pinned scale with a centre-tracking anchor: the copy column ends at a fixed
+     offset from the middle of the page once .wrap stops growing at 1200px, so
+     the branch has to follow the centre rather than a fraction of the window. */
+  left: calc(50vw - 726px);
+  width: 1685px;
+}
+/* --- everywhere else: the same branch as a fixed, far quieter backdrop --- */
+.sakura-ambient {
+  position: fixed; inset: 0; z-index: -1;
+  overflow: hidden;
+  opacity: .42;
+}
+[data-theme="dark"] .sakura-ambient { opacity: .3; }
+.sakura-ambient .sakura-anchor {
+  position: absolute;
+  top: -40px; right: -12vw;
+  width: min(112vw, 1500px);
+}
+
+/* On a tablet and below, a 1685px artwork pinned to the window shows a
+   magnified crop of the canopy behind the headline. Scaled to the viewport it
+   reads as the same branch entering from the corner, and lighter in weight so
+   the copy stays first on the small screen where it competes hardest. */
+@media (max-width: 900px) {
+  .sakura-hero .sakura-anchor {
+    /* Dropped below the header, which on a phone is two rows tall and would
+       otherwise cover the limb the composition hangs from. */
+    top: 20px;
+    left: auto; right: -10vw;
+    width: min(230vw, 1400px);
+  }
+}
+@media (max-width: 520px) {
+  .sakura-hero .sakura-anchor { width: 260vw; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sakura-branch,
+  .sakura-branch .sakura-wash { animation: none; }
+}
+
+/* ---------- Learning questionnaire and level test ----------
+   One question at a time on a narrow column: eighteen fields on one screen is
+   a form, and forms get abandoned. */
+.lq-narrow { max-width: 680px; }
+.lq-h1 { font-size: clamp(1.3rem, 2.6vw, 1.75rem); line-height: 1.3; }
+.lq-q { font-size: clamp(1.05rem, 2.2vw, 1.35rem); line-height: 1.35; }
+.lq-progress {
+  height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden;
+}
+.lq-progress > span {
+  display: block; height: 100%; background: var(--grad);
+  transition: width .3s ease;
+}
+.lq-option {
+  display: block; width: 100%; text-align: left;
+  padding: 13px 16px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--control);
+  color: var(--text); font: inherit; font-size: .96rem; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.lq-option:hover:not(:disabled) { border-color: var(--border-strong); background: var(--bg-2); }
+.lq-option.on {
+  border-color: var(--primary); background: var(--grad-soft); color: var(--ink);
+  font-weight: 600;
+}
+.lq-option:disabled { opacity: .55; cursor: default; }
+
+.lq-scale { display: flex; gap: 6px; flex-wrap: wrap; }
+.lq-dot {
+  width: 40px; height: 40px; border-radius: 10px; flex: none;
+  border: 1px solid var(--border); background: var(--control);
+  color: var(--text-dim); font: inherit; font-weight: 600; cursor: pointer;
+  font-variant-numeric: tabular-nums; transition: .15s;
+}
+.lq-dot:hover { border-color: var(--border-strong); color: var(--ink); }
+.lq-dot.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+
+.lq-level {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 700;
+  color: var(--ink); margin: 2px 0 4px;
+}
+
+@media (max-width: 480px) {
+  .lq-dot { width: 34px; height: 34px; font-size: .85rem; }
+}
+
+/* ---------- Admin workspace ----------
+   Deliberately not the public site. A coordinator reads figures for an hour at
+   a time: the surface is flat, the type is small and tabular, the radii are
+   tight, and the decorative branch is suppressed on these routes entirely.
+   Nothing here should compete with a number. */
+.aw {
+  display: grid;
+  grid-template-columns: 208px minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - 106px);
+  background: var(--bg-2);
+}
+.aw-side {
+  border-right: 1px solid var(--border);
+  padding: 22px 14px;
+  display: flex; flex-direction: column; gap: 22px;
+  background: var(--surface);
+}
+.aw-brandline { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+.aw-brandline strong { font-size: .95rem; color: var(--ink); }
+
+.aw-group { display: flex; flex-direction: column; gap: 2px; }
+.aw-group > span {
+  font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700; padding: 0 8px 6px;
+}
+.aw-link {
+  display: block; padding: 8px 10px; border-radius: 7px;
+  font-size: .88rem; color: var(--text-dim); cursor: pointer;
+  border: 0; background: none; text-align: left; width: 100%;
+  font-family: inherit; transition: background .15s, color .15s;
+}
+.aw-link:hover { background: var(--bg-2); color: var(--ink); }
+.aw-link.on { background: var(--primary); color: var(--on-primary); font-weight: 600; }
+
+.aw-main { padding: 24px 26px 46px; min-width: 0; }
+.aw-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.aw-h1 { font-family: inherit; font-size: 1.32rem; font-weight: 700; color: var(--ink); }
+
+/* Metric tiles: the number first, at a size you can read across a desk. */
+.aw-metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(168px, 100%), 1fr));
+  gap: 12px; margin-bottom: 22px;
+}
+.aw-metric {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.aw-metric-value {
+  font-size: 1.7rem; font-weight: 700; color: var(--ink);
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.aw-metric-label { font-size: .78rem; color: var(--text-dim); }
+.aw-metric-note { font-size: .72rem; color: var(--text-faint); }
+.aw-metric-accent .aw-metric-value { color: var(--gold); }
+
+.aw-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px;
+}
+.aw-card-title {
+  font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700; margin-bottom: 12px;
+}
+.aw-cols {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: 12px;
+}
+
+/* Funnel: each stage as a share of the one above it. */
+.aw-funnel { display: flex; flex-direction: column; gap: 9px; }
+.aw-stage { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; }
+.aw-stage-label { font-size: .82rem; color: var(--text-dim); }
+.aw-stage-value {
+  font-size: .82rem; font-weight: 700; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.aw-stage-bar {
+  grid-column: 1 / -1; height: 6px; border-radius: 999px;
+  background: var(--surface-2); overflow: hidden;
+}
+.aw-stage-bar > span { display: block; height: 100%; background: var(--grad); }
+
+@media (max-width: 860px) {
+  .aw { grid-template-columns: 1fr; }
+  .aw-side {
+    border-right: 0; border-bottom: 1px solid var(--border);
+    flex-direction: row; gap: 14px; overflow-x: auto; padding: 12px 14px;
+  }
+  .aw-brandline, .aw-group > span { display: none; }
+  .aw-group { flex-direction: row; gap: 6px; }
+  .aw-link { white-space: nowrap; }
+  .aw-main { padding: 18px 16px 40px; }
+}
+
+/* ---------- Programme detail page ----------
+   A course is what a woman decides on, so it gets an address and a page rather
+   than a panel sliding over the catalogue. */
+.pd-hero {
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  padding: 26px 0 34px;
+  position: relative; z-index: 1;
+}
+.pd-back { display: inline-block; }
+.pd-title {
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+  line-height: 1.15; margin-top: 2px;
+}
+.pd-h2 { font-size: clamp(1.2rem, 2.2vw, 1.5rem); }
+
+.pd-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  margin-top: -22px;
+  position: relative; z-index: 2;
+  overflow: hidden;
+}
+.pd-stat {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 16px 18px;
+}
+.pd-stat + .pd-stat { border-left: 1px solid var(--border); }
+.pd-stat strong { font-size: 1.05rem; color: var(--ink); }
+
+.pd-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 44px; align-items: start;
+}
+
+.pd-outcomes {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px 30px;
+}
+.pd-outcomes li { display: flex; gap: 11px; align-items: flex-start; }
+.pd-tick { color: var(--success); flex: none; line-height: 1.5; }
+
+.pd-modules {
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface); overflow: hidden;
+}
+.pd-module + .pd-module { border-top: 1px solid var(--border); }
+.pd-module-head {
+  width: 100%; padding: 15px 18px;
+  display: flex; align-items: center; gap: 14px;
+  background: none; border: 0; font: inherit; color: inherit;
+  text-align: left; cursor: pointer; transition: background .15s;
+}
+.pd-module-head:hover:not(:disabled) { background: var(--surface-2); }
+.pd-module-head:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+/* A module with nothing to show must not look clickable. */
+.pd-module-head:disabled { cursor: default; }
+.pd-caret {
+  flex: none; color: var(--text-faint); display: grid; place-items: center;
+  transition: transform .18s;
+}
+.pd-caret.open { transform: rotate(180deg); color: var(--navy); }
+.pd-module-body {
+  padding: 0 18px 16px 58px;
+  color: var(--text-dim); line-height: 1.6;
+  animation: pd-open .18s ease-out;
+}
+@keyframes pd-open { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .pd-caret, .pd-module-body { transition: none; animation: none; }
+}
+.pd-module-n {
+  width: 26px; height: 26px; border-radius: 8px; flex: none;
+  display: grid; place-items: center;
+  background: var(--surface-2); color: var(--gold);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: .88rem;
+}
+.pd-module-title { flex: 1; min-width: 0; }
+
+@media (max-width: 900px) {
+  .pd-body { grid-template-columns: 1fr; gap: 30px; }
+  .pd-stat + .pd-stat { border-left: 0; border-top: 1px solid var(--border); }
+  .pd-stats { grid-template-columns: repeat(2, 1fr); }
+  .pd-stats .pd-stat:nth-child(odd) { border-left: 0; }
+  .pd-stats .pd-stat:nth-child(even) { border-left: 1px solid var(--border); }
+  .pd-stats .pd-stat:nth-child(-n+2) { border-top: 0; }
+  .pd-module-body { padding-left: 18px; }
+}
+
+/* ---------- Landing showcase ----------
+   Real rows from the API and a drawn mock-up of the product, instead of prose
+   describing both. */
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 18px;
+}
+/* Pinned column counts on wide screens so six programmes fall as 3+3 and four
+   listings as 2+2, rather than the ragged 4+2 and 3+1 auto-fit produces. */
+@media (min-width: 1000px) {
+  .showcase-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.showcase-grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+@media (min-width: 880px) {
+  .showcase-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.showcase-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px;
+  display: flex; flex-direction: column; gap: 13px;
+}
+.showcase-card h3 { font-size: 1.12rem; }
+
+.tile {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  display: flex; flex-direction: column; gap: 11px;
+  transition: border-color .18s, transform .18s, box-shadow .18s;
+}
+.tile:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.tile-title {
+  font-size: 1.08rem; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tile-lead {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; flex: 1;
+}
+.tile-op .spread { margin-top: auto; }
+
+/* ---------- Activity calendar, points and streak ----------
+   A year of squares: steady effort is visible here in a way a progress bar
+   cannot show. Scrolls horizontally on a phone rather than shrinking the
+   squares below the size of a fingertip. */
+.cal-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.stat-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: .95rem; color: var(--ink);
+}
+.stat-pill strong { font-variant-numeric: tabular-nums; }
+/* A pill that navigates says so on hover; the ones that only report a number
+   stay flat, so the two are told apart by behaviour and not only by shape. */
+.stat-pill-link { cursor: pointer; transition: border-color .18s, transform .18s, box-shadow .18s; }
+.stat-pill-link:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+/* Warm only while the streak is alive — a cold counter should not nag. Pink
+   rather than orange: the streak is counted in blossoms, not flames. */
+.stat-pill-hot {
+  background: linear-gradient(135deg, rgba(226,163,180,.22), rgba(196,128,141,.16));
+  border-color: var(--bloom-edge);
+}
+.stat-ico { display: inline-grid; place-items: center; width: 18px; height: 18px; }
+.stat-ico-gem {
+  background: var(--grad);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+/* The blossom: a pale outline while dormant, open once the streak is running.
+   Same petal the hero branch is drawn with, so the mark and the artwork are
+   visibly the same plant. */
+.blossom { display: block; overflow: visible; }
+.blossom-petal {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  transition: fill .3s ease, stroke .3s ease;
+}
+.blossom-heart { fill: var(--border-strong); transition: fill .3s ease; }
+.blossom-alive .blossom-petal { fill: var(--bloom-mid); stroke: var(--bloom-line); }
+.blossom-alive .blossom-heart { fill: var(--bloom-heart); }
+
+.cal-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+  padding-bottom: 4px;
+}
+/* The default bar is a heavy grey slab across a pale grid — tone it down. */
+.cal-scroll::-webkit-scrollbar { height: 7px; }
+.cal-scroll::-webkit-scrollbar-track { background: transparent; }
+.cal-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 999px;
+}
+.cal-grid-wrap { display: flex; gap: 8px; min-width: max-content; }
+.cal-weekdays {
+  display: grid; grid-template-rows: repeat(7, 13px); gap: 3px;
+  padding-top: 18px; font-size: .62rem; color: var(--text-faint);
+}
+.cal-weekdays span { line-height: 13px; }
+.cal-body { display: flex; flex-direction: column; gap: 3px; }
+.cal-months {
+  display: flex; gap: 3px;
+  font-size: .62rem; color: var(--text-faint); height: 15px;
+}
+.cal-months span { width: 13px; white-space: nowrap; }
+.cal-grid { display: flex; gap: 3px; }
+.cal-week { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; }
+.cal-day {
+  width: 13px; height: 13px; border-radius: 3px;
+  background: var(--surface-2); border: 1px solid rgba(0,0,0,.03);
+}
+.cal-pad { background: transparent; border-color: transparent; }
+.cal-l1 { background: #f3c9d6; }
+.cal-l2 { background: #e39fb4; }
+.cal-l3 { background: #c9748f; }
+.cal-l4 { background: #9e4766; }
+[data-theme="dark"] .cal-day { border-color: rgba(255,255,255,.04); }
+[data-theme="dark"] .cal-l1 { background: #5c3446; }
+[data-theme="dark"] .cal-l2 { background: #8a4c66; }
+[data-theme="dark"] .cal-l3 { background: #b96d8a; }
+[data-theme="dark"] .cal-l4 { background: #e5a3bb; }
+
+.cal-legend {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap; font-size: .8rem;
+}
+
+@media (max-width: 640px) {
+  .cal-legend { justify-content: flex-end; }
+  .cal-legend > .faint:first-child { display: none; }
+}
+
+/* ---------- Sign-in and welcome ----------
+   A centred shell rather than a page-width form: these two screens have one
+   job each, and the surrounding chrome should not compete with it. */
+.auth-page {
+  min-height: calc(100vh - 180px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 44px 20px 60px;
+  position: relative; z-index: 1;
+}
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  gap: 56px; align-items: center;
+  width: min(980px, 100%);
+}
+.auth-shell-single { grid-template-columns: minmax(0, 460px); justify-content: center; }
+
+.auth-aside { gap: 14px; }
+.auth-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  line-height: 1.12; color: var(--ink);
+}
+.auth-benefit { display: flex; gap: 10px; align-items: flex-start; }
+.auth-tick { color: var(--gold); flex: none; line-height: 1.5; }
+
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+  gap: 16px;
+}
+.input-lg { font-size: 1.05rem; padding: 13px 15px; }
+.btn-lg { padding: 13px 20px; font-size: 1rem; }
+.input-code {
+  letter-spacing: 10px; font-size: 1.4rem; text-align: center;
+  font-weight: 700; padding: 13px 15px;
+}
+
+.auth-demo { border-top: 1px solid var(--border); padding-top: 14px; }
+.auth-demo > summary {
+  cursor: pointer; color: var(--text-dim); list-style: none;
+}
+.auth-demo > summary::-webkit-details-marker { display: none; }
+.auth-demo > summary::before { content: "▸ "; color: var(--gold); }
+.auth-demo[open] > summary::before { content: "▾ "; }
+
+.auth-terms { text-align: center; line-height: 1.5; }
+/* "or" with a rule either side, between the phone form and the Google button. */
+.auth-or {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--text-faint); font-size: .82rem;
+}
+/* Inline spinner for a button that is waiting on someone else's window. */
+.spinner {
+  width: 15px; height: 15px; flex: none;
+  border: 2px solid currentColor; border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+
+.auth-or::before, .auth-or::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}
+.auth-back {
+  margin-top: 20px;
+  /* A standalone link needs a real tap target; inline links inside a sentence
+     are left alone, since padding there would break the line. */
+  display: inline-flex; align-items: center;
+  min-height: 40px; padding: 0 12px; border-radius: 8px;
+}
+.auth-back:hover { background: var(--surface-2); color: var(--text); }
+
+/* The two-step progress bar on the welcome screen. */
+.wel-progress {
+  height: 4px; border-radius: 999px; background: var(--surface-2);
+  overflow: hidden; margin-top: 6px;
+}
+.wel-progress-fill {
+  display: block; height: 100%; background: var(--grad);
+  transition: width .28s ease;
+}
+.wel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+@media (max-width: 820px) {
+  .auth-shell { grid-template-columns: 1fr; gap: 30px; }
+  .auth-aside { text-align: left; }
+}
+@media (max-width: 520px) {
+  .auth-card { padding: 22px; }
+  .wel-row { grid-template-columns: 1fr; gap: 0; }
+  .input-code { letter-spacing: 7px; font-size: 1.2rem; }
+}
+
+/* ---------- Small-screen layout corrections ----------
+   Found by measuring every page at 320-430px, not by guessing. */
+
+/* A grid item defaults to min-width:auto, so it refuses to shrink below its
+   own min-content and drags the whole page wider than the phone. This is what
+   pushed the catalogue to 396px on a 320px screen. */
+.ed-split > *,
+.ed-hero-grid > *,
+.ed-row > *,
+.ed-pairs > * {
+  min-width: 0;
+}
+
+/* Last resort for a word longer than its own column — better a split word
+   than a page that scrolls sideways on a phone. It is a safety net, not a
+   layout tool: anywhere the measure is set deliberately (the hero headline)
+   the measure has to be wide enough that this never fires. */
+h1, h2, h3, .ed-panel-quote, .auth-title {
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 620px) {
+  /* The trailing column of a row carries buttons and badges. Below this width
+     there is no room for it beside the title, so it moves under it. */
+  .ed-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+    row-gap: 10px;
+  }
+  .ed-row-side {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .ed-num { font-size: 1.2rem; }
+}
+
+@media (max-width: 900px) {
+  /* 26px was not a reliable tap target on a phone; platform guidance is ~44px
+     and 40 is the most that fits beside the brand. */
+  .lang-switch button { min-height: 40px; padding: 8px 9px; }
+  .btn-sm { min-height: 38px; }
+  .chip { min-height: 36px; }
+}
+
+@media (max-width: 380px) {
+  /* Buttons sit side by side by default; at this width they stack instead of
+     spilling off the edge. */
+  .hero-actions, .row { flex-wrap: wrap; }
+  .hero-actions .btn { width: 100%; }
+}
+
+/* ---------- Admin: filters and tables ---------- */
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 12px; align-items: end;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+/* Denser inside the workspace: the filters are a control strip there, not a
+   form to fill in. */
+.aw .filter-bar {
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), max-content));
+  border-radius: 10px; padding: 11px 13px; gap: 10px;
+}
+.aw .filter-bar .input { padding: 7px 10px; font-size: .86rem; }
+.aw .filter-bar .label { font-size: .64rem; }
+
+/* A table is the honest shape for a user list, and a table on a phone has to
+   scroll sideways inside its own box rather than push the page out. */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  /* A cut-off column should look scrollable rather than broken. The fade only
+     bites when there is something past the edge: with the table narrower than
+     its box the gradient sits over the background and is invisible. */
+  background-image: linear-gradient(to left, var(--surface), transparent 40px);
+  background-attachment: local, scroll;
+}
+.table-scroll::-webkit-scrollbar { height: 8px; }
+.table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 999px;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.data-table th, .data-table td {
+  padding: 10px 13px; text-align: left; white-space: nowrap;
+}
+/* The region name is the one column long enough to be worth wrapping. */
+.data-table td:first-child { white-space: normal; min-width: 108px; }
+.data-table thead th {
+  font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.data-table tbody tr + tr td { border-top: 1px solid var(--border); }
+.data-table tbody tr:hover { background: var(--bg-2); }
+.uppercase { text-transform: uppercase; }
+.nowrap { white-space: nowrap; }
+
+/* ---------- Admin: site traffic ---------- */
+.traffic-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+  gap: 12px;
+}
+.traffic-tile {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.traffic-tile .figure { font-size: 1.5rem; color: var(--ink); line-height: 1.1; }
+
+/* Bars, not a line: the point is "how many days had anyone at all", and a gap
+   in a bar chart reads as an empty day rather than as missing data. */
+.traffic-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 96px; padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.traffic-bar {
+  /* Capped, so a single day reads as one day rather than as a full chart. */
+  flex: 1; min-width: 3px; max-width: 28px; border-radius: 3px 3px 0 0;
+  background: var(--grad); opacity: .85;
+}
+.traffic-bar:hover { opacity: 1; }
+
+.traffic-path {
+  display: grid;
+  grid-template-columns: minmax(90px, 150px) 1fr auto;
+  align-items: center; gap: 12px;
+}
+.traffic-path-bar {
+  height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden;
+}
+.traffic-path-bar > span { display: block; height: 100%; background: var(--grad); }
+
+@media (max-width: 560px) {
+  .traffic-path { grid-template-columns: minmax(min(80px, 100%), 1fr) auto; }
+  .traffic-path-bar { display: none; }
+}
+
+/* ---------- Site footer ----------
+   Three columns on desktop, stacked on a phone. The contact details are
+   placeholders until the real ones land. */
+.site-footer {
+  border-top: 1px solid var(--border);
+  padding: 52px 0 40px;
+  margin-top: 10px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  gap: 34px 28px;
+  align-items: start;
+}
+.footer-col { display: flex; flex-direction: column; gap: 9px; }
+.footer-col > span:first-child {
+  font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700; margin-bottom: 2px;
+}
+.footer-col a, .footer-col .footer-line { font-size: .9rem; color: var(--text-dim); }
+.footer-col a:hover { color: var(--ink); }
+.footer-base {
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding-top: 20px;
+  font-size: .84rem; color: var(--text-faint);
+}
+@media (max-width: 860px) {
+  .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+  .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* ---------- AI Assistant ----------
+   Chips for suggestions and choices, chat bubbles, and the onboarding sheet.
+   Same plum palette and pill geometry as .badge, sized for tapping. */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .85rem; font-weight: 600; padding: 8px 14px; border-radius: 999px;
+  background: var(--control); border: 1px solid var(--border-strong);
+  color: var(--navy); cursor: pointer; white-space: nowrap;
+  transition: background .16s, border-color .16s, color .16s;
+  font-family: inherit;
+}
+.chip:hover { background: var(--surface-2); border-color: var(--navy-3); }
+.chip:disabled { opacity: .45; cursor: not-allowed; }
+.chip-on {
+  background: var(--primary); border-color: var(--primary); color: var(--on-primary);
+}
+.chip-on:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.bubble-user, .bubble-ai {
+  max-width: 88%; padding: 12px 15px; border-radius: 14px;
+  border: 1px solid var(--border); white-space: pre-wrap;
+}
+.bubble-user { background: var(--surface-2); margin-left: auto; }
+.bubble-ai { background: var(--bg-2); margin-right: auto; }
+
+/* The onboarding sheet. Fixed and scrollable so a long form still reaches its
+   submit button on a 360px phone. */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  background: rgba(36, 21, 32, .48);
+  backdrop-filter: blur(3px);
+}
+.modal-backdrop > .card { margin: auto; }
+
+/* ---------- Falling petals ----------
+   Sits at z-index -1, next to the grid backdrop: petals drift over the page
+   ground but never in front of text or cards. Injected by <Petals />. */
+.petals {
+  position: fixed; inset: 0; z-index: -1;
+  pointer-events: none; overflow: hidden;
+  contain: strict;
+}
+.petal {
+  position: absolute;
+  border-radius: 50% 50% 50% 0;
+  background: radial-gradient(ellipse at 32% 28%, var(--bloom-core), var(--bloom-edge));
+  opacity: 0;
+  animation: petal-fall linear infinite;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+.petal:nth-child(3n)   { background: radial-gradient(ellipse at 32% 28%, var(--bloom-mid), var(--bloom-bud)); }
+.petal:nth-child(4n+1) { background: radial-gradient(ellipse at 32% 28%, var(--bloom-core), var(--bloom-mid)); }
+/* Sways sideways on the way down rather than dropping straight, and fades out
+   only at the very bottom so it stays visible for most of the fall. */
+@keyframes petal-fall {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+  8%   { opacity: var(--petal-peak, .55); }
+  45%  { transform: translate3d(calc(var(--drift, -80px) * .55), 42vh, 0)
+                    rotate(calc(var(--spin, 720deg) * .45)); }
+  84%  { opacity: var(--petal-peak, .55); }
+  100% { transform: translate3d(var(--drift, -80px), 104vh, 0) rotate(var(--spin, 720deg));
+         opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .petals { display: none; }
+}
+
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+img { max-width: 100%; display: block; }
+
+/* Playfair carries its weight in the shape of the letter, not in the stem —
+   set at 400/500 it reads as a book, and at 600+ as a poster. Everything
+   display-sized here is deliberately light. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1.16;
+  letter-spacing: -.015em;
+  font-weight: 500;
+}
+h1 { font-size: clamp(1.9rem, 4vw, 2.7rem); font-weight: 400; }
+h2 { font-size: 1.6rem; font-weight: 400; }
+h3 { font-size: 1.1rem; font-weight: 500; letter-spacing: -.005em; }
+p { margin: 0; }
+
+.serif { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.grad {
+  background: var(--grad); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: .7rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+/* The pill above a headline: "AI-powered personal development". Sits on the
+   page rather than on a card, so it takes the first step down from it. */
+.pill-note {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 15px 7px 11px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-size: .82rem; color: var(--text-dim); font-weight: 500;
+}
+.pill-note::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold-soft); flex: none;
+}
+
+/* ---------- Layout helpers ---------- */
+.wrap { width: min(1320px, 94%); margin: 0 auto; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.muted { color: var(--text-dim); }
+.faint { color: var(--text-faint); font-size: .86rem; }
+.small { font-size: .9rem; }
+.center { text-align: center; }
+.grow { flex: 1; }
+.page { padding: 34px 0 80px; }
+
+.grid { display: grid; gap: 18px; }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(290px, 100%), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(min(195px, 100%), 1fr)); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: .93rem;
+  border: 1px solid transparent; cursor: pointer; transition: .2s; white-space: nowrap;
+  font-family: inherit; letter-spacing: -.005em;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.btn-primary:not(:disabled):hover { background: var(--primary-hover); border-color: var(--primary-hover); transform: translateY(-1px); box-shadow: var(--glow); }
+/* The near-black pill. Reserved for the one commitment on a screen — "Get
+   started" in the header, the subscription button on a plan — so it never
+   turns up twice in the same eyeline. */
+.btn-contrast { background: var(--contrast); color: var(--on-contrast); border-color: var(--contrast); }
+.btn-contrast:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--shadow); opacity: .9; }
+.btn-ghost { background: var(--control); border-color: var(--border-strong); color: var(--ink); }
+.btn-ghost:not(:disabled):hover { border-color: var(--ink); background: var(--surface); }
+.btn-outline { background: var(--control); border-color: var(--border-strong); color: var(--ink); }
+.btn-outline:not(:disabled):hover { border-color: var(--ink); background: var(--surface); }
+.btn-soft { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+.btn-soft:not(:disabled):hover { border-color: var(--navy); color: var(--navy); }
+.btn-gold { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.btn-gold:not(:disabled):hover { filter: brightness(1.06); }
+.btn-sm { padding: 9px 16px; font-size: .85rem; border-radius: 9px; }
+.btn-pill { border-radius: 999px; }
+.btn-block { width: 100%; }
+
+/* ---------- Cards / panels ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  /* A card and the page behind it are close in tone by design — cream on cream
+     by day, plum on plum after dark — and every attempt to separate them by
+     shifting one of those two tones changed the colour of the whole product.
+     So the separation is an edge and a lift instead, both drawn from tokens the
+     palette already had. */
+  border-color: var(--border-strong);
+  box-shadow: var(--card-lift);
+  transition: .25s;
+}
+.card:hover { box-shadow: var(--shadow); }
+.card-tint { background: var(--bg-2); box-shadow: none; }
+.card-accent {
+  background-color: var(--surface-2); background-image: var(--grad-soft);
+  border-color: var(--border-strong);
+}
+.card-plum { background: var(--navy); border-color: var(--navy); color: #fff; }
+.card-plum h1, .card-plum h2, .card-plum h3 { color: #fff; }
+.card-plum .muted { color: rgba(255,255,255,.72); }
+.card-plum .faint { color: rgba(255,255,255,.55); }
+
+/* Rounded icon badge used on feature cards */
+.card-ico {
+  width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--grad-soft); border: 1px solid var(--border-strong); color: var(--navy);
+  font-size: 1.3rem;
+}
+
+/* ---------- Forms ---------- */
+.field { display: flex; flex-direction: column; gap: 7px; }
+.label {
+  font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-dim); font-weight: 700;
+}
+.input {
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: var(--control);
+  color: var(--ink);
+  width: 100%;
+  transition: .2s;
+}
+.input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+
+/* A native select paints the OS's own double arrow, which on macOS is a grey
+   box with a bevel — the one control on the page that belongs to a different
+   design. Draw our own chevron instead. The mark is inline so it cannot be
+   blocked, and it is repainted for the dark theme because a data URI has no
+   way to follow `currentColor`. */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%236b5560' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+  /* Safari otherwise keeps a 2px inner shadow on the control. */
+  box-shadow: none;
+}
+select.input:hover { border-color: var(--navy); }
+[data-theme="dark"] select.input {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23c7b3bd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* The dropdown list itself is drawn by the browser; at least keep it in our
+   colours rather than white-on-white in the dark theme. */
+select.input option { background: var(--control); color: var(--ink); }
+
+/* ---------- Tags / badges ---------- */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .71rem; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text-dim);
+  white-space: nowrap; letter-spacing: .01em;
+}
+.badge-gold  { color: var(--gold); background: rgba(158,84,100,.12); border-color: transparent; }
+.badge-green { color: var(--success); background: rgba(18,122,90,.12); border-color: transparent; }
+.badge-red   { color: var(--danger); background: rgba(209,75,75,.12); border-color: transparent; }
+.badge-grey  { color: var(--text-dim); background: var(--surface-2); border-color: transparent; }
+
+/* ---------- Progress ---------- */
+.bar { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.bar > span {
+  display: block; height: 100%; border-radius: 999px;
+  background: var(--grad);
+  transition: width .4s ease;
+}
+
+/* ---------- Section title ---------- */
+.section-title {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem; font-weight: 700; color: var(--ink);
+}
+.section-title::before {
+  content: ""; width: 3px; height: 21px; border-radius: 2px;
+  background: var(--gold); flex: none;
+}
+
+/* ---------- Header ---------- */
+/* Translucent and borderless: the branch runs behind the header instead of
+   being cut off by it, and the page is legible through the blur as it scrolls
+   underneath. */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--header-bg);
+  -webkit-backdrop-filter: saturate(1.3) blur(14px);
+          backdrop-filter: saturate(1.3) blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: background .35s, border-color .35s;
+}
+.nav-inner {
+  width: min(1340px, 94%); margin: 0 auto;
+  display: flex; align-items: center; gap: 14px;
+  min-height: 76px; padding: 12px 0;
+}
+/* The links live in a segmented pill in the middle of the bar, not ranged left
+   against the brand: the header then reads as three parts — who we are, where
+   you can go, what you can do — instead of one long list. */
+.nav-links {
+  flex: 1; display: flex; justify-content: center; min-width: 0;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-pills {
+  display: flex; gap: 2px; padding: 4px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  flex: none;
+}
+.nav-link {
+  padding: 8px 15px; border-radius: 999px; font-size: .89rem; white-space: nowrap;
+  color: var(--text-dim); font-weight: 500; transition: .2s;
+}
+.nav-link:hover { color: var(--ink); }
+.nav-link.active {
+  color: var(--ink); background: var(--control);
+  font-weight: 600; box-shadow: var(--shadow-sm);
+}
+
+/* Brand: the blossom from the branch, drawn at 26px, and the name in the
+   display serif. The plum tile it used to sit in belonged to the old palette —
+   on paper the mark is ink on cream like everything else. */
+.brand { display: flex; align-items: center; gap: 9px; }
+.logo-mark {
+  width: 30px; height: 30px; flex-shrink: 0;
+  display: grid; place-items: center; color: var(--ink);
+}
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 1.34rem; font-weight: 600; letter-spacing: -.02em;
+  color: var(--ink); line-height: 1.1; display: block;
+}
+.header-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
+/* "Sign in" is a word, not a button: the header carries exactly one filled
+   control and it is the dark one next to it. */
+.nav-plain {
+  font-size: .89rem; font-weight: 500; color: var(--text-dim);
+  padding: 8px 12px; border-radius: 999px;
+  border: 0; background: none; font-family: inherit; cursor: pointer;
+  transition: color .2s;
+}
+.nav-plain:hover { color: var(--ink); }
+
+.lang-switch {
+  display: flex; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 999px; overflow: hidden; flex: none; padding: 2px;
+}
+.lang-switch button {
+  background: transparent; border: 0; color: var(--text-dim);
+  padding: 7px 9px; font-weight: 700; font-size: .74rem; cursor: pointer;
+  transition: .2s; letter-spacing: .03em; font-family: inherit; line-height: 1;
+  border-radius: 999px;
+}
+.lang-switch button:hover { color: var(--ink); }
+.lang-switch button.active { background: var(--control); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text-dim); cursor: pointer; font-size: 1rem;
+  display: grid; place-items: center; transition: .2s;
+}
+.icon-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+
+/* ---------- Header on small screens ----------
+   Seven nav links and a four-button language switch do not fit beside the
+   brand on a phone: the row ran to ~480px and every page scrolled sideways.
+   The links drop to their own scrollable row, and below 420px the wordmark
+   gives way to the mark alone. */
+@media (max-width: 900px) {
+  .nav-inner {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    min-height: 0;
+    padding: 10px 0 8px;
+  }
+  .nav-links {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    padding-bottom: 2px;
+    /* Fades the right edge, so a cut-off link reads as "there is more". */
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+            mask-image: linear-gradient(to right, #000 88%, transparent 100%);
+  }
+  .header-tools { margin-left: auto; }
+}
+
+@media (max-width: 420px) {
+  .nav-inner { width: 94%; gap: 8px; }
+  .logo-text { display: none; }
+  .brand { gap: 0; }
+  .lang-switch button { padding: 6px 6px; font-size: .7rem; }
+  .icon-btn { width: 32px; height: 32px; font-size: .92rem; }
+  .header-tools { gap: 6px; }
+  .nav-plain { padding: 8px 6px; }
+}
+
+/* ---------- Hero ---------- */
+.hero { padding: 78px 0 40px; position: relative; }
+.hero h1 { font-size: clamp(2.4rem, 6vw, 4.2rem); font-weight: 600; max-width: 17ch; }
+.hero p.lead { font-size: 1.15rem; color: var(--text-dim); max-width: 640px; margin-top: 18px; }
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 30px; }
+
+/* ---------- Misc ---------- */
+.section { padding: 44px 0; }
+.hr { height: 1px; background: var(--border); border: 0; margin: 4px 0; }
+.notice {
+  padding: 13px 16px; border-radius: var(--radius-sm);
+  font-size: .92rem; border: 1px solid var(--border);
+  background: var(--bg-2); color: var(--text);
+}
+.notice-warn { background: rgba(196,128,141,.14); border-color: var(--border-strong); color: var(--ink); }
+.notice-red { background: rgba(209,75,75,.1); border-color: rgba(209,75,75,.3); color: var(--danger); }
+.notice-green { background: rgba(18,122,90,.1); border-color: rgba(18,122,90,.28); color: var(--success); }
+
+.demo-strip {
+  background: var(--strip-bg);
+  color: var(--strip-fg);
+  font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
+  font-weight: 700; text-align: center; padding: 7px 20px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--bg-2) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Single-column hero: the copy runs the full width, so the composition slides
+   right until only the drop and the twig above the headline are on screen.
+   The .sakura-hero box itself is the window now — it is sized and faded up in
+   the Sakura block; only the artwork inside it moves per breakpoint. */
+@media (max-width: 900px) {
+  .sakura-ambient { opacity: .3; }
+  .sakura-ambient .sakura-anchor { width: 190vw; right: -70vw; }
+}
+
+/* ====================================================================
+   Editorial layout — two-column heads, numbered rows instead of card
+   grids, sticky asides. Applied site-wide.
+   ==================================================================== */
+
+/* Hero: headline left, summary panel right */
+/* overflow-x: clip, not hidden — the branch has to stay clipped sideways while
+   its tail is still free to hang below the section. */
+.ed-hero {
+  position: relative; overflow-x: clip;
+  /* The second branch is pinned to the window now and reserves nothing here;
+     this is only the hero's own breathing room under the buttons. */
+  padding: 88px 0 48px;
+}
+/* Lifts the copy out of the decorative layer's stacking order. Without it the
+   sakura, being positioned, paints over the text instead of behind it. */
+.ed-hero > .wrap { position: relative; z-index: 1; }
+.ed-hero-grid {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 52px; align-items: start;
+}
+/* Sentence case, not capitals. The line is a sentence a woman could say out
+   loud — setting it in caps turned it into signage. Capped in `ch` so it wraps
+   before it reaches the branch rather than at whatever the window allows. */
+.ed-hero h1 {
+  font-size: clamp(2.4rem, 5.6vw, 4.1rem);
+  margin-top: 20px;
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: -.025em;
+  line-height: 1.05;
+  /* Wide enough for the longest word in any of the four locales — Russian's
+     "индивидуальный" is fourteen characters and was being split across two
+     lines by the site-wide break-word safety net at 13ch. The headline sets
+     its own line breaks; it never breaks inside a word. */
+  max-width: 16ch;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  /* The measure has to clear the longest word in the widest locale, which
+     leaves the shorter ones with a one-word last line. Balance evens the
+     lines out per locale instead of picking one and letting the rest look
+     ragged; where it is unsupported the headline simply wraps as before. */
+  text-wrap: balance;
+}
+/* Below this the column is narrower than that longest word, so the safety net
+   goes back on rather than letting the headline push the page sideways. */
+@media (max-width: 400px) {
+  .ed-hero h1 { overflow-wrap: break-word; word-break: normal; }
+}
+.ed-hero .lead {
+  font-size: 1.04rem; color: var(--text-dim);
+  margin-top: 22px; max-width: 30rem; line-height: 1.65;
+}
+.ed-hero .hero-actions { margin-top: 32px; }
+
+/* Aside pinned by a gold rule — the editorial "pull quote" */
+.ed-panel {
+  border-left: 3px solid var(--gold); padding: 4px 0 4px 22px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.ed-panel-quote {
+  font-family: var(--font-display);
+  font-size: 1.35rem; font-weight: 600; color: var(--ink); line-height: 1.25;
+}
+
+/* Section head */
+.ed-head { max-width: 660px; margin-bottom: 28px; }
+.ed-head h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 8px 0 10px; }
+
+/* Numbered rows — the workhorse that replaces card grids */
+.ed-rows { display: flex; flex-direction: column; }
+.ed-row {
+  display: grid; grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center; gap: 18px;
+  padding: 20px 0; border-top: 1px solid var(--border);
+  transition: background .18s;
+  width: 100%; text-align: left; background: none; border-left: 0;
+  border-right: 0; border-bottom: 0; font: inherit; color: inherit;
+}
+.ed-rows > :last-child { border-bottom: 1px solid var(--border); }
+.ed-row:hover { background: var(--bg-2); }
+button.ed-row { cursor: pointer; }
+.ed-num {
+  font-family: var(--font-display);
+  font-size: 1.9rem; font-weight: 700; color: var(--gold); line-height: 1;
+}
+.ed-num-muted { color: var(--border-strong); }
+.ed-row-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ed-row-title {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-family: var(--font-display);
+  font-size: 1.15rem; font-weight: 700; color: var(--ink);
+}
+.ed-row-ico {
+  width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--grad-soft); color: var(--navy); font-size: .95rem; flex: none;
+}
+.ed-row-side { display: flex; align-items: center; gap: 12px; flex: none; }
+.ed-arrow { color: var(--text-faint); font-size: 1.1rem; }
+.ed-row:hover .ed-arrow { color: var(--gold); }
+.ed-row-done .ed-row-title { text-decoration: line-through; color: var(--text-faint); }
+
+/* Split section: sticky aside + flowing content */
+.ed-split {
+  display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.5fr); gap: 46px;
+}
+.ed-aside {
+  position: sticky; top: 96px; align-self: start;
+  /* The profile card inside decides its own layout from *this* width, not the
+     window's — the rail is 443px on a 1440px screen, and a viewport query
+     cannot tell the two apart. */
+  container-type: inline-size;
+}
+.ed-aside h2 { margin: 10px 0; font-size: clamp(1.4rem, 2.4vw, 1.9rem); }
+
+/* Catalogue: a centred head with the search in it, results in a column below. */
+.cat-head {
+  max-width: 720px; margin: 0 auto 34px; text-align: center; gap: 10px;
+  align-items: center;
+}
+.cat-title { font-size: clamp(1.6rem, 3.4vw, 2.4rem); margin: 2px 0; }
+.cat-search { width: 100%; max-width: 560px; }
+.cat-search::-webkit-search-cancel-button { cursor: pointer; }
+.cat-filters {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-top: 4px;
+}
+.cat-results { max-width: 980px; margin: 0 auto; }
+.cat-count { align-self: flex-start; }
+
+/* Two-column rule-separated list, used for taxonomies and directions */
+.ed-pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 30px; }
+.ed-pairs > div { padding: 18px 0; border-top: 1px solid var(--border-strong); }
+.ed-pairs > div h3 { margin-bottom: 6px; }
+/* The one place secondary copy carries the whole meaning of a row: the heading
+   is two words and the line under it is the actual promise. A step up in
+   weight keeps it from reading as a caption. */
+.ed-pairs > div p { font-weight: 500; }
+
+.ed-alt { background: var(--band); }
+/* ...except on the landing page, where the branch is pinned behind the whole
+   document: an opaque band would wipe it off every second screen. The sections
+   there keep their rhythm from spacing alone, over one continuous canvas. */
+.landing .ed-alt { background: transparent; }
+
+/* Below 900px the branch is scaled to enter from the corner and lands over
+   the copy column. The artwork stays as it is; the copy gets a cream wash
+   under it so the headline is still a headline. */
+@media (max-width: 900px) {
+  .landing .ed-hero > .wrap::before {
+    content: ""; position: absolute; inset: -30px -8% -14px;
+    z-index: -1; pointer-events: none;
+    background: radial-gradient(115% 78% at 26% 46%,
+      var(--bg) 40%, color-mix(in srgb, var(--bg) 55%, transparent) 66%, transparent 84%);
+  }
+  .ed-hero-grid, .ed-split { grid-template-columns: 1fr; gap: 28px; }
+  .ed-aside { position: static; }
+  .ed-pairs { grid-template-columns: 1fr; }
+  .ed-row { grid-template-columns: 48px 1fr auto; gap: 12px; }
+  .ed-num { font-size: 1.4rem; }
+}
+
+/* ====================================================================
+   Landing composition — warm paper
+   Centred section heads, a drawn roadmap, and cards that are outlined
+   rather than shadowed so the branch behind them stays readable.
+   ==================================================================== */
+
+/* A section head on the landing is centred and has no eyebrow: the title is
+   short enough to be its own label, and a kicker above it only added a third
+   line of type to read before the point. */
+.sec-head {
+  /* Left-aligned, not centred. A centred head on a 1300px page puts a third of
+     every screen into empty margin before the reader reaches a word, and the
+     eye has to travel back to the left edge for the grid underneath anyway.
+     The measure is still capped so the sub-line does not run the full width. */
+  max-width: 68ch; margin: 0 0 22px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  text-align: left;
+}
+.sec-head h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 400; letter-spacing: -.022em; line-height: 1.15;
+}
+.sec-head p { color: var(--text-dim); font-size: 1rem; line-height: 1.6; }
+/* The "see all" link lives under the grid, not beside the title — centring the
+   head and then hanging a button off its right edge broke the symmetry the
+   whole page is built on. */
+.sec-more { display: flex; justify-content: flex-start; margin-top: 20px; }
+
+/* ---------- The AI companion, drawn ----------
+   A still of the assistant rather than a paragraph about it. Everything in it
+   is markup, so it translates and follows the theme. */
+.ai-teaser {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 52px; align-items: center;
+}
+.ai-copy { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
+.ai-copy h2 {
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem); font-weight: 400; letter-spacing: -.022em;
+  max-width: 20ch;
+}
+.ai-copy p { color: var(--text-dim); line-height: 1.65; max-width: 40ch; }
+
+.ai-window {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px;
+  display: flex; flex-direction: column; gap: 13px;
+  box-shadow: var(--shadow);
+}
+.ai-ask {
+  align-self: flex-end; max-width: 80%;
+  background: var(--grad-soft); border: 1px solid var(--border);
+  border-radius: 15px 15px 4px 15px; padding: 11px 14px;
+  font-size: .88rem; color: var(--ink); line-height: 1.5;
+}
+.ai-reply { display: flex; gap: 10px; align-items: flex-start; }
+.ai-avatar {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  background: var(--primary); color: var(--on-primary);
+  display: grid; place-items: center; font-size: .62rem; font-weight: 700;
+  letter-spacing: .02em;
+}
+.ai-reply-body {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 4px 15px 15px 15px; padding: 12px 15px;
+  font-size: .88rem; line-height: 1.5;
+  display: flex; flex-direction: column; gap: 9px; min-width: 0;
+}
+.ai-sugg { display: flex; flex-direction: column; gap: 7px; }
+.ai-sugg > span { display: flex; gap: 9px; align-items: baseline; color: var(--text-dim); font-size: .85rem; }
+.ai-sugg b {
+  font-family: var(--font-display); font-weight: 600; color: var(--gold);
+  flex: none; font-size: .82rem;
+}
+.ai-input {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border); background: var(--control);
+  border-radius: 999px; padding: 8px 8px 8px 17px;
+  color: var(--text-faint); font-size: .86rem;
+}
+.ai-send {
+  margin-left: auto; width: 31px; height: 31px; border-radius: 50%; flex: none;
+  background: var(--primary); color: var(--on-primary);
+  display: grid; place-items: center; font-size: .8rem;
+}
+
+/* ---------- Directions, as cards ---------- */
+.face-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(258px, 100%), 1fr));
+  gap: 16px;
+}
+@media (min-width: 1000px) { .face-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.face-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  /* The fill and the page are a hair apart by design, so the edge does the
+     separating: the stronger of the two existing border tokens, plus a real
+     shadow. Both are already in the palette — nothing here invents a colour. */
+  border-color: var(--border-strong);
+  box-shadow: var(--card-lift);
+  transition: border-color .18s, transform .18s, box-shadow .18s;
+}
+.face-card:hover {
+  border-color: var(--border-strong); transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.face-ico {
+  width: 40px; height: 40px; border-radius: 12px; flex: none;
+  display: grid; place-items: center;
+  background: var(--grad-soft); border: 1px solid var(--border);
+  color: var(--gold); font-size: 1.05rem;
+}
+.face-card h3 { font-size: 1.16rem; }
+.face-card p { color: var(--text-dim); font-size: .9rem; line-height: 1.6; flex: 1; }
+.face-link {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: .86rem; font-weight: 600; color: var(--gold);
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.face-card:hover .face-link { color: var(--primary-hover); }
+
+/* ---------- The roadmap ----------
+   Six stages drawn along one dotted line rather than listed. The line is what
+   carries the claim: these are not six services, they are one route. Below
+   900px the curve cannot hold six labels, so it becomes the numbered list it
+   always was underneath. */
+/* The labels hang outside the curve's own box on purpose — the line is the
+   drawing and the type is hung off it — so the section reserves the room for
+   them here rather than letting them crowd the heading above. */
+.road { position: relative; width: 100%; aspect-ratio: 1200 / 340; margin: 58px 0 74px; }
+.road-line { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.road-line path {
+  fill: none; stroke: var(--gold-soft); stroke-width: 2.5;
+  stroke-linecap: round; stroke-dasharray: 1 10;
+}
+.road-node {
+  position: absolute; width: 13px; height: 13px;
+  transform: translate(-50%, -50%);
+}
+.road-dot {
+  display: block; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--primary); box-shadow: 0 0 0 5px var(--bg);
+}
+.road-label {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  width: 182px; text-align: center;
+  display: flex; flex-direction: column; gap: 4px;
+  /* A halo of the page colour around every glyph. Weight and size alone could
+     not save the sixth label: the canopy is pinned to the window and lands
+     right behind it, and white type on white blossom is unreadable at any
+     weight. Where there is nothing behind, the halo is the page painting on
+     itself and cannot be seen at all. */
+  text-shadow:
+    0 0 4px var(--bg),
+    0 0 9px var(--bg),
+    0 0 18px var(--bg);
+}
+.road-node[data-side="up"]   .road-label { bottom: calc(100% + 18px); }
+.road-node[data-side="down"] .road-label { top: calc(100% + 18px); }
+/* Sized and weighted to survive the branch behind them. These labels are the
+   one place on the page where body copy sits on bare background with a canopy
+   of blossom passing under it and no card in between, so they carry more
+   weight than their size would otherwise ask for. */
+.road-n {
+  font-family: var(--font-display); font-size: .92rem; font-weight: 700;
+  color: var(--gold); letter-spacing: .05em;
+}
+.road-t {
+  font-size: 1.06rem; font-weight: 700; color: var(--ink);
+  line-height: 1.28; letter-spacing: -.005em;
+}
+.road-d { font-size: .89rem; font-weight: 500; color: var(--text); line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .road { aspect-ratio: auto; display: flex; flex-direction: column; margin: 0; }
+  .road-line { display: none; }
+  .road-node {
+    position: static; transform: none; width: auto; height: auto;
+    display: grid; grid-template-columns: 13px minmax(0, 1fr); gap: 16px;
+    align-items: start; padding: 16px 0; border-top: 1px solid var(--border);
+  }
+  .road-node:last-of-type { border-bottom: 1px solid var(--border); }
+  .road-dot { margin-top: 6px; box-shadow: 0 0 0 4px var(--bg); }
+  .road-label {
+    position: static; transform: none; width: auto; text-align: left;
+  }
+}
+
+/* ---------- Wellbeing ----------
+   A reminder, not a diagnosis: the platform never issues a medical verdict, so
+   this block sets habits beside a note that says as much. */
+.well-grid {
+  display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+  gap: 20px; align-items: start;
+}
+.well-note {
+  background-color: var(--surface-2); background-image: var(--grad-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  display: flex; flex-direction: column; gap: 11px;
+}
+.well-note h3 { font-size: 1.14rem; }
+.well-list { display: grid; gap: 12px; }
+.well-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.well-item strong { font-size: .96rem; color: var(--ink); font-weight: 600; }
+@media (max-width: 820px) { .well-grid { grid-template-columns: 1fr; } }
+
+/* ---------- Closing call ----------
+   The corners carry a rose wash rather than a second copy of the branch: one
+   sakura on a page, and it is the one in the hero. */
+.cta-panel {
+  position: relative; overflow: hidden; isolation: isolate;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: clamp(52px, 8vw, 84px) 30px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  text-align: center;
+}
+.cta-panel::before, .cta-panel::after {
+  content: ""; position: absolute; z-index: -1;
+  width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-soft), transparent 68%);
+  opacity: .3; pointer-events: none;
+}
+.cta-panel::before { top: -190px; left: -150px; }
+.cta-panel::after  { bottom: -210px; right: -140px; }
+.cta-panel h2 {
+  font-size: clamp(1.9rem, 4.4vw, 3.1rem); font-weight: 400;
+  letter-spacing: -.025em; line-height: 1.08; max-width: 15ch;
+}
+.cta-panel p { color: var(--text-dim); max-width: 44ch; line-height: 1.6; }
+
+@media (max-width: 900px) {
+  .ai-teaser { grid-template-columns: 1fr; gap: 30px; }
+}
+
+/* ====================================================================
+   SAKURA AT NIGHT — the dark identity
+   Everything below is scoped to [data-theme="dark"] and is deliberately
+   not a tone-mapped copy of the light page. On paper the design is warm
+   and open; after dark it is a garden seen at night — a near-black
+   ground, glass instead of card stock, light coming off the blossom
+   rather than off the page, and one hairline instead of a shadow.
+   ==================================================================== */
+
+/* ---------- Atmosphere ----------
+   Three radial washes, all far below the threshold of "a glow": one where
+   the branch enters at the top right, one under its canopy, one burgundy
+   pooled in the far corner. Fixed and at -2, so they sit behind the branch
+   and never move with the page. */
+[data-theme="dark"] body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 44% at 79% 4%,  rgba(233,167,181,.13), transparent 62%),
+    radial-gradient(40% 36% at 93% 30%, rgba(184,107,125,.10), transparent 66%),
+    radial-gradient(78% 58% at 8% 100%, rgba(84,41,54,.24),   transparent 72%);
+}
+
+/* The branch is the light source in this composition, so it is no longer
+   dimmed the way it was when the page behind it was pale. */
+[data-theme="dark"] .sakura-hero { opacity: 1; }
+[data-theme="dark"] .sakura-ambient { opacity: .34; }
+
+/* ---------- Glass ----------
+   A card after dark is a pane over the garden: translucent, blurred, and
+   edged with a single hairline of light along the top rather than a
+   shadow underneath. */
+[data-theme="dark"] .card,
+[data-theme="dark"] .tile,
+[data-theme="dark"] .showcase-card,
+[data-theme="dark"] .face-card,
+[data-theme="dark"] .well-item,
+[data-theme="dark"] .well-note,
+[data-theme="dark"] .ai-window,
+[data-theme="dark"] .price-card,
+[data-theme="dark"] .dash,
+[data-theme="dark"] .reminder,
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .aw-card,
+[data-theme="dark"] .aw-metric,
+[data-theme="dark"] .traffic-tile,
+[data-theme="dark"] .table-scroll,
+[data-theme="dark"] .filter-bar {
+  background: var(--glass);
+  /* No backdrop-filter any more: over an opaque fill it renders nothing and
+     still costs a compositor pass on every card. */
+  box-shadow: var(--hairline), var(--card-lift);
+}
+
+/* Hover moves the edge toward the blossom rather than lifting the card off
+   the page — the whole surface is meant to stay flat and quiet. */
+[data-theme="dark"] .tile:hover,
+[data-theme="dark"] .face-card:hover,
+[data-theme="dark"] .card:hover,
+[data-theme="dark"] .stat-pill-link:hover {
+  border-color: var(--gold-soft);
+  box-shadow: var(--hairline), 0 0 0 1px rgba(233,167,181,.10);
+}
+
+[data-theme="dark"] .ai-reply-body,
+[data-theme="dark"] .bubble-ai {
+  background: rgba(42, 38, 52, .75);
+}
+
+/* ---------- Chrome ---------- */
+[data-theme="dark"] .nav {
+  border-bottom: 1px solid var(--border);
+  -webkit-backdrop-filter: saturate(1.1) blur(20px);
+          backdrop-filter: saturate(1.1) blur(20px);
+}
+[data-theme="dark"] .nav-pills { background: rgba(57, 51, 67, .55); }
+[data-theme="dark"] .nav-link:hover { color: var(--gold); }
+[data-theme="dark"] .nav-link.active { background: rgba(245,241,238,.07); color: var(--ink); }
+[data-theme="dark"] .nav-plain:hover { color: var(--gold); }
+[data-theme="dark"] .pill-note {
+  background: rgba(57, 51, 67, .55);
+  box-shadow: var(--hairline);
+}
+[data-theme="dark"] .pill-note::before { background: var(--gold); }
+
+/* ---------- Type ----------
+   The word the headline turns on is picked out in blossom. In daylight it
+   stays ink: a pale pink on cream is a weaker headline, not a warmer one. */
+.hl { color: inherit; }
+[data-theme="dark"] .hl { color: var(--gold); }
+
+/* ---------- Buttons ---------- */
+[data-theme="dark"] .btn-primary { box-shadow: 0 0 28px -14px rgba(233,167,181,.55); }
+[data-theme="dark"] .btn-ghost,
+[data-theme="dark"] .btn-outline {
+  background: rgba(57, 51, 67, .6);
+  border-color: var(--border-strong);
+  color: var(--ink);
+  -webkit-backdrop-filter: blur(14px);
+          backdrop-filter: blur(14px);
+}
+[data-theme="dark"] .btn-ghost:not(:disabled):hover,
+[data-theme="dark"] .btn-outline:not(:disabled):hover {
+  border-color: var(--gold-soft); color: var(--gold); background: rgba(84,41,54,.28);
+}
+
+/* ---------- The roadmap, after dark ---------- */
+[data-theme="dark"] .road-line path { stroke: var(--gold-soft); }
+[data-theme="dark"] .road-dot {
+  background: var(--gold);
+  box-shadow: 0 0 0 5px var(--bg), 0 0 16px rgba(233,167,181,.5);
+}
+
+/* ---------- The closing call ----------
+   The one cinematic surface on the page: black falling into burgundy, with
+   the corner washes brought up from a hint to a presence. */
+[data-theme="dark"] .cta-panel {
+  background:
+    radial-gradient(120% 90% at 50% 120%, rgba(126,64,83,.48), transparent 70%),
+    linear-gradient(180deg, #262232 0%, #342436 100%);
+  border-color: var(--border-strong);
+  box-shadow: var(--hairline), 0 40px 90px -50px rgba(0,0,0,.9);
+}
+[data-theme="dark"] .cta-panel::before,
+[data-theme="dark"] .cta-panel::after { opacity: .22; }
+
+[data-theme="dark"] .site-footer { border-top-color: var(--border); }
+
+/* ---------- Motion ----------
+   Slow, and only where it says something. Sections rise as they enter the
+   viewport; the assistant thinks before it answers. Both are opt-in: the
+   scroll animation is gated behind support for a scroll timeline, so a
+   browser without one simply shows the page. */
+/* No scroll-driven motion. Sections used to rise sixteen pixels as they
+   entered the viewport; against a background that is pinned and perfectly
+   still, that slide was the one thing on the page that moved *because* you
+   scrolled, and it read as the whole scene drifting. The branches, the moon
+   and the petals keep their own slow, time-based life — none of it is tied to
+   the scrollbar. */
+
+.ai-typing { display: inline-flex; gap: 5px; align-items: center; height: 1em; }
+.ai-typing i {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--gold-soft);
+  display: block; opacity: .35;
+  animation: ai-blink 1.4s ease-in-out infinite;
+}
+.ai-typing i:nth-child(2) { animation-delay: .18s; }
+.ai-typing i:nth-child(3) { animation-delay: .36s; }
+@keyframes ai-blink {
+  0%, 60%, 100% { opacity: .28; transform: translateY(0); }
+  30%           { opacity: 1;   transform: translateY(-2px); }
+}
+@media (prefers-reduced-motion: reduce) { .ai-typing i { animation: none; } }
+
+/* A pink bloom around the assistant panel — the one place the interface is
+   allowed to look lit from inside. */
+[data-theme="dark"] .ai-window {
+  border-color: var(--border-strong);
+  box-shadow: var(--hairline), 0 0 70px -30px rgba(233,167,181,.45);
+}
+
+/* ====================================================================
+   Career progress dashboard
+   One instrument instead of three vignettes: the composite score, the
+   dimensions under it, and the single next step beside it.
+   ==================================================================== */
+.dash {
+  display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.dash-main { padding: 30px 32px; display: flex; flex-direction: column; gap: 22px; }
+.dash-label {
+  font-size: .68rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700;
+}
+.dash-figure { display: flex; align-items: center; gap: 22px; }
+.dash-value {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(2.6rem, 6vw, 3.9rem); line-height: 1; color: var(--ink);
+  letter-spacing: -.03em;
+}
+.dash-value em { font-style: normal; font-size: .42em; color: var(--text-faint); }
+.dash-caption { color: var(--text-dim); font-size: .9rem; max-width: 26ch; line-height: 1.55; }
+.dash-bars { display: flex; flex-direction: column; gap: 13px; }
+.dash-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; }
+.dash-row > span:first-child { font-size: .88rem; color: var(--text); }
+.dash-pct {
+  font-size: .88rem; font-weight: 700; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.dash-track {
+  grid-column: 1 / -1; height: 5px; border-radius: 999px;
+  background: var(--surface-2); overflow: hidden;
+}
+.dash-track > span { display: block; height: 100%; border-radius: 999px; background: var(--grad); }
+.dash-next {
+  padding: 30px 32px; border-left: 1px solid var(--border);
+  background: var(--bg-2);
+  display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+}
+.dash-next h3 { font-size: 1.14rem; }
+.dash-next p { color: var(--text-dim); font-size: .9rem; line-height: 1.6; }
+.dash-next .btn { margin-top: auto; }
+[data-theme="dark"] .dash-next {
+  background: rgba(110,54,71,.18); border-left-color: var(--border-strong);
+}
+@media (max-width: 860px) {
+  .dash { grid-template-columns: 1fr; }
+  .dash-main, .dash-next { padding: 24px; }
+  .dash-next { border-left: 0; border-top: 1px solid var(--border); }
+}
+
+/* ---------- Today's reminder ---------- */
+.reminder {
+  background-color: var(--surface-2); background-image: var(--grad-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 26px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.reminder blockquote {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(1.2rem, 2.4vw, 1.6rem); line-height: 1.3;
+  color: var(--ink); letter-spacing: -.015em;
+}
+
+/* ====================================================================
+   Pricing
+   Two cards, one decision. Plus is the dominant one — a hairline of
+   blossom around it in the dark, the near-black pill on paper.
+   ==================================================================== */
+.price-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 18px; max-width: 880px; margin: 0 auto;
+}
+.price-card {
+  position: relative;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 30px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.price-name {
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 700;
+}
+.price-amount {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(2rem, 4.4vw, 2.9rem); line-height: 1;
+  color: var(--ink); letter-spacing: -.03em;
+  display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap;
+}
+.price-unit {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: .88rem; font-weight: 500; color: var(--text-faint); letter-spacing: 0;
+}
+.price-list { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.price-list li {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: .91rem; color: var(--text-dim); line-height: 1.5;
+}
+.price-tick { color: var(--gold); flex: none; line-height: 1.45; }
+.price-tag {
+  position: absolute; top: 22px; right: 22px;
+  font-size: .66rem; letter-spacing: .14em; text-transform: uppercase;
+  font-weight: 700; padding: 5px 11px; border-radius: 999px;
+  background: var(--grad-soft); border: 1px solid var(--border-strong);
+  color: var(--gold);
+}
+.price-card-plus { border-color: var(--border-strong); }
+[data-theme="dark"] .price-card-plus {
+  border-color: rgba(233,167,181,.34);
+  box-shadow: var(--hairline), 0 0 70px -34px rgba(233,167,181,.55);
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(84,41,54,.34), transparent 62%),
+    var(--glass);
+}
+
+/* Blossom scattered at the edges of the closing panel. Decoration only:
+   aria-hidden, behind the copy, and never over the headline's measure. */
+.cta-bloom { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.cta-bloom > span { position: absolute; display: block; }
+.cta-bloom > span:nth-child(1) { top: 9%;     left: 4%;   transform: rotate(-18deg); opacity: .5; }
+.cta-bloom > span:nth-child(2) { top: 30%;    left: 12%;  transform: rotate(26deg);  opacity: .3; }
+.cta-bloom > span:nth-child(3) { bottom: 11%; right: 5%;  transform: rotate(13deg);  opacity: .5; }
+.cta-bloom > span:nth-child(4) { bottom: 34%; right: 13%; transform: rotate(-31deg); opacity: .3; }
+.cta-bloom > span:nth-child(5) { top: 62%;    left: 8%;   transform: rotate(42deg);  opacity: .22; }
+@media (max-width: 760px) {
+  /* On a phone the panel is barely wider than its own headline; the flowers
+     would sit on the words rather than beside them. */
+  .cta-bloom > span:nth-child(2),
+  .cta-bloom > span:nth-child(4),
+  .cta-bloom > span:nth-child(5) { display: none; }
+  .cta-bloom > span:nth-child(1) { left: -2%; opacity: .35; }
+  .cta-bloom > span:nth-child(3) { right: -2%; opacity: .35; }
+}
+
+/* ====================================================================
+   The corner branch — the canopy again, entering from the left
+   Same component, same geometry, same artwork size, flipped top to bottom
+   so the limb comes in low at the left edge and climbs away to the right.
+   Drawn by <Sakura variant="corner" />.
+
+   scaleY, not rotate. Turning the drawing through 180° puts its root on the
+   *bottom* edge — the limb then grows up out of the floor, which is what made
+   this read as a branch stuck to the bottom of the window rather than one
+   coming in from the side. Flipping it vertically keeps the root where the
+   canopy has it, off the near edge, and reverses only the climb: the canopy
+   enters high and plunges right, so its mirror enters low and rises right.
+   ==================================================================== */
+.sakura-corner {
+  /* The layer is the window and the anchor is placed inside it, the same way
+     the canopy is built — that is what lets the artwork keep a fixed size
+     while the layer tracks the viewport. */
+  position: fixed; inset: 0; z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sakura-corner .sakura-anchor {
+  position: absolute;
+  /* Pushed far enough left that the limb's root is off-screen: a branch you can
+     see the end of is a cutting lying on the page, not a bough entering frame. */
+  left: -405px;
+  bottom: 10px;
+  width: 940px;
+  /* Full strength for almost its whole length — it is the same branch as the
+     canopy and is meant to look it. The only thing the mask does is stop the
+     far tip ending on a hard edge where the artwork runs out. */
+  -webkit-mask-image: linear-gradient(105deg, #000 0%, #000 78%, rgba(0,0,0,.6) 92%, transparent 100%);
+          mask-image: linear-gradient(105deg, #000 0%, #000 78%, rgba(0,0,0,.6) 92%, transparent 100%);
+}
+.sakura-corner .sakura-branch {
+  display: block; width: 100%; height: auto;
+  transform: scaleY(-1);
+  transform-origin: 50% 50%;
+  /* No sway: the canopy's animation is hinged at its own top edge, which after
+     the flip would swing this branch from its tip instead of its root. */
+  animation: none;
+}
+.sakura-corner .sakura-wash { animation: none; }
+
+@media (max-width: 1100px) {
+  .sakura-corner .sakura-anchor { left: -308px; width: 730px; bottom: -18px; }
+}
+@media (max-width: 900px) {
+  .sakura-corner .sakura-anchor { left: -223px; width: 540px; bottom: -14px; }
+}
+
+/* ====================================================================
+   The sky — a crescent after dark, the sun by day
+   Sky, not decoration. Fixed to the viewport on the same background
+   layer as the branch, small and high on the left, painting behind
+   every piece of the interface at all times. Drawn by <Sky />.
+   ==================================================================== */
+.sky-layer {
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  /* The strip between the header and the badge is the only sky with nothing in
+     front of it, and it is 88px tall — so that, not taste, sets the body's
+     size. Wider windows open a second option and take it below. */
+  top: 80px;
+  left: max(16px, calc(50% - 760px));
+  width: 80px;
+  height: 80px;
+}
+/* Three widening stops and then nothing: a tight bloom on the disc, the glow
+   proper, and a wide atmospheric haze with no boundary of its own. The haze is
+   what puts air between the viewer and the moon — without it a small disc with
+   a halo is a sticker, not a distance. */
+.sky-haze {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 780px; height: 780px;
+  margin: -390px 0 0 -390px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--sky-core) 0%, var(--sky-core-0) 13%),
+    radial-gradient(circle, var(--sky-glow) 0%, var(--sky-glow-0) 35%),
+    radial-gradient(circle, var(--sky-haze) 0%, var(--sky-haze-0) 70%);
+  /* Three stacked gradients band this faint into visible rings on an 8-bit
+     display, and the wider the halo the wider the rings. A little blur costs
+     nothing on an element that never repaints and removes them completely. */
+  filter: blur(14px);
+  animation: sky-breathe 15s ease-in-out infinite alternate;
+}
+@keyframes sky-breathe {
+  from { opacity: .8; transform: scale(.96); }
+  to   { opacity: 1;  transform: scale(1.05); }
+}
+.sky-moon {
+  position: relative;
+  display: block;
+  width: 100%; height: auto;
+  /* Feathers the edge rather than cutting it — a hard rim reads as a shape
+     pasted on the page instead of a body a long way off, and the bigger the
+     body the more obvious that rim becomes. */
+  filter: drop-shadow(0 0 15px var(--sky-core));
+}
+
+/* Past about 1560px the copy column stops growing and the margin beside it
+   opens up, so the moon can leave that strip of clear sky between the header
+   and the first line of copy, move into the margin and take the size it wants.
+   Below this width the column runs to the window edge and the strip — 88px of
+   it — is the ceiling. */
+@media (min-width: 1560px) {
+  .sky-layer {
+    top: clamp(78px, 10vh, 112px);
+    left: max(16px, calc(50% - 770px));
+    width: 92px;
+    height: 92px;
+  }
+  .sky-haze { width: 900px; height: 900px; margin: -450px 0 0 -450px; }
+  /* Past this width the sun clears the copy column horizontally, so the 88px
+     strip stops being its ceiling and it can take the size it wants. */
+}
+
+/* There is a body in the sky after dark and nothing by day.
+   The layer is hidden rather than emptied: the haze is a glow with no edge of
+   its own, so left behind without a disc inside it, it is a bright smudge in
+   the corner of the page. The unset state — before the theme toggle has stamped
+   the root — counts as day, so nothing flashes on before the theme resolves. */
+.sky-layer { display: none; }
+[data-theme="dark"] .sky-layer { display: block; }
+
+@media (max-width: 900px) {
+  /* The header is two rows tall here (bottom at ~122px) and the badge drops to
+     match, so the strip moves down with them. */
+  .sky-layer { width: 68px; height: 68px; top: 132px; left: 16px; }
+  .sky-haze { width: 460px; height: 460px; margin: -230px 0 0 -230px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-haze { animation: none; }
+}
+
+/* ====================================================================
+   Promotion slots
+   First-party partner banners in fixed layout positions. Drawn by
+   <PromoSlot />; what goes in them comes from services/promos.ts.
+   The pair sits directly under the hero, where a promotion is expected
+   and does not interrupt a reader mid-thought.
+   ==================================================================== */
+.promo-slot {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 8px;
+}
+.promo-slot-pair { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.promo-slot-solo { grid-template-columns: minmax(0, 1fr); }
+
+.promo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 22px 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform .22s ease, box-shadow .22s ease;
+  box-shadow: var(--shadow-sm);
+}
+.promo:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+/* The label is deliberately plain and always present: an unlabelled promotion
+   in a state portal reads as editorial, which is a different promise to the
+   reader than an advertisement. */
+.promo-label {
+  font-size: .74rem; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-faint); font-weight: 600;
+}
+.promo-title { font-size: 1.12rem; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.promo-body { font-size: .94rem; color: var(--text-dim); line-height: 1.5; }
+.promo-cta { margin-top: 6px; font-size: .92rem; font-weight: 600; color: var(--primary); }
+
+.promo-plum { background-color: var(--surface-2); background-image: var(--grad-soft); }
+.promo-sand { background: var(--surface-2); }
+.promo-rose { background: var(--bg-2); }
+
+@media (max-width: 780px) {
+  .promo-slot-pair { grid-template-columns: minmax(0, 1fr); }
+  .promo { padding: 18px 18px; }
+}
+/* A promo band carries its own padding, so it does not stack a section's worth
+   of space on top of the one it sits between. */
+.section-promo { padding: 20px 0; }
+
+/* ====================================================================
+   Legal documents — the privacy policy and anything like it
+   Long-form prose, so it is set for reading: one narrow measure, a
+   clear hierarchy of numbered sections, and no card around it.
+   ==================================================================== */
+.legal { max-width: 78ch; }
+.legal-crumbs { font-size: .88rem; color: var(--text-dim); margin-bottom: 18px; }
+.legal-crumbs a { color: var(--text-dim); }
+.legal-crumbs a:hover { color: var(--primary); }
+.legal h1 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 400; letter-spacing: -.022em; line-height: 1.15;
+}
+.legal-updated { margin-top: 10px; color: var(--text-dim); font-size: .93rem; }
+.legal-notice { margin-top: 20px; }
+
+.legal-body { margin-top: 30px; }
+.legal-body p { margin-bottom: 14px; line-height: 1.7; color: var(--text); }
+.legal-body ul, .legal-body ol { margin: 0 0 16px 22px; }
+.legal-body li { margin-bottom: 7px; line-height: 1.65; color: var(--text); }
+.legal-body ul { list-style: disc; }
+.legal-body ol { list-style: decimal; }
+.legal-body strong { font-weight: 600; color: var(--ink); }
+
+.legal-section { margin-top: 34px; }
+.legal-section h2 {
+  font-size: clamp(1.12rem, 1.7vw, 1.35rem);
+  font-weight: 600; line-height: 1.3; margin-bottom: 12px;
+  padding-bottom: 9px; border-bottom: 1px solid var(--border);
+}
+/* The number is set apart so the section can be cited by it — a policy is a
+   document people quote clause numbers out of, not just read top to bottom. */
+.legal-n { color: var(--primary); font-variant-numeric: tabular-nums; }
+.legal-group { margin-top: 20px; }
+.legal-group h3 { font-size: 1rem; font-weight: 600; margin-bottom: 9px; color: var(--ink); }
+
+/* An unfilled field. The document arrived with the operator's legal name,
+   address, contacts and effective date blank; a policy is the statement of who
+   is accountable for a woman's data, so those blanks are marked rather than
+   quietly rendered as though they were content. */
+.legal-blank {
+  background: rgba(209, 75, 75, .12);
+  color: var(--danger);
+  border: 1px dashed rgba(209, 75, 75, .45);
+  border-radius: 5px;
+  padding: 0 5px;
+  font-size: .93em;
+  font-style: normal;
+}
+
+@media (max-width: 620px) {
+  .legal-body ul, .legal-body ol { margin-left: 18px; }
+}
+
+/* The privacy agreement on the sign-up form. A real control with a real link,
+   sized for a thumb: this is the record that justifies holding her data, so it
+   is not a line of small print under the button. */
+.auth-consent {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: .9rem; line-height: 1.5; color: var(--text-dim);
+  cursor: pointer;
+}
+.auth-consent input {
+  width: 18px; height: 18px; flex: none; margin-top: 2px;
+  accent-color: var(--primary); cursor: pointer;
+}
+.auth-consent a { color: var(--primary); text-decoration: underline; }
+
+/* ====================================================================
+   Profile card — a glass pane over the garden
+   A standalone component: nothing decorative lives inside it, and the
+   page's own branches and sky stay behind it rather than in it. The
+   glass is what ties the two together — the backdrop blurs through,
+   so the card belongs to the page without borrowing its clutter.
+   ==================================================================== */
+/* The card reads its own width from this, not from the window: it has lived in
+   a 443px rail and across a 1320px page, and a viewport query cannot tell those
+   apart. */
+.pcard-slot { container-type: inline-size; }
+
+.pcard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "portrait body"
+    "foot     foot";
+  gap: 28px 32px;
+  padding: 34px;
+  border-radius: 30px;
+  position: relative;
+  isolation: isolate;
+  background: var(--pane);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+          backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--pane-edge);
+  /* Three layers, and each does one job: a hairline of light along the top
+     edge, a wide soft shadow that lifts the card off the page, and nothing
+     else. That inner highlight is most of what reads as "glass". */
+  box-shadow:
+    inset 0 1px 0 var(--pane-inner),
+    var(--pane-shadow);
+}
+/* A sheen falling across the head of the pane. One soft diagonal, stopping
+   well before the middle: glass catches light at its top edge, and a wash over
+   the whole surface reads as fog instead. */
+.pcard::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(152deg, var(--pane-inner) 0%, transparent 46%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* --- left: the portrait --- */
+.pcard-portrait {
+  grid-area: portrait;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  width: clamp(124px, 35cqw, 204px);
+}
+.pcard-avatar {
+  /* A third of the card, measured against the card and not the window: the
+     reference reads as "the big round photo" and that only survives if it
+     scales with the pane it sits in. */
+  width: clamp(112px, 33cqw, 184px);
+  aspect-ratio: 1;
+  height: auto;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: clamp(2rem, 11cqw, 3.4rem); font-weight: 600; letter-spacing: .02em;
+  color: var(--on-primary);
+  background: var(--grad);
+  /* A thin light ring, then a very soft bloom outside it. */
+  border: 2px solid var(--pane-edge);
+  box-shadow: 0 0 0 6px var(--pane-inner), 0 14px 34px -14px rgba(0, 0, 0, .45);
+}
+.pcard-status {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: .8rem; padding: 6px 13px; border-radius: 999px;
+  background: var(--pane-inner); border: 1px solid var(--pane-edge);
+  color: var(--text); white-space: nowrap; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.pcard-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none;
+  background: var(--success); box-shadow: 0 0 0 3px rgba(95, 208, 162, .22);
+}
+.pcard-idno { font-size: .68rem; letter-spacing: .09em; text-transform: uppercase; color: var(--text-faint); }
+.pcard-idno code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .78rem; letter-spacing: .06em; color: var(--primary); text-transform: none;
+}
+
+/* --- right: the substance --- */
+.pcard-body { grid-area: body; display: flex; flex-direction: column; gap: 11px; min-width: 0; }
+.pcard-name {
+  font-size: clamp(1.7rem, 8cqw, 2.5rem);
+  font-weight: 600; line-height: 1.08; letter-spacing: -.024em; color: var(--ink);
+}
+.pcard-role { color: var(--text-dim); font-size: 1.02rem; font-weight: 500; margin-top: -3px; }
+.pcard-bio { color: var(--text-dim); font-size: .95rem; line-height: 1.62; max-width: 62ch; }
+
+/* Age and direction: two short facts, set as a definition list because that is
+   what a label and its value are. Sits between the description and the skills,
+   where the reader is already asking "who is this". */
+.pcard-facts {
+  display: flex; flex-wrap: wrap; gap: 8px 26px;
+  margin: 6px 0 2px;
+}
+.pcard-facts > div { display: flex; align-items: baseline; gap: 8px; }
+.pcard-facts dt {
+  font-size: .76rem; letter-spacing: .11em; text-transform: uppercase; color: var(--text-faint);
+}
+.pcard-facts dd { color: var(--ink); font-size: .95rem; font-weight: 500; }
+
+.pcard-skills-label {
+  font-size: .76rem; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--text-faint); margin-top: 10px;
+}
+.pcard-skills { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; list-style: none; }
+.pcard-skill {
+  font-size: .83rem; padding: 7px 15px; border-radius: 999px;
+  background: var(--pane-inner); border: 1px solid var(--pane-edge);
+  color: var(--text);
+}
+
+.pcard-block { margin-top: 8px; }
+.pcard-block h3 {
+  display: flex; align-items: center; gap: 9px;
+  font-size: .76rem; font-weight: 600; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 6px;
+}
+.pcard-block h3 svg { width: 17px; height: 17px; flex: none; color: var(--primary); }
+.pcard-block p { color: var(--text); font-size: .95rem; line-height: 1.55; }
+
+/* --- the foot, spanning both columns --- */
+.pcard-foot {
+  grid-area: foot;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--pane-edge);
+}
+.pcard-where { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.pcard-where .pcard-meter { max-width: 260px; margin-top: 4px; }
+.pcard-place { color: var(--text); font-size: .92rem; }
+.pcard-avail { color: var(--text-faint); font-size: .85rem; }
+.pcard-cta {
+  flex: none;
+  padding: 13px 30px; border-radius: 999px;
+  background: var(--contrast); color: var(--on-contrast);
+  font-weight: 600; font-size: .94rem; text-decoration: none; white-space: nowrap;
+  border: 1px solid var(--pane-edge);
+  /* A bloom under the button rather than a drop shadow: it is the one lit thing
+     on the card, so the light should look like it comes off it. */
+  box-shadow: 0 8px 30px -10px var(--ring), 0 2px 8px -4px rgba(0, 0, 0, .35);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.pcard-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 38px -10px var(--ring), 0 3px 10px -4px rgba(0, 0, 0, .45);
+}
+
+/* Tablet: still horizontal, just tighter — the portrait gives up the width
+   before the copy does, because the copy is what the card is for. */
+@container (max-width: 780px) {
+  .pcard { gap: 22px 24px; padding: 28px; }
+}
+/* One column. A 148px circle beside a 130px measure is not a layout, so below
+   this the portrait goes above the copy instead of beside it. The avatar stays
+   large here: this is the width of the cabinet's left rail, where the card is a
+   column by choice rather than by shortage of room. */
+@container (max-width: 560px) {
+  .pcard {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "portrait" "body" "foot";
+    gap: 22px; padding: 28px; border-radius: 28px;
+  }
+  /* The portrait keeps its own clamp — it is sized against the card, and
+     pinning it here is what stopped it being "the big round photo". */
+  .pcard-portrait { width: auto; }
+  .pcard-foot { flex-direction: column; align-items: stretch; gap: 16px; }
+  .pcard-cta { text-align: center; }
+}
+/* A real phone. Now the portrait does have to give way, so it lies down beside
+   the status instead of above it. */
+@container (max-width: 400px) {
+  .pcard { gap: 18px; padding: 22px; border-radius: 26px; }
+  .pcard-portrait { flex-direction: row; flex-wrap: wrap; justify-content: flex-start; align-items: center; }
+}
+
+/* The privacy agreement on the sign-up form. A real control with a real link,
+   sized for a thumb: this is the record that justifies holding her data, so it
+   is not a line of small print under the button. */
+.auth-consent {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: .9rem; line-height: 1.5; color: var(--text-dim);
+  cursor: pointer;
+}
+.auth-consent input {
+  width: 18px; height: 18px; flex: none; margin-top: 2px;
+  accent-color: var(--primary); cursor: pointer;
+}
+.auth-consent a { color: var(--primary); text-decoration: underline; }
+
+/* The privacy agreement on the sign-up form. A real control with a real link,
+   sized for a thumb: this is the record that justifies holding her data, so it
+   is not a line of small print under the button. */
+.auth-consent {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: .9rem; line-height: 1.5; color: var(--text-dim);
+  cursor: pointer;
+}
+.auth-consent input {
+  width: 18px; height: 18px; flex: none; margin-top: 2px;
+  accent-color: var(--primary); cursor: pointer;
+}
+.auth-consent a { color: var(--primary); text-decoration: underline; }
+
+
+
+/* The calendar's hover label.
+   The native `title` needs half a second of stillness before it appears, which
+   is longer than anyone hovers a 13px square — so the squares had a tooltip
+   nobody ever saw, and "when was I last active" had no answer. This one is
+   immediate. The native one stays underneath for screen readers and touch. */
+.cal-grid { position: relative; }
+.cal-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.cal-tip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  margin-top: -8px;
+  z-index: 5;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: .78rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 22px -10px rgba(0, 0, 0, .55);
+}
+/* The little arrow, so the label points at the square it belongs to. */
+.cal-tip::after {
+  content: "";
+  position: absolute; left: 50%; top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ink);
+}
+
+/* ====================================================================
+   Programme cards
+   The catalogue was a list of rows: every programme the same height,
+   the title and the goal on one line, and nothing to distinguish one
+   from another until you read it. A card gives each one its own edge
+   and lets the title breathe, which is what makes a catalogue browsable
+   rather than scannable.
+   ==================================================================== */
+.prog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+.prog-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--card-lift);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.prog-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+.prog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.prog-title { font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+.prog-title a { color: var(--ink); text-decoration: none; }
+.prog-title a:hover { color: var(--primary); }
+/* The goal is what she is choosing between, so it gets room — but a card in a
+   grid has to end somewhere or the row heights go ragged. */
+.prog-goal {
+  color: var(--text-dim); font-size: .93rem; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.prog-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto; padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.prog-hours { color: var(--text-faint); font-size: .86rem; white-space: nowrap; }
+.prog-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* The catalogue column was capped for a single list of rows; a grid wants the
+   page. */
+.cat-results:has(.prog-grid) { max-width: none; }
+
+@media (max-width: 520px) {
+  .prog-card { padding: 18px; }
+  .prog-foot { flex-direction: column; align-items: stretch; }
+  .prog-actions { justify-content: stretch; }
+  .prog-actions > * { flex: 1; text-align: center; }
+}
+
+/* ====================================================================
+   News and announcements — the feed the portal opens on
+   --------------------------------------------------------------------
+   A feed, not a catalogue. The first build drew every post as a bordered
+   card in a grid, which is how you present things to *choose between*;
+   a feed is one column you scroll, and each post is who is speaking, the
+   picture, and the caption under it. So there is no card here: no border,
+   no surface, no shadow. The picture is the block, and the text sits on
+   the page beneath it.
+
+   Nothing stands between the reader and the first post except the search
+   field. The sections used to be seven permanent chips under a title and
+   a lead — three rows of chrome before anything worth reading. They now
+   open under the field when she goes looking for something, which is the
+   only moment they are of any use.
+
+   The pictures are drawn, never fetched. A feed of remote images would be
+   a third-party request on every scroll with no consent behind it — the
+   one thing this portal does not do — and it would break the moment the
+   page is opened on a slow regional connection. A tint and a glyph cost
+   nothing and are legible at any bandwidth.
+   ==================================================================== */
+:root,
+[data-theme="light"] {
+  --tone-plum:  linear-gradient(140deg, #a8626f 0%, #d3949e 100%);
+  --tone-rose:  linear-gradient(140deg, #c97f8c 0%, #f0c3c8 100%);
+  --tone-sand:  linear-gradient(140deg, #c08f63 0%, #ecd2ac 100%);
+  --tone-sage:  linear-gradient(140deg, #6f8f74 0%, #bcd3ba 100%);
+  --tone-sky:   linear-gradient(140deg, #6b83a8 0%, #bccfe4 100%);
+  --tone-ink:   linear-gradient(140deg, #45414f 0%, #8d879b 100%);
+}
+[data-theme="dark"] {
+  --tone-plum:  linear-gradient(140deg, #6d3f49 0%, #9c6672 100%);
+  --tone-rose:  linear-gradient(140deg, #834e58 0%, #b3808a 100%);
+  --tone-sand:  linear-gradient(140deg, #7d5c40 0%, #b09271 100%);
+  --tone-sage:  linear-gradient(140deg, #47604c 0%, #7c9880 100%);
+  --tone-sky:   linear-gradient(140deg, #465671 0%, #7b8fae 100%);
+  --tone-ink:   linear-gradient(140deg, #2e2b36 0%, #625d70 100%);
+}
+
+/* The feed carries no page heading, so it starts nearer the header than a
+   titled screen would. */
+.news-page { padding-top: 12px; }
+
+/* ---- search, and the sections it opens ---- */
+.news-search {
+  position: relative;
+  max-width: 500px; margin: 0 auto 26px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.news-search .input { width: 100%; }
+.news-search .input::-webkit-search-cancel-button { cursor: pointer; }
+
+.news-sections {
+  /* Out of the flow: opening the sections must not push the first post down
+     the screen and lose her place in what she was reading. */
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 5;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  animation: news-sections-in .16s ease-out;
+}
+@keyframes news-sections-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-sections { animation: none; }
+}
+
+.chip-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; padding: 0 5px; border-radius: 999px;
+  font-size: .72rem; font-weight: 700;
+  background: var(--surface-2); color: var(--text-faint);
+}
+.chip-on .chip-count { background: rgba(255, 255, 255, .22); color: var(--on-primary); }
+.chip-static { cursor: default; }
+
+/* ---- the personalised section, and the line between the two lists ----
+
+   "For you" ranks; the feed below hides nothing. That distinction is the whole
+   feature, so it is drawn rather than implied: each list gets a heading, and
+   the personalised one sits on a tinted ground so a reader can see at a glance
+   which of the two she is scrolling. Same column width as the feed — they are
+   the same posts, and staggering them would read as two different products. */
+.news-section-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  max-width: 500px; margin: 0 auto 18px;
+}
+.news-section-head h2 { margin: 0; }
+.news-section-head p { margin: 4px 0 0; font-size: .88rem; }
+
+.news-foryou {
+  display: flex; flex-direction: column; gap: 34px;
+  max-width: 500px; margin: 0 auto 44px;
+  padding: 22px 20px 26px;
+  background: var(--grad-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.news-foryou .news-section-head { margin-bottom: 0; }
+.news-foryou-empty { margin: 0; font-size: .92rem; }
+
+/* Why a card is here. Labels, never scores — the reader is told the reason and
+   not the arithmetic behind it. */
+.news-why {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 0 0 8px;
+}
+.news-why-chip {
+  padding: 2px 9px; border-radius: 999px;
+  font-size: .74rem; font-weight: 650; letter-spacing: .01em;
+  background: var(--surface-2); color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+/* ---- news preferences ---- */
+.news-prefs {
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 18px; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border);
+}
+.news-prefs-lead { margin: 0; font-size: .86rem; }
+.news-prefs-age { display: flex; flex-direction: column; gap: 8px; }
+.news-prefs-derived { margin: 0; font-weight: 650; }
+.news-prefs-topics { border: 0; padding: 0; margin: 0; }
+.news-prefs-topics legend { padding: 0; margin-bottom: 8px; }
+.news-prefs-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---- the feed ---- */
+.news-feed {
+  display: flex; flex-direction: column; gap: 34px;
+  /* The column a single-column feed wants. Wider and the caption becomes a
+     paragraph of an article; this keeps it a caption. */
+  max-width: 500px; margin: 0 auto;
+}
+
+.news-post { display: flex; flex-direction: column; gap: 12px; }
+
+.news-post-head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .9rem;
+}
+.news-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  font-size: 1rem; flex: 0 0 auto;
+  background: var(--tone-plum);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, .14);
+}
+.news-author { font-weight: 650; color: var(--ink); }
+.news-dot, .news-time { color: var(--text-faint); }
+/* Opaque, unlike the badge everywhere else on the site: this one sits over the
+   sakura, and the branch was reading straight through its tint. */
+.news-post-head .badge {
+  margin-left: auto;
+  background: var(--surface); border: 1px solid var(--border-strong);
+}
+
+/* The picture, with the headline set on it — the shape a news account posts.
+   4:5 is the portrait a feed is scrolled in. */
+.news-photo {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  /* Without a photograph behind it there is nothing above the headline but
+     tint, and 4:5 of tint is a lot of nothing to scroll past. A photograph
+     gets the portrait a feed is scrolled in; the drawn cover gets the shorter
+     frame it can actually fill. */
+  aspect-ratio: 4 / 3;
+  padding: 22px;
+  border-radius: var(--radius-sm);
+  background: var(--tone-plum);
+  border: 1px solid var(--border);
+  isolation: isolate;
+}
+.news-photo-shot { aspect-ratio: 4 / 5; }
+.news-photo-img {
+  position: absolute; inset: 0; z-index: -1;
+  width: 100%; height: 100%; object-fit: cover;
+}
+
+/* The glyph is the mark in the corner, not the subject. It used to be the
+   whole picture, floating in the middle of an empty wash. */
+.news-photo .news-emblem {
+  position: absolute; top: 20px; left: 22px;
+  font-size: 1.9rem; line-height: 1;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, .3));
+}
+
+/* The headline card. Opaque rather than tinted, because behind it there may be
+   a photograph, and a headline you cannot read is not a headline. */
+.news-headline {
+  margin: 0; position: relative;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 1.22rem; font-weight: 600; line-height: 1.3;
+  color: var(--ink);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 15px 17px;
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .5);
+  /* A long Russian or Uzbek headline must not swallow the picture whole. */
+  max-height: 62%; overflow: hidden;
+}
+.news-cover-plum { background: var(--tone-plum); }
+.news-cover-rose { background: var(--tone-rose); }
+.news-cover-sand { background: var(--tone-sand); }
+.news-cover-sage { background: var(--tone-sage); }
+.news-cover-sky  { background: var(--tone-sky); }
+.news-cover-ink  { background: var(--tone-ink); }
+
+.news-emblem {
+  font-size: 4rem; line-height: 1;
+  /* The glyph is drawn on a tinted ground in both themes, so it carries its
+     own shadow rather than borrowing contrast from the page. */
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .26));
+}
+
+/* The caption is the description; the headline is on the picture above it. */
+.news-cap-text { font-size: .96rem; }
+
+.news-caption { display: flex; flex-direction: column; gap: 10px; }
+.news-cap-text { margin: 0; line-height: 1.55; color: var(--text); }
+.news-cap-text strong { color: var(--ink); font-weight: 650; }
+
+/* "… ещё" — the same size and line as the sentence it ends, because it is the
+   end of that sentence rather than a control under it. */
+.news-inline-more {
+  border: 0; padding: 0; background: none; cursor: pointer;
+  font: inherit; color: var(--text-faint);
+}
+.news-inline-more:hover { color: var(--primary); }
+
+.news-actions {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  font-size: .88rem;
+}
+.news-plain {
+  border: 0; padding: 0; background: none; cursor: pointer;
+  font: inherit; font-weight: 600; color: var(--primary); text-decoration: none;
+}
+.news-plain:hover { color: var(--primary-hover); }
+.news-readtime { margin-left: auto; }
+
+/* ---- the article body, in the feed and on its own page ---- */
+.news-text > p { margin: 14px 0 0; line-height: 1.7; }
+.news-text > p:first-child { margin-top: 6px; }
+
+/* The portal never gives a medical verdict, and the note saying so is part of
+   the post rather than fine print under it. */
+.news-care {
+  margin-top: 22px !important; padding: 13px 15px;
+  background: var(--bg-2); border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: .9rem; color: var(--text-dim);
+}
+
+.news-source {
+  margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-strong);
+}
+.news-source p { margin: 6px 0 12px; font-weight: 550; }
+
+.news-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+.news-more { align-self: center; }
+
+.news-invite {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 28px 22px; text-align: center;
+  background: var(--grad-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.news-invite p { color: var(--text-dim); margin: 0; }
+
+/* ---- one post on its own page ---- */
+.news-back {
+  display: inline-block; margin-bottom: 16px;
+  color: var(--text-dim); text-decoration: none; font-size: .9rem; font-weight: 600;
+}
+.news-back:hover { color: var(--primary); }
+
+.news-article { max-width: 620px; margin: 0 auto; }
+.news-article .news-cover {
+  display: flex; align-items: center; justify-content: center;
+  aspect-ratio: 16 / 9; border-radius: var(--radius); margin-bottom: 20px;
+  width: 100%; object-fit: cover;
+  box-shadow: inset 0 0 140px rgba(0, 0, 0, .14);
+}
+.news-article .news-cover-photo { box-shadow: none; border: 1px solid var(--border); }
+.news-article h1 {
+  font-size: clamp(1.5rem, 3.4vw, 2.1rem); line-height: 1.22; margin: 14px 0 0;
+}
+.news-lead {
+  font-size: 1.05rem; color: var(--text-dim); font-weight: 500;
+  margin: 12px 0 0;
+}
+
+@media (max-width: 560px) {
+  .news-emblem { font-size: 3rem; }
+  .news-photo { padding: 16px; }
+  .news-headline { font-size: 1.08rem; padding: 13px 14px; }
+}

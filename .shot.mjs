@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const url = process.argv[2] || 'http://localhost:3000/';
+const out = process.argv[3] || 'shot.png';
+const mode = process.argv[4] || 'full';
+const w = Number(process.argv[5] || 1440);
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: w, height: 950 }, deviceScaleFactor: 2 });
+await p.goto(url, { waitUntil: 'networkidle', timeout: 60000 }).catch(()=>{});
+await p.waitForTimeout(2500);
+await p.screenshot({ path: out, fullPage: mode !== 'fold' });
+await b.close();
+console.log('saved', out);
