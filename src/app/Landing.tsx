@@ -65,13 +65,19 @@ export function AiTeaser() {
 
 /* --------------------------------------------- directions, as a card set */
 
-const DIRECTIONS: ReadonlyArray<{ icon: string; t: MessageKey; d: MessageKey }> = [
-  { icon: "❖", t: "dir.work.t", d: "dir.work.d" },
-  { icon: "◈", t: "dir.biz.t", d: "dir.biz.d" },
-  { icon: "✿", t: "dir.health.t", d: "dir.health.d" },
-  { icon: "⌂", t: "dir.family.t", d: "dir.family.d" },
-  { icon: "◉", t: "dir.digital.t", d: "dir.digital.d" },
-  { icon: "★", t: "dir.lead.t", d: "dir.lead.d" },
+/* Each direction carries the catalogue category it stands for, so the card
+   opens the programmes for that direction instead of dropping every visitor
+   on the same unfiltered list. The category is also what gives the card its
+   colour, which is the same colour the programme cards carry — one system
+   across the two pages rather than six identical boxes here and a grid
+   there. */
+const DIRECTIONS: ReadonlyArray<{ icon: string; t: MessageKey; d: MessageKey; cat: string }> = [
+  { icon: "❖", t: "dir.work.t", d: "dir.work.d", cat: "vocational_skills" },
+  { icon: "◈", t: "dir.biz.t", d: "dir.biz.d", cat: "entrepreneurship" },
+  { icon: "✿", t: "dir.health.t", d: "dir.health.d", cat: "health" },
+  { icon: "⌂", t: "dir.family.t", d: "dir.family.d", cat: "parenting" },
+  { icon: "◉", t: "dir.digital.t", d: "dir.digital.d", cat: "digital_safety" },
+  { icon: "★", t: "dir.lead.t", d: "dir.lead.d", cat: "leadership" },
 ];
 
 export function PathCards() {
@@ -85,16 +91,21 @@ export function PathCards() {
         </div>
 
         <div className="face-grid">
+          {/* No "view programmes →" line under each one: the card is already
+              the link, and six copies of the same sentence told a reader
+              nothing the cursor did not. */}
           {DIRECTIONS.map((item) => (
-            <Link key={item.t} href="/dasturlar" className="face-card">
+            <Link
+              key={item.t}
+              href={`/dasturlar?category=${item.cat}`}
+              className="face-card"
+              data-cat={item.cat}
+            >
               <span className="face-ico" aria-hidden="true">
                 {item.icon}
               </span>
               <h3>{t(item.t)}</h3>
               <p>{t(item.d)}</p>
-              <span className="face-link">
-                {t("landing.faceLink")} <span aria-hidden="true">→</span>
-              </span>
             </Link>
           ))}
         </div>

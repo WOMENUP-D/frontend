@@ -25,6 +25,25 @@ export const LOCALES: ReadonlyArray<{ code: Locale; short: string; title: string
 const STORAGE_KEY = "womanup.locale";
 const DEFAULT: Locale = "uz";
 
+/**
+ * Renders the Uzbek okina with a character the webfont actually carries.
+ *
+ * Uzbek Latin writes oʻ and gʻ with U+02BB, and that is what the database and
+ * the dictionaries store — correctly, because it is the letter. Google Fonts
+ * does not ship U+02BB in the Latin subsets it serves, so the browser drops
+ * out of the page's typeface for that one glyph and substitutes a system
+ * face, which draws it with its own side bearings: "boʻyicha" arrives on
+ * screen as "bo ʻ yicha", broken into three pieces in the middle of a word.
+ *
+ * U+2018 is the same mark, sits in every subset, and is what most Uzbek text
+ * on the web already uses. Substituting it at the point of display leaves the
+ * stored letter untouched — the API, the search index and the exports keep
+ * the official character; only the pixels change.
+ */
+function typeset(text: string): string {
+  return text.replace(/[\u02BB\u02BC]/g, "\u2018");
+}
+
 /** Localised JSON coming from the API, e.g. Program.title_i18n. */
 export type I18nField = Record<string, string> | undefined | null;
 
@@ -37,6 +56,9 @@ interface I18nValue {
   tx: (field: I18nField) => string;
   /** Free Uzbek text from the API — converted when the script is Cyrillic. */
   tu: (text: string | null | undefined) => string;
+  /** The locale to send the server. `uz-Cyrl` is Uzbek in another script and
+   *  is transliterated in the browser, so the server only ever needs three. */
+  apiLocale: "uz" | "ru" | "en";
 }
 
 const I18nContext = createContext<I18nValue | null>(null);
@@ -70,7 +92,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       const entry = messages[key];
       if (!entry) return key;
       const text = entry[written as "uz" | "ru" | "en"] ?? entry.uz;
-      return cyrillic ? toCyrillic(text) : text;
+      return typeset(cyrillic ? toCyrillic(text) : text);
     };
 
     const tx = (field: I18nField): string => {
@@ -80,15 +102,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         field[written] ?? field.uz ?? Object.values(field)[0] ?? "";
       // Only an Uzbek source can be transliterated; ru/en stay as they are.
       const isUzbekSource = field[written] === undefined || written === "uz";
-      return cyrillic && isUzbekSource ? toCyrillic(text) : text;
+      return typeset(cyrillic && isUzbekSource ? toCyrillic(text) : text);
     };
 
     const tu = (text: string | null | undefined): string => {
       if (!text) return "";
-      return cyrillic ? toCyrillic(text) : text;
+      return typeset(cyrillic ? toCyrillic(text) : text);
     };
 
-    return { locale, setLocale, t, tx, tu };
+    return { locale, setLocale, t, tx, tu, apiLocale: written as "uz" | "ru" | "en" };
   }, [locale, setLocale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

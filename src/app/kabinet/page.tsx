@@ -12,6 +12,8 @@ import {
 } from "@/services/portal";
 import { DimensionRow, EdRow, EdRows, Empty, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
+import { ProfileCard } from "@/components/ProfileCard";
+import { FeedPreferences } from "@/components/FeedPreferences";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
@@ -111,34 +113,13 @@ function IconStudy() {
  */
 function ProfileDetails({
   profile,
-  account,
   persona,
-  name,
   t,
 }: {
   profile: Profile | null;
-  account: Account | null;
   persona: AssistantProfile | null;
-  name: string;
   t: (key: MessageKey) => string;
 }) {
-  const shortId = account?.id ? account.id.split("-")[0].toUpperCase() : null;
-  const joined = account?.created_at
-    ? new Date(account.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })
-    : null;
-  /** Numeric runs are skipped: "dilnoza1998" should give D, not D1. */
-  const initials = name
-    .split(/[\s@._-]+/)
-    .filter((part) => part && /\p{L}/u.test(part))
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
-
-  /* Age comes from the assistant persona; the birth date is the fallback,
-     because a profile can carry one without the persona having been built. */
-  const age = persona?.age ?? (profile?.birth_date
-    ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / 31557600000)
-    : null);
   /* The directions she is developing in — the weakest score dimensions. Falls
      back to what she studied, which is the nearest thing a profile holds. */
   const directions = (persona?.directions ?? []).map((d) => t(dimensionKey(d)));
@@ -146,9 +127,6 @@ function ProfileDetails({
     ? directions.join(", ")
     : profile?.education_field ?? null;
 
-  /* `district` is free text she typed; `region` is an enum value and has to be
-     looked up, or the card prints "tashkent_city" at her. */
-  const place = profile?.district ?? (account?.region ? t(regionKey(account.region)) : null);
   const role = profile?.profession ?? profile?.employment_status ?? null;
   const label = (value: string) => {
     const key = interestKey(value);
@@ -164,38 +142,19 @@ function ProfileDetails({
     profile?.years_of_experience != null ? `${profile.years_of_experience} ${t("prof.years")}` : null,
   ].filter(Boolean).join(" · ");
   const education = [profile?.education_level, profile?.education_field].filter(Boolean).join(", ");
-  const percent = profile?.completeness_percent ?? 0;
 
   return (
     <section className="pcard">
-      <div className="pcard-portrait">
-        <span className="pcard-avatar" aria-hidden="true">{initials || "•"}</span>
-        {profile?.employment_status && (
-          <span className="pcard-status">
-            <span className="pcard-dot" aria-hidden="true" />
-            {profile.employment_status}
-          </span>
-        )}
-        {shortId && (
-          <span className="pcard-idno">{t("prof.id")} <code>{shortId}</code></span>
-        )}
-      </div>
-
       <div className="pcard-body">
-        {/* The page heading: this card is the identity block of the cabinet,
-            so the person's name is the page's h1 rather than a heading above it. */}
-        <h1 className="pcard-name">{name}</h1>
+        {/* Name, ID, age, city, joining date and the completeness meter all sit
+            in the ProfileCard at the top of the page now. What is left here is
+            only what that card does not carry — the prose and the lists. */}
         {role && <p className="pcard-role">{role}</p>}
         {profile?.bio && <p className="pcard-bio">{profile.bio}</p>}
 
-        {(age != null || direction) && (
+        {direction && (
           <dl className="pcard-facts">
-            {age != null && (
-              <div><dt>{t("prof.age")}</dt><dd>{age}</dd></div>
-            )}
-            {direction && (
-              <div><dt>{t("prof.direction")}</dt><dd>{direction}</dd></div>
-            )}
+            <div><dt>{t("prof.direction")}</dt><dd>{direction}</dd></div>
           </dl>
         )}
 
@@ -223,30 +182,94 @@ function ProfileDetails({
           </div>
         )}
       </div>
-
-      <footer className="pcard-foot">
-        <div className="pcard-where">
-          {place && <span className="pcard-place">📍 {place}</span>}
-          {joined && (
-            <span className="pcard-avail">{t("prof.joined")}: {joined}</span>
-          )}
-          {/* A profile filled in over months spends most of its life half empty,
-              and a card that just leaves the gaps blank reads as broken. The
-              meter turns the blanks into progress and gives the button below a
-              reason to be pressed. */}
-          <div className="pcard-meter">
-            <div className="spread small">
-              <span className="muted">{t("cab.profileFull")}</span>
-              <strong>{percent}%</strong>
-            </div>
-            <div className="bar"><span style={{ width: `${percent}%` }} /></div>
-          </div>
-        </div>
-        <Link href="/welcome" className="pcard-cta">
-          {percent < 100 ? t("prof.fill") : t("prof.edit")}
-        </Link>
-      </footer>
     </section>
+  );
+}
+
+/**
+ * The identity block: the card, and the four figures it summarises, on one line.
+ *
+ * The figures used to sit far down the page as a numbered list under a heading
+ * that said "quick links", which is not what four numbers are. Beside the card
+ * they read as what they are — the state of her account — and the card stops
+ * leaving half the width of the page empty.
+ */
+function ProfileSummary({
+  profile,
+  account,
+  persona,
+  name,
+  active,
+  done,
+  score,
+  t,
+}: {
+  profile: Profile | null;
+  account: Account | null;
+  persona: AssistantProfile | null;
+  name: string;
+  active: number;
+  done: number;
+  score: DevelopmentScore | null;
+  t: (key: MessageKey) => string;
+}) {
+  const shortId = account?.id ? account.id.split("-")[0].toUpperCase() : "—";
+  const joined = account?.created_at
+    ? new Date(account.created_at).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+      })
+    : null;
+  /** Numeric runs are skipped: "dilnoza1998" should give D, not D1. */
+  const initials =
+    name
+      .split(/[\s@._-]+/)
+      .filter((part) => part && /\p{L}/u.test(part))
+      .slice(0, 2)
+      .map((part) => part[0].toUpperCase())
+      .join("") || "•";
+
+  /* Prefer the assistant's number, then derive from the date of birth. Both
+     ultimately come from the same column; the persona is simply already
+     resolved. */
+  const age =
+    persona?.age ??
+    (profile?.birth_date
+      ? Math.floor((Date.now() - new Date(profile.birth_date).getTime()) / 31557600000)
+      : null);
+
+  const place = profile?.district ?? (account?.region ? t(regionKey(account.region)) : null);
+  const percent = profile?.completeness_percent ?? 0;
+
+  const tiles: ReadonlyArray<[string, string | number]> = [
+    [t("cab.activeCourses"), active],
+    [t("cab.completed"), done],
+    [t("cab.profileFull"), `${percent}%`],
+    [t("cab.totalScore"), score ? Math.round(score.composite) : "—"],
+  ];
+
+  return (
+    <div className="profcard-row">
+      <ProfileCard
+        headingLevel={1}
+        name={name}
+        initials={initials}
+        womanupId={shortId}
+        age={age}
+        city={place}
+        joined={joined}
+        completeness={percent}
+        fillHref="/welcome"
+      />
+      <div className="pstats">
+        {tiles.map(([label, value]) => (
+          <div className="pstat" key={label}>
+            <div className="pstat-value">{value}</div>
+            <span className="pstat-label">{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -302,6 +325,12 @@ export default function CabinetPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (loading || typeof window === "undefined") return;
+    if (window.location.hash !== "#lenta") return;
+    document.getElementById("lenta")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [loading]);
+
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (loading) return <main className="wrap page"><Loading rows={4} /></main>;
 
@@ -314,15 +343,19 @@ export default function CabinetPage() {
   const displayName =
     profile?.full_name || account?.email?.split("@")[0] || account?.phone || t("cab.user");
 
-  const stats: ReadonlyArray<[string, string | number]> = [
-    [t("cab.activeCourses"), active],
-    [t("cab.completed"), done],
-    [t("cab.profileFull"), `${profile?.completeness_percent ?? 0}%`],
-    [t("cab.totalScore"), score ? Math.round(score.composite) : "—"],
-  ];
-
   return (
     <main className="wrap page">
+      <ProfileSummary
+        profile={profile}
+        account={account}
+        persona={persona}
+        name={displayName}
+        active={active}
+        done={done}
+        score={score}
+        t={t}
+      />
+
       <div className="ed-split">
         {/* Score rides along as the reader scrolls */}
         <aside className="ed-aside stack" style={{ gap: 16 }}>
@@ -362,13 +395,7 @@ export default function CabinetPage() {
               reads its own width, so at 443px it lays itself out as a column
               rather than squeezing a 148px portrait against a 150px measure. */}
           <div className="pcard-slot">
-            <ProfileDetails
-              profile={profile}
-              account={account}
-              persona={persona}
-              name={displayName}
-              t={t}
-            />
+            <ProfileDetails profile={profile} persona={persona} t={t} />
           </div>
         </aside>
 
@@ -445,24 +472,14 @@ export default function CabinetPage() {
             )}
           </div>
 
-          <div>
-            <span className="eyebrow">{t("cab.quickLinks")}</span>
-            <EdRows>
-              {stats.map(([label, value], index) => (
-                <EdRow
-                  key={label}
-                  index={index + 1}
-                  title={label}
-                  arrow={false}
-                  side={
-                    <strong className="figure" style={{ fontSize: "1.5rem" }}>
-                      {value}
-                    </strong>
-                  }
-                />
-              ))}
-            </EdRows>
+          {/* What the feed ranks on. It lives here rather than over the feed
+              itself: it is a setting about her, and settings belong where the
+              rest of her account does. The feed keeps a link back to it. */}
+          <div id="lenta">
+            <span className="eyebrow">{t("news.prefs")}</span>
+            <FeedPreferences />
           </div>
+
 
           <div className="row">
             <Link href="/dasturlar" className="btn btn-outline btn-sm">

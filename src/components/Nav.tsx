@@ -39,6 +39,9 @@ const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> =
   { href: "/diagnostika", key: "nav.assessment" },
   { href: "/reja", key: "nav.plan" },
   { href: "/dasturlar", key: "nav.programs", guest: true },
+  // Next to the catalogue on purpose: the catalogue is what she can enrol in,
+  // this is where she actually studies. It is hers, so no `guest` flag.
+  { href: "/talim", key: "nav.learning" },
   { href: "/imkoniyatlar", key: "nav.opportunities", guest: true },
   { href: "/yordamchi", key: "asst.nav", guest: true },
   { href: "/kabinet", key: "nav.cabinet" },

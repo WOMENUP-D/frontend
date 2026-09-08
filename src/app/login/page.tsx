@@ -13,7 +13,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ApiError, getRoles } from "@/services/api";
 import { googleLogin, passwordLogin, register } from "@/services/auth";
 import {
@@ -23,6 +23,13 @@ import {
   requestGoogleIdToken,
 } from "@/services/googleAuth";
 import { portal } from "@/services/portal";
+import {
+  BirthDateField,
+  EMPTY_BIRTH,
+  birthError,
+  isoBirthDate,
+  type BirthParts,
+} from "@/components/BirthDateField";
 import { useI18n, type MessageKey } from "@/i18n";
 import { showDemo } from "@/services/env";
 
@@ -82,7 +89,8 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [region, setRegion] = useState("");
-  const [age, setAge] = useState("");
+  const [birth, setBirth] = useState<BirthParts>(EMPTY_BIRTH);
+  const [birthTouched, setBirthTouched] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -180,10 +188,19 @@ export default function LoginPage() {
      tick is a precondition of the button rather than a setting to find later. */
   const [agreed, setAgreed] = useState(false);
 
+  const today = useMemo(() => new Date(), []);
+  const birthIso = isoBirthDate(birth);
+  const birthIssue = birthError(birth, today);
+
+  /* The date of birth is now a precondition of signing up, not an optional
+     extra. It used to be blank-able, and a blank one became 18 — which handed
+     every reader who skipped it the adult health scope by default, including
+     the children this portal is explicitly open to. */
   const valid =
     EMAIL.test(email) &&
     password.length >= (mode === "signup" ? 8 : 1) &&
-    (mode !== "signup" || (name.trim().length > 0 && agreed));
+    (mode !== "signup" ||
+      (name.trim().length > 0 && agreed && birthIssue === null && birthIso !== null));
 
   /** Register or sign in, then decide where she lands. */
   async function submit() {
@@ -199,7 +216,7 @@ export default function LoginPage() {
           await portal.assistantOnboarding({
             name: name.trim(),
             surname: surname.trim(),
-            age: Number(age) || 18,
+            birth_date: birthIso!,
             region: region || null,
             interests: [],
             goal: "",
@@ -207,8 +224,13 @@ export default function LoginPage() {
             consent_ai_personalisation: true,
           });
         } catch {
-          // The account exists and she is signed in; a failed profile save
-          // must not strand her on this screen.
+          // The account exists and she is signed in, but the portal now knows
+          // nothing about her — including her age, which decides what she may
+          // be shown. Finish it on /welcome rather than dropping her into an
+          // unpersonalised feed as an unknown, which the age gate has to treat
+          // as a minor anyway.
+          router.push("/welcome");
+          return;
         }
         // The feed, not her cabinet. A minute-old account has no score, no
         // plan and no activity, so the cabinet greets her with an empty form
@@ -275,33 +297,30 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                <div className="wel-row">
-                  <div className="field">
-                    <label className="label" htmlFor="region">{t("wel.region")}</label>
-                    <select
-                      id="region"
-                      className="input"
-                      value={region}
-                      onChange={(event) => setRegion(event.target.value)}
-                    >
-                      <option value="">{t("wel.regionPick")}</option>
-                      {REGIONS.map(([value, key]) => (
-                        <option key={value} value={value}>{t(key)}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="field">
-                    <label className="label" htmlFor="age">{t("asst.obAge")}</label>
-                    <input
-                      id="age"
-                      className="input"
-                      type="number"
-                      min={10}
-                      max={100}
-                      value={age}
-                      onChange={(event) => setAge(event.target.value)}
-                    />
-                  </div>
+                {/* Alone in the column now that the age input has become the
+                    date-of-birth control below, so it takes the full width
+                    rather than sitting in half a two-column row. */}
+                <div className="field">
+                  <label className="label" htmlFor="region">{t("wel.region")}</label>
+                  <select
+                    id="region"
+                    className="input"
+                    value={region}
+                    onChange={(event) => setRegion(event.target.value)}
+                  >
+                    <option value="">{t("wel.regionPick")}</option>
+                    {REGIONS.map(([value, key]) => (
+                      <option key={value} value={value}>{t(key)}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div onBlur={() => setBirthTouched(true)}>
+                  <BirthDateField
+                    value={birth}
+                    onChange={setBirth}
+                    error={birthTouched ? birthIssue : null}
+                  />
                 </div>
               </>
             )}

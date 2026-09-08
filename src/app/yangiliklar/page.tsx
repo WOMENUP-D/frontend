@@ -33,7 +33,6 @@ import {
   type ForYouFeed,
   type NewsDetail,
   type NewsPost,
-  type NewsPreferences,
   type PersonalisedNewsPost,
 } from "@/services/portal";
 import { NewsBody } from "@/components/NewsBody";
@@ -208,136 +207,6 @@ function Post({ post, reasons }: { post: NewsPost; reasons?: string[] }) {
   );
 }
 
-/** The news-preferences screen: an age and a list of subjects.
- *
- *  Nothing here shows a score. She is setting what she is interested in; how
- *  heavily that weighs against freshness and importance is our problem.
- *
- *  The age is chosen as a bracket rather than typed as a number. Only the
- *  bracket is stored, so a free number field would take "15", save it, and
- *  read back "13" — the form losing her answer in front of her. Six buttons
- *  cannot do that, and the brackets are what the ranking actually uses.
- *
- *  A real date of birth on her profile wins over anything set here — the
- *  server prefers it and says so through `age_source` — so in that case the
- *  age is shown as a fact rather than as a control offering to overwrite it
- *  with something less precise. */
-function PreferencesPanel({ onSaved }: { onSaved: () => void }) {
-  const { t } = useI18n();
-
-  const [prefs, setPrefs] = useState<NewsPreferences | null>(null);
-  const [group, setGroup] = useState<string | null>(null);
-  const [chosen, setChosen] = useState<string[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    portal
-      .newsPreferences()
-      .then((loaded) => {
-        if (cancelled) return;
-        setPrefs(loaded);
-        setGroup(loaded.age_group);
-        setChosen(loaded.interests);
-      })
-      .catch(() => !cancelled && setFailed(true));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const toggle = (topic: string) => {
-    setSaved(false);
-    setChosen((prev) =>
-      prev.includes(topic) ? prev.filter((one) => one !== topic) : [...prev, topic],
-    );
-  };
-
-  const save = () => {
-    setSaving(true);
-    setFailed(false);
-    portal
-      .saveNewsPreferences({
-        // The bracket's lower bound: the server stores the bracket an age
-        // falls in, so sending "25" for 25-34 round-trips exactly.
-        age: group ? Number.parseInt(group, 10) : null,
-        interests: chosen,
-      })
-      .then((updated) => {
-        setPrefs(updated);
-        setGroup(updated.age_group);
-        setSaved(true);
-        onSaved();
-      })
-      .catch(() => setFailed(true))
-      .finally(() => setSaving(false));
-  };
-
-  if (failed && !prefs) return <ErrorNote message={t("common.error")} />;
-  if (!prefs) return <Loading rows={1} />;
-
-  const fromBirthDate = prefs.age_source === "birth_date";
-
-  return (
-    <div className="news-prefs">
-      <p className="faint news-prefs-lead">{t("news.prefsLead")}</p>
-
-      <div className="news-prefs-age">
-        <span className="eyebrow">{t("news.prefsAge")}</span>
-        {fromBirthDate ? (
-          <p className="news-prefs-derived">
-            {prefs.age} <span className="faint">· {t("news.prefsAgeAuto")}</span>
-          </p>
-        ) : (
-          <div className="cat-filters">
-            {prefs.available_age_groups.map((bracket) => (
-              <button
-                key={bracket}
-                type="button"
-                aria-pressed={group === bracket}
-                className={group === bracket ? "chip chip-on" : "chip"}
-                onClick={() => {
-                  setSaved(false);
-                  setGroup((current) => (current === bracket ? null : bracket));
-                }}
-              >
-                {bracket}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <fieldset className="news-prefs-topics">
-        <legend className="eyebrow">{t("news.prefsInterests")}</legend>
-        <div className="cat-filters">
-          {prefs.available_interests.map((topic) => (
-            <button
-              key={topic}
-              type="button"
-              aria-pressed={chosen.includes(topic)}
-              className={chosen.includes(topic) ? "chip chip-on" : "chip"}
-              onClick={() => toggle(topic)}
-            >
-              {t(newsTopicKey(topic))}
-            </button>
-          ))}
-        </div>
-      </fieldset>
-
-      <div className="news-prefs-actions">
-        <button type="button" className="btn btn-primary" onClick={save} disabled={saving}>
-          {saving ? t("common.loading") : t("news.prefsSave")}
-        </button>
-        {saved && <span className="faint">{t("news.prefsSaved")}</span>}
-        {failed && <ErrorNote message={t("common.error")} />}
-      </div>
-    </div>
-  );
-}
-
 export default function NewsFeedPage() {
   const { t } = useI18n();
 
@@ -360,10 +229,6 @@ export default function NewsFeedPage() {
   const [browsing, setBrowsing] = useState(false);
 
   const [forYou, setForYou] = useState<ForYouFeed | null>(null);
-  const [prefsOpen, setPrefsOpen] = useState(false);
-  // Bumped when she saves, to re-rank the section against what she just
-  // chose — otherwise the panel would close onto the ordering it replaced.
-  const [prefsVersion, setPrefsVersion] = useState(0);
 
   useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
@@ -380,7 +245,7 @@ export default function NewsFeedPage() {
     return () => {
       cancelled = true;
     };
-  }, [authed, prefsVersion]);
+  }, [authed]);
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(search.trim()), 300);
@@ -473,19 +338,10 @@ export default function NewsFeedPage() {
               <h2 className="eyebrow">{t("news.forYou")}</h2>
               <p className="faint">{t("news.forYouLead")}</p>
             </div>
-            <button
-              type="button"
-              className="btn btn-quiet"
-              aria-expanded={prefsOpen}
-              onClick={() => setPrefsOpen((open) => !open)}
-            >
-              {prefsOpen ? t("news.prefsClose") : t("news.prefs")}
-            </button>
+            <Link href="/kabinet#lenta" className="btn btn-quiet">
+              {t("news.prefs")}
+            </Link>
           </header>
-
-          {prefsOpen && (
-            <PreferencesPanel onSaved={() => setPrefsVersion((version) => version + 1)} />
-          )}
 
           {forYou?.personalised && forYou.items.length > 0 ? (
             forYou.items.map((item: PersonalisedNewsPost) => (

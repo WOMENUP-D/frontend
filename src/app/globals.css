@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap');
 
 /* ============================================================
    WomanUP — Ayol-qizlarni rivojlantirish milliy dasturi
@@ -26,18 +26,18 @@
   /* Warm paper, edge to edge. The branch is painted on the page itself, so
      the page cannot be the darkest surface here — everything a card carries
      sits a shade *lighter* than the ground instead of a shade darker. */
-  --bg:            #fdf5f5;
+  --bg:            #fbf9f8;
   /* Hover states and inset panels: the first step down from the page. */
-  --bg-2:          #f9ecec;
+  --bg-2:          #f4efee;
   /* The alternating full-width band. Suppressed on the landing page, where an
      opaque band would wipe the branch off every second screen. */
-  --band:          #faeeee;
-  --surface:       #fffbfb;
-  --surface-2:     #f7eaea;
+  --band:          #f7f2f1;
+  --surface:       #ffffff;
+  --surface-2:     #f6f1f0;
   /* Controls sitting *on* a card: inputs, chips, outline buttons. */
   --control:       #ffffff;
-  --border:        #efdddf;
-  --border-strong: #e0c8cb;
+  --border:        #ebe3e1;
+  --border-strong: #dcd1ce;
   /* The profile card's glass. Kept well short of transparent on purpose: the
      branch behind it is bright, and a pane you can read the garden through is
      a pane you cannot read text on. */
@@ -46,13 +46,13 @@
   --pane-inner:    rgba(255, 255, 255, .58);
   --pane-shadow:   0 24px 60px -28px rgba(120, 70, 80, .30);
 
-  --text:          #4b463d;
-  --ink:           #1d1a15;
+  --text:          #453c40;
+  --ink:           #241d21;
   /* Measured against the page cream, which is the lightest thing secondary
      copy ever lands on — 5.1:1 there, and more on anything tinted. */
-  --text-dim:      #6e685c;
+  --text-dim:      #5f545a;
   /* 4.5:1 on the page cream. Anything paler failed on a card. */
-  --text-faint:    #78715f;
+  --text-faint:    #756a6f;
 
   --danger:        #b8453f;
   --warning:       #a8626f;
@@ -60,8 +60,8 @@
   --on-gold:       #ffffff;
   /* Dusty rose, dark enough to carry white button text at 4.5:1. The pale
      rose of the mock-up is kept for decoration only — --gold-soft. */
-  --primary:       #a8626f;
-  --primary-hover: #92505d;
+  --primary:       #8e4a5c;
+  --primary-hover: #77394a;
   --on-primary:    #ffffff;
   /* The near-black pill. One per screen: the single thing we want pressed. */
   --contrast:      #1d1a15;
@@ -81,15 +81,33 @@
   --radius-lg:     28px;
   /* Translucent: the header floats over the page rather than cutting a bar
      across it, which is what keeps the branch continuous behind it. */
-  --header-bg:     rgba(253,245,245,.84);
+  --header-bg:     rgba(251,249,248,.86);
   --petal-peak:    .55;
   /* Focus ring. A gradient is not a valid box-shadow colour. */
   --ring:          rgba(168,98,111,.20);
 
-  /* Display face. Playfair first, Source Serif behind it — Uzbek's oʻ/gʻ use a
-     modifier letter that not every display face carries, and per-glyph
-     fallback covers it without changing the rest of the setting. */
+  /* Type. One family carries the whole interface — headings included — because
+     a catalogue is scanned and compared rather than read like an essay, and a
+     display serif over every section heading was doing decoration's job while
+     the body copy underneath went unread.
+
+     Plex was chosen over the previous Inter for two reasons that matter here
+     and nowhere else: it draws Uzbek's oʻ/gʻ modifier letter itself, so words
+     no longer break apart where a fallback face took over one glyph, and its
+     Cyrillic is drawn by the same hand as its Latin, which the Russian locale
+     needs. `--font-display` stays as the token so the eighteen headings that
+     already reference it follow without being touched one by one. */
   --font-display:  'Playfair Display', 'Source Serif 4', Georgia, serif;
+  /* Running text, controls and labels. Plex rather than the Inter it replaced:
+     its Cyrillic is drawn by the same hand as its Latin, which the Russian
+     locale needs, and it has a monospace cut that belongs to the same family
+     as the figures on the catalogue cards. */
+  --font-ui:       'IBM Plex Sans', system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Figures that sit in a column and get compared — weeks, hours, scores. */
+  --font-mono:     'IBM Plex Mono', ui-monospace, "SF Mono", Menlo, monospace;
+  /* The wordmark. A logo is a drawing of a name rather than a heading, so it
+     is named separately even though it currently resolves to the same face. */
+  --font-brand:    'Playfair Display', Georgia, serif;
 }
 
 /* ------------------------------------------------------------------
@@ -180,7 +198,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: 90px; }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -325,13 +343,22 @@ body {
   left: calc(50vw - 726px);
   width: 1685px;
 }
+/* Off the landing page the whole scene drops to a wash. It is still the same
+   garden — the requirement was that the portal not turn into a plain form the
+   moment she signs in — but it now sits under the words instead of across
+   them. The wrapper is inert in layout; only its children carry the opacity,
+   so nothing here moves. */
+.sakura-behind > .sakura { opacity: .17; }
+.sakura-behind > .sky-layer { opacity: .5; }
+[data-theme="dark"] .sakura-behind > .sakura { opacity: .2; }
+
 /* --- everywhere else: the same branch as a fixed, far quieter backdrop --- */
 .sakura-ambient {
   position: fixed; inset: 0; z-index: -1;
   overflow: hidden;
-  opacity: .42;
+  opacity: .15;
 }
-[data-theme="dark"] .sakura-ambient { opacity: .3; }
+[data-theme="dark"] .sakura-ambient { opacity: .16; }
 .sakura-ambient .sakura-anchor {
   position: absolute;
   top: -40px; right: -12vw;
@@ -836,6 +863,32 @@ body {
   transition: width .28s ease;
 }
 .wel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ---------- date of birth ----------
+   Three selects rather than one date input: the native picker opens on today,
+   which is the wrong end of a hundred-year range, and its rendered order is
+   locale-dependent in a form read in three languages. */
+.birth-field { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
+.birth-field > .label { padding: 0; }
+
+/* Month is the widest of the three — it holds a word, the others hold digits. */
+.birth-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) 6.5rem;
+  gap: 10px;
+  margin: 6px 0 8px;
+}
+
+.birth-part { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.birth-part select { width: 100%; }
+.birth-part select[aria-invalid="true"] { border-color: var(--danger); }
+
+/* The squeeze is between 521px and 820px, where the two-column `.wel-row` is
+   still in force and would put three selects into half the card. Below 520px
+   `.wel-row` has already collapsed and the row has the full width again. */
+@media (max-width: 400px) {
+  .birth-row { grid-template-columns: 4.5rem minmax(0, 1fr) 5.5rem; gap: 8px; }
+}
 
 @media (max-width: 820px) {
   .auth-shell { grid-template-columns: 1fr; gap: 30px; }
@@ -1347,7 +1400,7 @@ select.input option { background: var(--control); color: var(--ink); }
   display: grid; place-items: center; color: var(--ink);
 }
 .logo-text {
-  font-family: var(--font-display);
+  font-family: var(--font-brand);
   font-size: 1.34rem; font-weight: 600; letter-spacing: -.02em;
   color: var(--ink); line-height: 1.1; display: block;
 }
@@ -1715,35 +1768,26 @@ button.ed-row { cursor: pointer; }
   gap: 16px;
 }
 @media (min-width: 1000px) { .face-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* The same object as a programme card, one level up: white on the warm page,
+   a coloured top edge naming the direction, and no lift. The page and the
+   card now differ in value, so the edge can stop shouting. */
 .face-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 24px;
-  display: flex; flex-direction: column; gap: 12px;
-  /* The fill and the page are a hair apart by design, so the edge does the
-     separating: the stronger of the two existing border tokens, plus a real
-     shadow. Both are already in the palette — nothing here invents a colour. */
-  border-color: var(--border-strong);
-  box-shadow: var(--card-lift);
-  transition: border-color .18s, transform .18s, box-shadow .18s;
+  border-top: 2px solid var(--cat, var(--primary));
+  border-radius: 4px; padding: 22px;
+  display: flex; flex-direction: column; gap: 11px;
+  text-decoration: none;
+  transition: border-color .15s ease;
 }
-.face-card:hover {
-  border-color: var(--border-strong); transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
+.face-card:hover { border-color: var(--border-strong); border-top-color: var(--cat, var(--primary)); }
 .face-ico {
-  width: 40px; height: 40px; border-radius: 12px; flex: none;
+  width: 34px; height: 34px; border-radius: 8px; flex: none;
   display: grid; place-items: center;
-  background: var(--grad-soft); border: 1px solid var(--border);
-  color: var(--gold); font-size: 1.05rem;
+  background: color-mix(in srgb, var(--cat, var(--primary)) 10%, transparent);
+  color: var(--cat, var(--primary)); font-size: 1rem;
 }
-.face-card h3 { font-size: 1.16rem; }
+.face-card h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
 .face-card p { color: var(--text-dim); font-size: .9rem; line-height: 1.6; flex: 1; }
-.face-link {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: .86rem; font-weight: 600; color: var(--gold);
-  padding-top: 12px; border-top: 1px solid var(--border);
-}
-.face-card:hover .face-link { color: var(--primary-hover); }
 
 /* ---------- The roadmap ----------
    Six stages drawn along one dotted line rather than listed. The line is what
@@ -2678,24 +2722,49 @@ button.ed-row { cursor: pointer; }
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
+/* A card earns its border by carrying what somebody actually compares on.
+   These used to be four soft-shadowed boxes holding a title and a sentence,
+   which is a list wearing a card's clothes; the shadow and the lift-on-hover
+   were the only things distinguishing one from the next. Now the top edge
+   names the direction of work by colour, and the foot carries weeks, hours
+   and outcomes in figures that line up down the column — so two programmes
+   can be told apart without opening either. */
 .prog-card {
   display: flex; flex-direction: column; gap: 10px;
-  padding: 22px;
+  padding: 18px 18px 16px;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--card-lift);
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--cat, var(--primary));
+  border-radius: 4px;
+  transition: border-color .15s ease, background .15s ease;
 }
-.prog-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary);
-  box-shadow: var(--shadow);
+.prog-card:hover { border-color: var(--border-strong); border-top-color: var(--cat, var(--primary)); }
+.prog-cat {
+  font-size: .8rem; font-weight: 600; color: var(--cat, var(--primary));
+  letter-spacing: -.005em;
 }
 .prog-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.prog-title { font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+.prog-title { font-size: 1.06rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
 .prog-title a { color: var(--ink); text-decoration: none; }
 .prog-title a:hover { color: var(--primary); }
+
+/* Weeks as a length, not a number to be read: at a glance a two-week course
+   and a twelve-week one are different shapes before they are different
+   figures. Scaled against the longest programme in the catalogue. */
+.prog-meter { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.prog-track {
+  height: 3px; border-radius: 2px; overflow: hidden;
+  background: var(--surface-2);
+}
+.prog-fill { height: 100%; border-radius: 2px; background: var(--cat, var(--primary)); }
+.prog-figs {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+.prog-figs b { color: var(--text); font-weight: 500; }
 /* The goal is what she is choosing between, so it gets room — but a card in a
    grid has to end somewhere or the row heights go ragged. */
 .prog-goal {
@@ -2704,13 +2773,57 @@ button.ed-row { cursor: pointer; }
   overflow: hidden;
 }
 .prog-foot {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   flex-wrap: wrap;
-  margin-top: auto; padding-top: 14px;
+  margin-top: auto; padding-top: 12px;
   border-top: 1px solid var(--border);
 }
+.prog-marks { display: flex; flex-wrap: wrap; gap: 6px; }
+.prog-fmt {
+  font-size: .78rem; color: var(--text-faint);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: 2px 7px; white-space: nowrap;
+}
+/* A certificate is the one mark worth more than the format it sits beside,
+   so it carries the gold the rest of the row does not. */
+.prog-cert { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 32%, transparent); }
 .prog-hours { color: var(--text-faint); font-size: .86rem; white-space: nowrap; }
 .prog-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* One desaturated family, not a rainbow. Ten directions of work need ten
+   distinguishable hues, but every one is pulled down in saturation so the
+   grid still reads as a single palette with the brand rose at its head —
+   colour sorting the catalogue rather than decorating it.
+
+   Keyed on the attribute alone, not on one card class, because the landing
+   page's six direction cards and the catalogue's programme cards name the
+   same categories and have to agree on their colour. */
+[data-cat="vocational_skills"]      { --cat: #8e4a5c; }
+[data-cat="entrepreneurship"]       { --cat: #a9683f; }
+[data-cat="financial_literacy"]     { --cat: #4f6f63; }
+[data-cat="leadership"]             { --cat: #6d5480; }
+[data-cat="digital_safety"]         { --cat: #4d6480; }
+[data-cat="parenting"]              { --cat: #96604e; }
+[data-cat="health"]                 { --cat: #6b8060; }
+[data-cat="legal_literacy"]         { --cat: #5c6470; }
+[data-cat="international"]          { --cat: #3f6b74; }
+[data-cat="volunteering"]           { --cat: #8a7340; }
+[data-cat="mentorship_networking"]  { --cat: #7d4f6b; }
+
+/* After dark the same eleven hues, lifted off the deep ground. A mid-tone
+   that reads as considered on white turns to mud on #211e29, and the top
+   edge — the one thing telling the cards apart — disappears first. */
+[data-theme="dark"] [data-cat="vocational_skills"]     { --cat: #d99aa8; }
+[data-theme="dark"] [data-cat="entrepreneurship"]      { --cat: #e0a578; }
+[data-theme="dark"] [data-cat="financial_literacy"]    { --cat: #86bfab; }
+[data-theme="dark"] [data-cat="leadership"]            { --cat: #b39ac8; }
+[data-theme="dark"] [data-cat="digital_safety"]        { --cat: #94b3d6; }
+[data-theme="dark"] [data-cat="parenting"]             { --cat: #d9a08a; }
+[data-theme="dark"] [data-cat="health"]                { --cat: #a8c79a; }
+[data-theme="dark"] [data-cat="legal_literacy"]        { --cat: #a8b2c0; }
+[data-theme="dark"] [data-cat="international"]         { --cat: #7fb8c2; }
+[data-theme="dark"] [data-cat="volunteering"]          { --cat: #cfb677; }
+[data-theme="dark"] [data-cat="mentorship_networking"] { --cat: #cb96b6; }
 
 /* The catalogue column was capped for a single list of rows; a grid wants the
    page. */
@@ -3027,4 +3140,263 @@ button.ed-row { cursor: pointer; }
   .news-emblem { font-size: 3rem; }
   .news-photo { padding: 16px; }
   .news-headline { font-size: 1.08rem; padding: 13px 14px; }
+}
+
+/* ====================================================================
+   Profile card (variant 4)
+
+   A tinted header with the branch drawn into it, the avatar sitting low
+   in that tint, and the identity reading downward from it; then a plain
+   body where the facts line up in two columns. Every colour is a token,
+   so the card follows both themes rather than carrying its own palette.
+   ==================================================================== */
+
+.profcard {
+  --profcard-pad: 22px;
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ---- header ---- */
+
+.profcard-head {
+  position: relative;
+  padding: var(--profcard-pad);
+  padding-top: 26px;
+  /* Reaches the card ground well before the name does. The tint is scenery and
+     the name is the content: at full strength behind it the display serif fell
+     to about 2.5:1, which is a decorative choice paid for by legibility. */
+  background: linear-gradient(
+    158deg,
+    var(--gold-soft) -14%,
+    color-mix(in srgb, var(--gold-soft) 34%, var(--surface)) 34%,
+    var(--surface) 78%
+  );
+}
+
+.profcard-sprig {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  width: 74%;
+  max-width: 230px;
+  height: auto;
+  pointer-events: none;
+}
+
+.profcard-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  /* The ring is the card ground, not white: on the tint a white ring reads as
+     a second shape rather than as breathing room. */
+  box-shadow: 0 0 0 4px var(--surface);
+}
+
+.profcard-name {
+  position: relative;
+  margin: 16px 0 2px;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--primary-hover);
+}
+
+/* Dark rose on the faded end of the tint. Checked at the darkest point the
+   name can land on, not at the lightest. */
+.profcard-id {
+  position: relative;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.profcard-idno { color: var(--primary); letter-spacing: 0.06em; }
+
+/* ---- facts ---- */
+
+.profcard-body { padding: 4px var(--profcard-pad) var(--profcard-pad); }
+
+.profcard-facts { margin: 0 0 20px; }
+
+.profcard-fact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+}
+
+.profcard-fact + .profcard-fact { border-top: 1px solid var(--border); }
+
+.profcard-fact dt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.92rem;
+  color: var(--text-dim);
+}
+
+.profcard-fact dd {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+  /* Digits in a column of values should not shuffle their own width. */
+  font-variant-numeric: tabular-nums;
+}
+
+.profcard-ico {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--text-faint);
+}
+
+.profcard-ico svg { width: 100%; height: 100%; }
+
+/* ---- completeness ---- */
+
+.profcard-progress { margin-bottom: 16px; }
+
+.profcard-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  color: var(--text-dim);
+}
+
+.profcard-progress-head strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.profcard-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.profcard-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 0.5s ease;
+}
+
+/* ---- action ---- */
+
+.profcard-cta {
+  display: block;
+  width: 100%;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+
+.profcard-cta:hover { background: var(--primary-hover); }
+
+.profcard-cta:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 420px) {
+  .profcard { --profcard-pad: 18px; }
+  .profcard-name { font-size: 1.38rem; }
+  .profcard-avatar { width: 64px; height: 64px; font-size: 1.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profcard-bar > span { transition: none; }
+}
+
+/* ---------- profile card beside its numbers ----------
+   The same composition the learning profile uses: the card names her, the
+   tiles say what the record adds up to, and they read as one thought on one
+   line. The four figures used to sit further down the page as a numbered list,
+   which made them look like navigation rather than a summary. */
+.profcard-row {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 28px;
+}
+
+.pstats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pstat {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.pstat-value {
+  font-family: var(--font-display);
+  font-size: 1.72rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.pstat-label {
+  display: block;
+  margin-top: 7px;
+  font-size: 0.83rem;
+  color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+  .profcard-row { grid-template-columns: minmax(0, 1fr); }
+  .profcard-row .profcard { max-width: 380px; }
+}
+
+@media (max-width: 520px) {
+  .pstats { gap: 10px; }
+  .pstat { padding: 13px; }
+  .pstat-value { font-size: 1.45rem; }
 }

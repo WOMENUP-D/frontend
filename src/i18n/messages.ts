@@ -92,7 +92,6 @@ export const messages = {
   "news.prefsInterests": { uz: "Qiziqishlaringiz", ru: "Ваши интересы", en: "Your interests" },
   "news.prefsSave":   { uz: "Saqlash", ru: "Сохранить", en: "Save" },
   "news.prefsSaved":  { uz: "Saqlandi", ru: "Сохранено", en: "Saved" },
-  "news.prefsClose":  { uz: "Yopish", ru: "Закрыть", en: "Close" },
 
   // Why a card is in the personalised section. Labels, never scores —
   // the weighting behind them is not something to put in front of a reader.
@@ -344,6 +343,11 @@ export const messages = {
   "pr.duration":      { uz: "Davomiylik", ru: "Длительность", en: "Duration" },
   "pr.period":        { uz: "Muddat", ru: "Период", en: "Period" },
   "pr.outcomes":      { uz: "Oʻquv natijalari", ru: "Результаты обучения", en: "Learning outcomes" },
+  /* Short form for the catalogue card, where the count sits beside weeks and
+     hours. Russian takes three forms; Uzbek keeps one word after a numeral. */
+  "pr.outcome.one":   { uz: "natija", ru: "результат",   en: "outcome" },
+  "pr.outcome.few":   { uz: "natija", ru: "результата",  en: "outcomes" },
+  "pr.outcome.many":  { uz: "natija", ru: "результатов", en: "outcomes" },
   "pr.skills":        { uz: "Beriladigan koʻnikmalar", ru: "Получаемые навыки", en: "Skills gained" },
   "pr.found":         { uz: "{n} ta dastur topildi", ru: "Найдено программ: {n}", en: "{n} programmes found" },
   "pr.notFound":      { uz: "Dastur topilmadi", ru: "Программа не найдена", en: "No programme found" },
@@ -556,8 +560,6 @@ export const messages = {
   "asst.obTitle":        { uz: "Bir daqiqada tanishamiz", ru: "Познакомимся за минуту", en: "Let's meet in a minute" },
   "asst.obLead":         { uz: "Beshta savol — va yordamchi javoblarni aynan sizga moslaydi.", ru: "Пять вопросов — и помощник подстроит ответы под вас.", en: "Five questions, and the assistant tailors everything to you." },
   "asst.obName":         { uz: "Ismingiz", ru: "Ваше имя", en: "Your name" },
-  "asst.obAge":          { uz: "Yoshingiz", ru: "Ваш возраст", en: "Your age" },
-  "asst.obAgeHint":      { uz: "Yosh sogʻliq boʻyicha maslahatni mos qilish uchun kerak", ru: "Возраст нужен, чтобы советы по здоровью подходили вам", en: "Age is used to keep health guidance appropriate for you" },
   "asst.obInterests":    { uz: "Qiziqishlaringiz", ru: "Ваши интересы", en: "Your interests" },
   "asst.obGoal":         { uz: "Asosiy maqsadingiz", ru: "Ваша главная цель", en: "Your main goal" },
   "asst.obGoalPh":       { uz: "Masalan: ish topish, kasb egallash, biznes ochish", ru: "Например: найти работу, освоить профессию, открыть дело", en: "For example: find work, learn a profession, start a business" },
@@ -826,6 +828,9 @@ export const messages = {
   "prof.field":       { uz: "Yoʻnalish", ru: "Направление", en: "Field" },
   "prof.experience":  { uz: "Tajriba, yil", ru: "Опыт, лет", en: "Experience, years" },
   "prof.district":    { uz: "Hudud", ru: "Регион", en: "Region" },
+  // Distinct from `prof.district`: the profile card names a city, the profile
+  // form asks for the administrative region, and they are not the same answer.
+  "prof.city":        { uz: "Shahar", ru: "Город", en: "City" },
   "prof.skills":      { uz: "Koʻnikmalar", ru: "Навыки", en: "Skills" },
   "prof.interests":   { uz: "Qiziqishlar", ru: "Интересы", en: "Interests" },
   "prof.languages":   { uz: "Tillar", ru: "Языки", en: "Languages" },
@@ -848,6 +853,14 @@ export const messages = {
   "wd.mon":       { uz: "Du", ru: "Пн", en: "Mon" },
   "wd.wed":       { uz: "Cho", ru: "Ср", en: "Wed" },
   "wd.fri":       { uz: "Ju", ru: "Пт", en: "Fri" },
+  // The activity strip only ever labels three rows, so the other four were
+  // never needed. The learning calendar draws a full week, and deriving those
+  // four from Intl while these three come from the catalogue would put two
+  // different spellings of the same week on one screen.
+  "wd.tue":       { uz: "Se", ru: "Вт", en: "Tue" },
+  "wd.thu":       { uz: "Pay", ru: "Чт", en: "Thu" },
+  "wd.sat":       { uz: "Sha", ru: "Сб", en: "Sat" },
+  "wd.sun":       { uz: "Yak", ru: "Вс", en: "Sun" },
   "mon.1":           { uz: "yanvar", ru: "января", en: "January" },
   "mon.2":           { uz: "fevral", ru: "февраля", en: "February" },
   "mon.3":           { uz: "mart", ru: "марта", en: "March" },
@@ -860,6 +873,220 @@ export const messages = {
   "mon.10":          { uz: "oktabr", ru: "октября", en: "October" },
   "mon.11":          { uz: "noyabr", ru: "ноября", en: "November" },
   "mon.12":          { uz: "dekabr", ru: "декабря", en: "December" },
+
+  // Nominative, for a month standing on its own in a select. The `mon.*` set
+  // above is genitive in Russian because it always follows a day number there;
+  // alone in a dropdown "сентября" is simply the wrong case.
+  "mn.1":            { uz: "Yanvar", ru: "Январь", en: "January" },
+  "mn.2":            { uz: "Fevral", ru: "Февраль", en: "February" },
+  "mn.3":            { uz: "Mart", ru: "Март", en: "March" },
+  "mn.4":            { uz: "Aprel", ru: "Апрель", en: "April" },
+  "mn.5":            { uz: "May", ru: "Май", en: "May" },
+  "mn.6":            { uz: "Iyun", ru: "Июнь", en: "June" },
+  "mn.7":            { uz: "Iyul", ru: "Июль", en: "July" },
+  "mn.8":            { uz: "Avgust", ru: "Август", en: "August" },
+  "mn.9":            { uz: "Sentabr", ru: "Сентябрь", en: "September" },
+  "mn.10":           { uz: "Oktabr", ru: "Октябрь", en: "October" },
+  "mn.11":           { uz: "Noyabr", ru: "Ноябрь", en: "November" },
+  "mn.12":           { uz: "Dekabr", ru: "Декабрь", en: "December" },
+
+  // ---- date of birth at sign-up --------------------------------------
+  // Asked as a date rather than an age: an age is only true on the day it is
+  // typed, and the number decides which health content she may be shown.
+  "wel.birthDate":     { uz: "Tugʻilgan sana", ru: "Дата рождения", en: "Date of birth" },
+  "wel.birthDay":      { uz: "Kun", ru: "День", en: "Day" },
+  "wel.birthMonth":    { uz: "Oy", ru: "Месяц", en: "Month" },
+  "wel.birthYear":     { uz: "Yil", ru: "Год", en: "Year" },
+  "wel.birthWhy":      { uz: "Yoshingiz shu sanadan hisoblanadi — kurslar va maqolalar shunga qarab tanlanadi.", ru: "Возраст считается по этой дате — от него зависят подборки курсов и статей.", en: "Your age is worked out from this date, and it decides which courses and articles you are shown." },
+  "wel.birthInvalid":  { uz: "Bunday sana yoʻq", ru: "Такой даты не существует", en: "That date does not exist" },
+  "wel.birthFuture":   { uz: "Sana kelajakda boʻlishi mumkin emas", ru: "Дата не может быть в будущем", en: "The date cannot be in the future" },
+  // "{n}" is substituted with the minimum age, so the copy and the bound
+  // cannot drift apart — `t()` has no interpolation of its own.
+  "wel.birthTooYoung": { uz: "Portal {n} yoshdan boshlab", ru: "Портал — для пользователей от {n} лет", en: "The portal is for users aged {n} and over" },
+  "wel.birthTooOld":   { uz: "Sanani tekshiring", ru: "Проверьте дату", en: "Check the date" },
+
+  // ---- learning platform (/talim) -----------------------------------
+  // Its own namespace: the section has its own shell and its own vocabulary,
+  // and mixing it into nav.* / pr.* would make both harder to read.
+  "nav.learning":     { uz: "Taʼlim", ru: "Обучение", en: "Learning" },
+
+  "lms.section":      { uz: "Taʼlim", ru: "Обучение", en: "Learning" },
+  "lms.nav.dashboard":{ uz: "Bosh sahifa", ru: "Главная", en: "Dashboard" },
+  "lms.nav.courses":  { uz: "Kurslarim", ru: "Мои курсы", en: "My courses" },
+  "lms.nav.calendar": { uz: "Kalendar", ru: "Календарь", en: "Calendar" },
+  "lms.nav.goals":    { uz: "Maqsadlarim", ru: "Мои цели", en: "My goals" },
+  "lms.nav.achievements": { uz: "Yutuqlar", ru: "Достижения", en: "Achievements" },
+  "lms.nav.assistant":{ uz: "AI yordamchi", ru: "AI-помощник", en: "AI assistant" },
+  "lms.nav.settings": { uz: "Sozlamalar", ru: "Настройки", en: "Settings" },
+  "lms.nav.help":     { uz: "Yordam", ru: "Помощь", en: "Help" },
+  "lms.nav.profile":  { uz: "Profil", ru: "Профиль", en: "Profile" },
+  "lms.nav.toPortal": { uz: "Portalga qaytish", ru: "Вернуться на портал", en: "Back to the portal" },
+  "lms.nav.open":     { uz: "Menyuni ochish", ru: "Открыть меню", en: "Open the menu" },
+  "lms.nav.close":    { uz: "Menyuni yopish", ru: "Закрыть меню", en: "Close the menu" },
+
+  "lms.search":       { uz: "Kurs, dars yoki oʻqituvchini qidiring", ru: "Найти курс, урок или преподавателя", en: "Find a course, lesson or instructor" },
+  "lms.search.short": { uz: "Qidirish", ru: "Поиск", en: "Search" },
+  "lms.search.courses":     { uz: "Kurslar", ru: "Курсы", en: "Courses" },
+  "lms.search.lessons":     { uz: "Darslar", ru: "Уроки", en: "Lessons" },
+  "lms.search.instructors": { uz: "Oʻqituvchilar", ru: "Преподаватели", en: "Instructors" },
+  "lms.search.empty": { uz: "Hech narsa topilmadi", ru: "Ничего не найдено", en: "Nothing found" },
+  "lms.search.emptyHint": { uz: "Boshqa soʻz bilan urinib koʻring.", ru: "Попробуйте другое слово.", en: "Try another word." },
+
+  "lms.notifications":       { uz: "Bildirishnomalar", ru: "Уведомления", en: "Notifications" },
+  "lms.notifications.empty": { uz: "Yangi bildirishnoma yoʻq", ru: "Новых уведомлений нет", en: "No new notifications" },
+  "lms.notifications.all":   { uz: "Hammasini oʻqilgan deb belgilash", ru: "Отметить всё прочитанным", en: "Mark all as read" },
+
+  "lms.greet.morning":   { uz: "Xayrli tong", ru: "Доброе утро", en: "Good morning" },
+  "lms.greet.afternoon": { uz: "Xayrli kun", ru: "Добрый день", en: "Good afternoon" },
+  "lms.greet.evening":   { uz: "Xayrli kech", ru: "Добрый вечер", en: "Good evening" },
+  "lms.greet.sub":       { uz: "Oʻqishda davom eting — yaxshi ketyapsiz.", ru: "Продолжайте учиться — у вас хорошо получается.", en: "Keep learning. You are doing well." },
+  "lms.greet.streak":    { uz: "Seriya uzilmasin: bugun bitta dars yetadi.", ru: "Не прерывайте серию: сегодня хватит одного урока.", en: "Keep the streak alive — one lesson today is enough." },
+
+  "lms.continue.title":  { uz: "Oʻqishni davom ettirish", ru: "Продолжить обучение", en: "Continue learning" },
+  "lms.continue.current":{ uz: "Joriy dars", ru: "Текущий урок", en: "Current lesson" },
+  "lms.continue.action": { uz: "Davom ettirish", ru: "Продолжить", en: "Continue" },
+  "lms.continue.empty":  { uz: "Hali boshlangan kurs yoʻq", ru: "Пока нет начатых курсов", en: "Nothing started yet" },
+  "lms.continue.emptyHint": { uz: "Katalogdan birinchi kursingizni tanlang.", ru: "Выберите первый курс в каталоге.", en: "Pick your first course from the catalogue." },
+
+  "lms.stats.title":     { uz: "Sizning progressingiz", ru: "Ваш прогресс", en: "Your progress" },
+  "lms.stats.completed": { uz: "Tugatilgan kurslar", ru: "Курсов завершено", en: "Courses completed" },
+  "lms.stats.inProgress":{ uz: "Jarayondagi kurslar", ru: "Курсов в процессе", en: "Courses in progress" },
+  "lms.stats.hours":     { uz: "Oʻqish soatlari", ru: "Часов обучения", en: "Learning hours" },
+  "lms.stats.streak":    { uz: "Joriy seriya", ru: "Текущая серия", en: "Current streak" },
+  "lms.days":            { uz: "kun", ru: "дней", en: "days" },
+
+  "lms.courses.title":   { uz: "Kurslarim", ru: "Мои курсы", en: "My courses" },
+  "lms.courses.lead":    { uz: "Boshlagan va tugatgan kurslaringiz — bir joyda.", ru: "Курсы, которые вы начали и закончили, — в одном месте.", en: "Everything you have started and finished, in one place." },
+  "lms.courses.all":     { uz: "Barchasi", ru: "Все", en: "All" },
+  "lms.courses.empty":   { uz: "Hali kurs yoʻq", ru: "Пока нет курсов", en: "No courses yet" },
+  "lms.courses.emptyHint": { uz: "Oʻqish yoʻlingizni boshlang.", ru: "Начните свой путь в обучении.", en: "Start your learning journey." },
+  "lms.courses.explore": { uz: "Kurslarni koʻrish", ru: "Смотреть курсы", en: "Explore courses" },
+  "lms.courses.count":   { uz: "kurs", ru: "курсов", en: "courses" },
+
+  "lms.course.instructor":{ uz: "Oʻqituvchi", ru: "Преподаватель", en: "Instructor" },
+  "lms.course.lessons":  { uz: "dars", ru: "уроков", en: "lessons" },
+  "lms.course.level":    { uz: "Daraja", ru: "Уровень", en: "Level" },
+  "lms.course.duration": { uz: "Davomiyligi", ru: "Длительность", en: "Duration" },
+  "lms.course.rating":   { uz: "Reyting", ru: "Рейтинг", en: "Rating" },
+  "lms.course.learners": { uz: "Oʻquvchilar", ru: "Студентов", en: "Students" },
+  "lms.course.contents": { uz: "Kurs tarkibi", ru: "Содержание курса", en: "Course contents" },
+  "lms.course.about":    { uz: "Kurs haqida", ru: "О курсе", en: "About this course" },
+  "lms.course.progress": { uz: "Kurs progressi", ru: "Прогресс курса", en: "Course progress" },
+  "lms.course.timeLeft": { uz: "Taxminiy qolgan vaqt", ru: "Примерно осталось", en: "Estimated time left" },
+  "lms.course.continue": { uz: "Davom ettirish", ru: "Продолжить", en: "Continue" },
+  "lms.course.start":    { uz: "Boshlash", ru: "Начать", en: "Start" },
+  "lms.course.review":   { uz: "Takrorlash", ru: "Повторить", en: "Review" },
+  "lms.course.view":     { uz: "Kursni koʻrish", ru: "Смотреть курс", en: "View course" },
+  "lms.course.back":     { uz: "Kurslarga qaytish", ru: "Вернуться к курсам", en: "Back to courses" },
+  "lms.course.noLessons": { uz: "Bu kursda hali dars yoʻq", ru: "В этом курсе пока нет уроков", en: "This course has no lessons yet" },
+  "lms.course.noLessonsHint": { uz: "Dastur tayyorlanmoqda — tez orada ochiladi.", ru: "Программа готовится — скоро откроется.", en: "The programme is being prepared and opens shortly." },
+  "lms.course.notFound": { uz: "Kurs topilmadi", ru: "Курс не найден", en: "Course not found" },
+  "lms.course.notFoundHint": { uz: "Havola eskirgan boʻlishi mumkin.", ru: "Возможно, ссылка устарела.", en: "The link may be out of date." },
+
+  "lms.status.in_progress": { uz: "Jarayonda", ru: "В процессе", en: "In progress" },
+  "lms.status.completed":   { uz: "Tugatilgan", ru: "Завершён", en: "Completed" },
+  "lms.status.not_started": { uz: "Boshlanmagan", ru: "Не начат", en: "Not started" },
+
+  "lms.level.beginner":     { uz: "Boshlangʻich", ru: "Начальный", en: "Beginner" },
+  "lms.level.intermediate": { uz: "Oʻrta", ru: "Средний", en: "Intermediate" },
+  "lms.level.advanced":     { uz: "Yuqori", ru: "Продвинутый", en: "Advanced" },
+
+  "lms.kind.video":    { uz: "Video", ru: "Видео", en: "Video" },
+  "lms.kind.reading":  { uz: "Oʻqish", ru: "Чтение", en: "Reading" },
+  "lms.kind.practice": { uz: "Amaliyot", ru: "Практика", en: "Practice" },
+  "lms.kind.quiz":     { uz: "Test", ru: "Тест", en: "Quiz" },
+  "lms.kind.project":  { uz: "Loyiha", ru: "Проект", en: "Project" },
+
+  "lms.rec.title":   { uz: "Sizga tavsiya etamiz", ru: "Рекомендуем вам", en: "Recommended for you" },
+  "lms.rec.lead":    { uz: "Har bir tavsiya sababi bilan — tanlov sizniki.", ru: "Каждая рекомендация — с причиной. Решение за вами.", en: "Every suggestion comes with its reason. The choice stays yours." },
+  "lms.rec.why":     { uz: "Nega aynan shu", ru: "Почему именно это", en: "Why this" },
+
+  "lms.upcoming.title": { uz: "Yaqin kunlarda", ru: "Ближайшее", en: "Upcoming" },
+  "lms.upcoming.empty": { uz: "Yaqin muddatlar yoʻq", ru: "Ближайших дедлайнов нет", en: "No upcoming deadlines" },
+  "lms.upcoming.emptyHint": { uz: "Hammasi bajarilgan 🎉", ru: "Всё сделано 🎉", en: "You are all caught up 🎉" },
+  "lms.upcoming.all":   { uz: "Kalendarni ochish", ru: "Открыть календарь", en: "Open the calendar" },
+
+  "lms.event.class":      { uz: "Dars", ru: "Занятие", en: "Class" },
+  "lms.event.assignment": { uz: "Topshiriq", ru: "Задание", en: "Assignment" },
+  "lms.event.exam":       { uz: "Imtihon", ru: "Экзамен", en: "Exam" },
+  "lms.event.deadline":   { uz: "Muddat", ru: "Дедлайн", en: "Deadline" },
+  "lms.evst.upcoming":    { uz: "Rejada", ru: "Запланировано", en: "Upcoming" },
+  "lms.evst.due_soon":    { uz: "Muddati yaqin", ru: "Скоро срок", en: "Due soon" },
+  "lms.evst.completed":   { uz: "Bajarilgan", ru: "Выполнено", en: "Completed" },
+
+  "lms.goal.title":   { uz: "Mening maqsadim", ru: "Моя цель", en: "My goal" },
+  "lms.goal.weekly":  { uz: "Haftalik maqsad", ru: "Цель на неделю", en: "Weekly learning target" },
+  "lms.goal.view":    { uz: "Maqsadlarni koʻrish", ru: "Смотреть цели", en: "View goals" },
+  "lms.goal.target":  { uz: "Muddat", ru: "Срок", en: "Target date" },
+  "lms.goal.steps":   { uz: "Qadamlar", ru: "Шаги", en: "Steps" },
+  "lms.goal.why":     { uz: "Nima uchun", ru: "Зачем", en: "Why" },
+  "lms.goals.title":  { uz: "Maqsadlarim", ru: "Мои цели", en: "My goals" },
+  "lms.goals.lead":   { uz: "Katta maqsad — kichik qadamlarga boʻlingan.", ru: "Большая цель, разложенная на маленькие шаги.", en: "One large goal, broken into small steps." },
+  "lms.goals.empty":  { uz: "Hali maqsad yoʻq", ru: "Целей пока нет", en: "No goals yet" },
+  "lms.goals.emptyHint": { uz: "Birinchi maqsadni qoʻying — reja shundan boshlanadi.", ru: "Поставьте первую цель — с неё начинается план.", en: "Set your first goal — the plan starts there." },
+  "lms.goals.add":    { uz: "Maqsad qoʻshish", ru: "Добавить цель", en: "Add a goal" },
+
+  "lms.ai.title":     { uz: "AI oʻquv yordamchingiz", ru: "Ваш AI-помощник в обучении", en: "Your AI learning assistant" },
+  "lms.ai.lead":      { uz: "Savol bering, qiyin mavzuni tushuning va shaxsiy oʻquv rejangizni tuzing.", ru: "Задавайте вопросы, разбирайте сложные темы и стройте личный план обучения.", en: "Ask questions, work through hard topics, and build a learning plan of your own." },
+  "lms.ai.ask":       { uz: "AI’dan soʻrash", ru: "Спросить AI", en: "Ask AI" },
+  "lms.ai.quick":     { uz: "Tez amallar", ru: "Быстрые действия", en: "Quick actions" },
+  "lms.ai.placeholder": { uz: "Savolingizni yozing…", ru: "Напишите свой вопрос…", en: "Type your question…" },
+  "lms.ai.send":      { uz: "Yuborish", ru: "Отправить", en: "Send" },
+  "lms.ai.thinking":  { uz: "Oʻylayapti…", ru: "Думает…", en: "Thinking…" },
+  // What the mock answers with. It deliberately does not imitate a tutor:
+  // inventing plausible teaching text and presenting it as the assistant's
+  // answer would be the one thing this portal's AI rules forbid outright.
+  "lms.ai.reply":     { uz: "Savolingiz qabul qilindi. Jonli AI yordamchi API bosqichida ulanadi — shundan keyin bu yerda toʻliq javob olasiz.", ru: "Ваш вопрос принят. Живой AI-помощник подключается на этапе API — после этого здесь появится полный ответ.", en: "Your question has been received. The live assistant is connected at the API stage — a full answer will appear here then." },
+  "lms.ai.empty":     { uz: "Suhbatni boshlang", ru: "Начните разговор", en: "Start the conversation" },
+  "lms.ai.emptyHint": { uz: "Quyidagi tayyor savollardan birini tanlang yoki oʻzingiznikini yozing.", ru: "Выберите готовый вопрос ниже или напишите свой.", en: "Pick one of the prompts below, or write your own." },
+  // The portal-wide guardrail, restated where she reads the answer.
+  "lms.ai.disclaimer":{ uz: "AI maslahat beradi — qaror sizniki. Muhim masalalarda mutaxassisga murojaat qiling.", ru: "AI советует — решение за вами. По важным вопросам обращайтесь к специалисту.", en: "The assistant advises; the decision is yours. For anything important, talk to a specialist." },
+
+  "lms.lesson.prev":     { uz: "Oldingi dars", ru: "Предыдущий урок", en: "Previous lesson" },
+  "lms.lesson.next":     { uz: "Keyingi dars", ru: "Следующий урок", en: "Next lesson" },
+  "lms.lesson.complete": { uz: "Bajarildi deb belgilash", ru: "Отметить пройденным", en: "Mark as completed" },
+  "lms.lesson.completed":{ uz: "Bajarildi", ru: "Пройдено", en: "Completed" },
+  "lms.lesson.notes":    { uz: "Qaydlarim", ru: "Мои заметки", en: "My notes" },
+  "lms.lesson.notesPlaceholder": { uz: "Shu dars boʻyicha qayd yozing…", ru: "Запишите мысль по этому уроку…", en: "Note something from this lesson…" },
+  "lms.lesson.notesSaved": { uz: "Saqlandi", ru: "Сохранено", en: "Saved" },
+  "lms.lesson.askAI":    { uz: "AI’dan soʻrash", ru: "Спросить AI", en: "Ask AI" },
+  "lms.lesson.resources":{ uz: "Materiallar", ru: "Материалы", en: "Resources" },
+  "lms.lesson.min":      { uz: "daq.", ru: "мин", en: "min" },
+  "lms.lesson.notFound": { uz: "Dars topilmadi", ru: "Урок не найден", en: "Lesson not found" },
+
+  "lms.cal.title":  { uz: "Kalendar", ru: "Календарь", en: "Calendar" },
+  "lms.cal.lead":   { uz: "Darslar, topshiriqlar, imtihonlar va muddatlar.", ru: "Занятия, задания, экзамены и дедлайны.", en: "Classes, assignments, exams and deadlines." },
+  "lms.cal.month":  { uz: "Oy", ru: "Месяц", en: "Month" },
+  "lms.cal.week":   { uz: "Hafta", ru: "Неделя", en: "Week" },
+  "lms.cal.list":   { uz: "Roʻyxat", ru: "Список", en: "List" },
+  "lms.cal.today":  { uz: "Bugun", ru: "Сегодня", en: "Today" },
+  "lms.cal.prev":   { uz: "Oldingi", ru: "Предыдущий", en: "Previous" },
+  "lms.cal.next":   { uz: "Keyingi", ru: "Следующий", en: "Next" },
+  "lms.cal.empty":  { uz: "Bu davrda tadbir yoʻq", ru: "В этом периоде событий нет", en: "Nothing in this period" },
+
+  "lms.ach.title":   { uz: "Yutuqlar", ru: "Достижения", en: "Achievements" },
+  "lms.ach.lead":    { uz: "Yoʻlda qolgan izlar — qancha bosib oʻtganingiz.", ru: "Следы на пути — сколько уже пройдено.", en: "The marks along the way — how far you have come." },
+  "lms.ach.earned":  { uz: "Qoʻlga kiritilgan", ru: "Полученные", en: "Earned" },
+  "lms.ach.locked":  { uz: "Hali ochilmagan", ru: "Ещё не открыты", en: "Not yet earned" },
+  "lms.ach.earnedOn":{ uz: "Sana", ru: "Дата", en: "Earned" },
+  "lms.ach.longest": { uz: "Eng uzun seriya", ru: "Самая длинная серия", en: "Longest streak" },
+  "lms.ach.empty":   { uz: "Hali yutuq yoʻq", ru: "Достижений пока нет", en: "No achievements yet" },
+  "lms.ach.emptyHint": { uz: "Birinchi darsni tugating — birinchi nishon shundan keyin.", ru: "Пройдите первый урок — первый значок сразу за ним.", en: "Finish your first lesson; the first badge follows it." },
+
+  "lms.profile.title":     { uz: "Profil", ru: "Профиль", en: "Profile" },
+  "lms.profile.edit":      { uz: "Profilni tahrirlash", ru: "Редактировать профиль", en: "Edit profile" },
+  "lms.profile.education": { uz: "Taʼlim", ru: "Образование", en: "Education" },
+  "lms.profile.interests": { uz: "Qiziqishlar", ru: "Интересы", en: "Interests" },
+  "lms.profile.skills":    { uz: "Koʻnikmalar", ru: "Навыки", en: "Skills" },
+  "lms.profile.goals":     { uz: "Oʻquv maqsadlari", ru: "Учебные цели", en: "Learning goals" },
+  "lms.profile.level":     { uz: "Joriy daraja", ru: "Текущий уровень", en: "Current level" },
+  "lms.profile.certificates": { uz: "Sertifikatlar", ru: "Сертификаты", en: "Certificates" },
+  "lms.profile.noCertificates": { uz: "Hali sertifikat yoʻq", ru: "Сертификатов пока нет", en: "No certificates yet" },
+  "lms.profile.noCertificatesHint": { uz: "Kursni toʻliq tugatsangiz, sertifikat shu yerda paydo boʻladi.", ru: "Закончите курс полностью — сертификат появится здесь.", en: "Finish a course end to end and the certificate appears here." },
+
+  "lms.err.title": { uz: "Nimadir notoʻgʻri ketdi", ru: "Что-то пошло не так", en: "Something went wrong" },
+  "lms.err.hint":  { uz: "Qayta urinib koʻring.", ru: "Попробуйте ещё раз.", en: "Please try again." },
+  "lms.err.retry": { uz: "Qayta urinish", ru: "Повторить", en: "Retry" },
 } as const satisfies Record<string, Written>;
 
 export type MessageKey = keyof typeof messages;

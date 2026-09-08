@@ -5,8 +5,8 @@ import { getAccessToken } from "@/services/api";
 import { portal, type Program } from "@/services/portal";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
 import Link from "next/link";
-import { useI18n } from "@/i18n";
-import { categoryKey, formatKey } from "@/utils/format";
+import { useI18n, type MessageKey } from "@/i18n";
+import { categoryKey, formatKey, pluralKey } from "@/utils/format";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -14,8 +14,14 @@ const CATEGORIES = [
   "international", "digital_safety",
 ];
 
+/* The bar on each card is a length compared against the longest thing on
+   offer, so the scale has to be the catalogue's own maximum rather than a
+   round number — twelve weeks is the English course, and it is what "long"
+   means here. */
+const MAX_WEEKS = 12;
+
 export default function ProgramsPage() {
-  const { t, tx } = useI18n();
+  const { t, tx, locale } = useI18n();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
@@ -28,6 +34,17 @@ export default function ProgramsPage() {
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => { setAuthed(Boolean(getAccessToken())); }, []);
+
+  /* The six direction cards on the landing page each name a category, so the
+     catalogue has to arrive already filtered — otherwise every one of them
+     lands on the same undifferentiated list and the choice she just made is
+     thrown away. Read from the address itself rather than through
+     `useSearchParams`, which would push this page behind a Suspense boundary
+     for one string available on mount. */
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("category");
+    if (wanted && CATEGORIES.includes(wanted)) setCategory(wanted);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(search.trim()), 300);
@@ -111,15 +128,13 @@ export default function ProgramsPage() {
           <div className="prog-grid">
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
+              const outcomes = program.learning_outcomes?.length ?? 0;
               return (
-                <article key={program.id} className="prog-card">
-                  <div className="prog-tags">
-                    <span className="badge">{t(categoryKey(program.category))}</span>
-                    <span className="badge badge-grey">{t(formatKey(program.format))}</span>
-                    {program.has_certificate && (
-                      <span className="badge badge-gold">{t("pr.certificate")}</span>
-                    )}
-                  </div>
+                <article key={program.id} className="prog-card" data-cat={program.category}>
+                  {/* The category names itself in its own colour, which is the
+                      same colour running along the top edge — so the grid can
+                      be sorted by eye before a single title is read. */}
+                  <span className="prog-cat">{t(categoryKey(program.category))}</span>
 
                   {/* The title is the link, so the whole card does not have to be
                       one — an enrol button inside a clickable card is a trap. */}
@@ -128,9 +143,37 @@ export default function ProgramsPage() {
                   </h3>
                   <p className="prog-goal">{tx(program.goal_i18n)}</p>
 
+                  {/* Length as a shape and as figures. The bar is scaled against
+                      the longest programme on offer, so "two weeks" and "twelve
+                      weeks" differ before the numbers are read. */}
+                  <div className="prog-meter">
+                    {program.duration_weeks != null && (
+                      <div className="prog-track">
+                        <div
+                          className="prog-fill"
+                          style={{ width: `${Math.min(100, Math.round((program.duration_weeks / MAX_WEEKS) * 100))}%` }}
+                        />
+                      </div>
+                    )}
+                    <div className="prog-figs">
+                      {program.duration_weeks != null && (
+                        <span><b>{program.duration_weeks}</b> {t("common.weeks")}</span>
+                      )}
+                      {program.duration_hours != null && (
+                        <span><b>{program.duration_hours}</b> {t("common.hours")}</span>
+                      )}
+                      {outcomes > 0 && (
+                        <span><b>{outcomes}</b> {t(pluralKey("pr.outcome", outcomes, locale) as MessageKey)}</span>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="prog-foot">
-                    <span className="prog-hours">
-                      {program.duration_hours ?? "—"} {t("common.hours")}
+                    <span className="prog-marks">
+                      <span className="prog-fmt">{t(formatKey(program.format))}</span>
+                      {program.has_certificate && (
+                        <span className="prog-fmt prog-cert">{t("pr.certificate")}</span>
+                      )}
                     </span>
                     <div className="prog-actions">
                       <Link className="btn btn-outline btn-sm" href={`/dasturlar/${program.id}`}>

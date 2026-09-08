@@ -27,11 +27,19 @@ import { Sky } from "./Sky";
 export function AmbientSakura() {
   const pathname = usePathname();
   if (pathname === "/" || pathname.startsWith("/admin")) return null;
+  /* Same three layers as the landing page, at a fraction of the weight.
+     The landing hero keeps its copy in the left half and leaves the right to
+     the canopy, so the branch can be drawn at full strength there. Every
+     other page centres its column underneath it — the catalogue put its own
+     title and its first row of cards directly behind the limb — and a
+     headline crossed by a branch is a headline nobody finishes reading.
+     Held back here rather than in the artwork, so the front door is
+     untouched. */
   return (
-    <>
+    <div className="sakura-behind">
       <Sakura />
       <Sky />
       <Sakura variant="corner" />
-    </>
+    </div>
   );
 }

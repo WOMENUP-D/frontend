@@ -395,7 +395,11 @@ export const portal = {
 
   activePlan: () => api.get<Plan>("/plans/active"),
   myPlans: () => api.get<Plan[]>("/plans"),
-  generatePlan: (horizon = "6m") => api.post<Plan>("/plans/generate", { horizon }),
+  /** `language` is the locale she is reading in. Without it the server falls
+   *  back to a stored column that used to be `uz` for every account, which is
+   *  why plans came back in Uzbek on the Russian pages. */
+  generatePlan: (horizon = "6m", language?: string) =>
+    api.post<Plan>("/plans/generate", { horizon, language }),
   acceptPlan: (planId: string) =>
     api.post<Plan>(`/plans/${planId}/accept`, { accepted: true, removed_item_ids: [] }),
   updatePlanItem: (itemId: string, status: string) =>
@@ -480,7 +484,9 @@ export const portal = {
   assistantOnboarding: (payload: {
     name: string;
     surname?: string;
-    age: number;
+    /** "YYYY-MM-DD". A date rather than an age, so the safety band follows her
+     *  instead of being right only on the day she signed up. */
+    birth_date: string;
     region?: string | null;
     interests: string[];
     goal: string;

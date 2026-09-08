@@ -14,11 +14,18 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken } from "@/services/api";
 import { takeGoogleName } from "@/services/auth";
 import { portal } from "@/services/portal";
 import { useI18n, type MessageKey } from "@/i18n";
+import {
+  BirthDateField,
+  EMPTY_BIRTH,
+  birthError,
+  isoBirthDate,
+  type BirthParts,
+} from "@/components/BirthDateField";
 
 const REGIONS: ReadonlyArray<[string, MessageKey]> = [
   ["tashkent_city", "reg.tashkent_city"],
@@ -66,7 +73,10 @@ export default function WelcomePage() {
   const [stage, setStage] = useState<1 | 2>(1);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
-  const [age, setAge] = useState("");
+  const [birth, setBirth] = useState<BirthParts>(EMPTY_BIRTH);
+  // Set once she leaves the control, so the form does not complain at someone
+  // who has only got as far as picking a month.
+  const [birthTouched, setBirthTouched] = useState(false);
   const [region, setRegion] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [goal, setGoal] = useState("");
@@ -74,7 +84,7 @@ export default function WelcomePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-  const ageRef = useRef<HTMLInputElement>(null);
+  const birthRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -90,7 +100,7 @@ export default function WelcomePage() {
     // Focus the first field she still has to fill in. `autoFocus` cannot do
     // this: it is decided when the input mounts, which is before we know
     // whether Google already gave us a name.
-    (fromGoogle?.name ? ageRef : nameRef).current?.focus();
+    (fromGoogle?.name ? birthRef : nameRef).current?.focus();
     // Staff never see this: the questionnaire exists to personalise a learner's
     // plan, and a coordinator does not have one.
     portal
@@ -102,12 +112,10 @@ export default function WelcomePage() {
       .catch(() => undefined);
   }, [router]);
 
-  const ageNumber = Number(age);
-  const stage1Valid =
-    name.trim().length > 0 &&
-    Number.isFinite(ageNumber) &&
-    ageNumber >= 10 &&
-    ageNumber <= 100;
+  const today = useMemo(() => new Date(), []);
+  const birthIso = isoBirthDate(birth);
+  const birthIssue = birthError(birth, today);
+  const stage1Valid = name.trim().length > 0 && birthIssue === null && birthIso !== null;
 
   async function save(withDetails: boolean) {
     if (!stage1Valid || busy) return;
@@ -117,7 +125,7 @@ export default function WelcomePage() {
       await portal.assistantOnboarding({
         name: name.trim(),
         surname: surname.trim(),
-        age: ageNumber,
+        birth_date: birthIso!,
         region: region || null,
         interests: withDetails ? interests : [],
         goal: withDetails ? goal.trim() : "",
@@ -184,20 +192,16 @@ export default function WelcomePage() {
                 </div>
               </div>
 
+              <div onBlur={() => setBirthTouched(true)}>
+                <BirthDateField
+                  value={birth}
+                  onChange={setBirth}
+                  dayRef={birthRef}
+                  error={birthTouched ? birthIssue : null}
+                />
+              </div>
+
               <div className="wel-row">
-                <div className="field">
-                  <label className="label" htmlFor="age">{t("asst.obAge")}</label>
-                  <input
-                    id="age"
-                    ref={ageRef}
-                    className="input"
-                    type="number"
-                    min={10}
-                    max={100}
-                    value={age}
-                    onChange={(event) => setAge(event.target.value)}
-                  />
-                </div>
                 <div className="field">
                   <label className="label" htmlFor="region">{t("wel.region")}</label>
                   <select
@@ -215,8 +219,6 @@ export default function WelcomePage() {
                   </select>
                 </div>
               </div>
-
-              <p className="faint">{t("asst.obAgeHint")}</p>
 
               <button
                 className="btn btn-primary btn-block btn-lg"

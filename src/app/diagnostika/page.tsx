@@ -26,7 +26,7 @@ type Answers = Record<string, unknown>;
 type Stage = "form" | "done";
 
 export default function DiagnosticPage() {
-  const { t, tx } = useI18n();
+  const { t, tx, apiLocale } = useI18n();
   const router = useRouter();
 
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -101,7 +101,7 @@ export default function DiagnosticPage() {
         // blocking the results behind a minute of spinner would be worse than
         // the click it replaces.
         markPlanGenerating();
-        void portal.generatePlan("6m").catch(() => {
+        void portal.generatePlan("6m", apiLocale).catch(() => {
           // The roadmap page generates its own draft if this never lands, so a
           // failure here costs a wait, not the plan.
           clearPlanGenerating();

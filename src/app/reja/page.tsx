@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, getAccessToken } from "@/services/api";
 import { clearPlanGenerating, isPlanGenerating } from "@/services/planDraft";
 import { portal, type Plan } from "@/services/portal";
@@ -37,7 +37,16 @@ async function waitForDraft(cancelled: () => boolean): Promise<Plan | null> {
 }
 
 export default function PlanPage() {
-  const { t } = useI18n();
+  const { t, apiLocale } = useI18n();
+  /* Read through a ref inside the mount effect rather than added to its
+     dependency list. Widening that list restarts the effect on a language
+     switch, and neither guard in it stops a second generation: `cancelled`
+     only gates setState — the POST is already in flight — and the marker that
+     would make the re-run wait for the first draft is cleared just before the
+     call. The result would be two model calls and two orphan drafts, which is
+     exactly what the draft check exists to prevent. */
+  const localeRef = useRef(apiLocale);
+  localeRef.current = apiLocale;
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [draft, setDraft] = useState<Plan | null>(null);
@@ -93,7 +102,7 @@ export default function PlanPage() {
               if (arrived) { clearPlanGenerating(); setDraft(arrived); return; }
             }
             clearPlanGenerating();
-            const made = await portal.generatePlan("6m");
+            const made = await portal.generatePlan("6m", localeRef.current);
             if (!cancelled) setDraft(made);
           } catch {
             if (!cancelled) setError(t("plan.errMake"));
@@ -109,7 +118,7 @@ export default function PlanPage() {
   async function generate() {
     setBusy(true); setError(null);
     try {
-      setDraft(await portal.generatePlan("6m"));
+      setDraft(await portal.generatePlan("6m", apiLocale));
     } catch {
       setError(t("plan.errMake"));
     } finally { setBusy(false); }

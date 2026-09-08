@@ -81,3 +81,29 @@ export function timeAgo(iso: string | null, locale: string): string {
     return then.toISOString().slice(0, 10);
   }
 }
+
+/**
+ * Picks the right noun form for a count.
+ *
+ * Russian needs three: one результат, two-four результата, five результатов —
+ * and the rule is not "last digit", because 11 to 14 take the many-form
+ * whatever they end in. Uzbek inflects the verb rather than the noun after a
+ * numeral, so one form covers every count; English needs two.
+ *
+ * Kept here rather than in the dictionary because it is arithmetic, not
+ * translation: the three Russian words live in `messages.ts` like everything
+ * else, and this only decides which of them is asked for.
+ */
+export function pluralKey(base: string, count: number, locale: string): string {
+  if (locale === "ru") {
+    const mod100 = Math.abs(count) % 100;
+    const mod10 = mod100 % 10;
+    if (mod100 >= 11 && mod100 <= 14) return `${base}.many`;
+    if (mod10 === 1) return `${base}.one`;
+    if (mod10 >= 2 && mod10 <= 4) return `${base}.few`;
+    return `${base}.many`;
+  }
+  // uz, uz-Cyrl and en all resolve on a simple one/other split; the Uzbek
+  // entries carry the same word in both, which is correct for the language.
+  return count === 1 ? `${base}.one` : `${base}.many`;
+}
