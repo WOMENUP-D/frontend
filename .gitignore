@@ -6,6 +6,11 @@
 *.key
 
 # Python
+.npm-cache/
+.infra/
+reports/
+
+# Python
 __pycache__/
 *.py[cod]
 .venv/

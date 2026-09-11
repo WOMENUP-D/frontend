@@ -22,6 +22,22 @@ const CONFIG = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_SENDER_ID ?? "",
 };
 
+let configPromise: Promise<void> | null = null;
+export function loadFirebaseConfig(): Promise<void> {
+  if (!configPromise) {
+    configPromise = fetch("/public-config", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Public configuration unavailable");
+        const config = await response.json();
+        for (const key of Object.keys(CONFIG) as (keyof typeof CONFIG)[]) {
+          if (typeof config[key] === "string" && config[key]) CONFIG[key] = config[key];
+        }
+      })
+      .catch((error) => { configPromise = null; throw error; });
+  }
+  return configPromise;
+}
+
 /** The three values sign-in genuinely cannot work without. */
 export function firebaseConfigured(): boolean {
   return Boolean(CONFIG.apiKey && CONFIG.authDomain && CONFIG.projectId);
@@ -32,6 +48,7 @@ let authPromise: Promise<Auth> | null = null;
 export function firebaseAuth(): Promise<Auth> {
   if (!authPromise) {
     authPromise = (async () => {
+      await loadFirebaseConfig();
       const [{ initializeApp, getApps, getApp }, { getAuth }] = await Promise.all([
         import("firebase/app"),
         import("firebase/auth"),

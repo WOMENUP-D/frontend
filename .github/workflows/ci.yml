@@ -1,0 +1,161 @@
+name: frontend CI and release
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: bash .ci/security.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: security-reports
+          path: reports/
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: python3 .ci/test_promote.py
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: /api/v1
+          NEXT_PUBLIC_DEMO: 'false'
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: npx playwright install --with-deps chromium
+      - name: Production browser smoke tests
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          node .next/standalone/server.js > /tmp/frontend.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          for attempt in {1..60}; do
+            if curl -fsS http://localhost:3000/healthz; then break; fi
+            sleep 2
+          done
+          npm run test:smoke
+
+  publish:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: [security, tests]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.release.outputs.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check immutable version
+        id: existing
+        env:
+          TAG: ghcr.io/womenup-d/frontend:frontend-${{ github.sha }}
+          VERSION: frontend-${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if versions=$(gh api --paginate --slurp 'orgs/WOMENUP-D/packages/container/frontend/versions?per_page=100' 2>error.log); then
+            digest=$(jq -r --arg tag "$VERSION" '.[][] | select(any(.metadata.container.tags[]?; . == $tag)) | .name' <<< "$versions")
+            if [[ -n "$digest" ]]; then
+              [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+              actual=$(docker buildx imagetools inspect "$TAG" --format '{{json .Manifest}}' | jq -r .digest)
+              test "$actual" = "$digest"
+              echo "digest=$digest" >> "$GITHUB_OUTPUT"
+            fi
+          elif ! grep -q 'HTTP 404' error.log; then
+            cat error.log >&2
+            exit 1
+          fi
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        if: steps.existing.outputs.digest == ''
+        id: build
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/womenup-d/frontend:candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          build-args: REVISION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: mode=max
+          sbom: true
+      - name: Scan exact release image
+        env:
+          DIGEST: ${{ steps.existing.outputs.digest || steps.build.outputs.digest }}
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p reports
+          docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD -v "$PWD/reports:/reports" \
+            aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
+            image --severity HIGH,CRITICAL --exit-code 1 --format json \
+            --output /reports/image.json "ghcr.io/womenup-d/frontend@$DIGEST"
+      - name: Publish immutable version
+        id: release
+        env:
+          DIGEST: ${{ steps.existing.outputs.digest || steps.build.outputs.digest }}
+          EXISTING: ${{ steps.existing.outputs.digest }}
+          TAG: ghcr.io/womenup-d/frontend:frontend-${{ github.sha }}
+        run: |
+          if [[ -z "$EXISTING" ]]; then
+            docker buildx imagetools create --prefer-index=false --tag "$TAG" "ghcr.io/womenup-d/frontend@$DIGEST"
+          fi
+          actual=$(docker buildx imagetools inspect "$TAG" --format '{{json .Manifest}}' | jq -r .digest)
+          test "$actual" = "$DIGEST"
+          echo "image=ghcr.io/womenup-d/frontend@$DIGEST" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: image-security-report
+          path: reports/
+  deploy:
+    needs: publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: WOMENUP-D/infra
+          ref: main
+          path: .infra
+          token: ${{ secrets.INFRA_PUSH_TOKEN }}
+      - run: bash .ci/promote.sh
+        env:
+          APP: frontend
+          SOURCE_SHA: ${{ github.sha }}
+          IMAGE: ${{ needs.publish.outputs.image }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

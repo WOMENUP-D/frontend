@@ -1,0 +1,11 @@
+*
+!package.json
+!package-lock.json
+!next.config.mjs
+!next-env.d.ts
+!tsconfig.json
+!eslint.config.mjs
+!src/
+!src/**
+!public/
+!public/**

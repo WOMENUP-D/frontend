@@ -32,6 +32,7 @@ import {
 } from "@/components/BirthDateField";
 import { useI18n, type MessageKey } from "@/i18n";
 import { showDemo } from "@/services/env";
+import { loadFirebaseConfig } from "@/services/firebase";
 
 /** Where a signed-in learner lands. The feed is the portal's first tab, and
  *  it is the one screen that has something on it before she has done any
@@ -96,6 +97,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
 
   /** The API speaks English to developers; the login screen must not. The OTP
    *  throttle is the one error a real user hits routinely, so it gets its own
@@ -170,7 +172,10 @@ export default function LoginPage() {
   // Coming back from a redirect sign-in. Silent when there is nothing waiting.
   useEffect(() => {
     let cancelled = false;
-    completeGoogleRedirect()
+    loadFirebaseConfig().then(() => {
+      if (!cancelled) setGoogleReady(googleConfigured());
+      return completeGoogleRedirect();
+    })
       .then((idToken) => {
         if (!idToken || cancelled) return;
         setGoogleBusy(true);
@@ -391,7 +396,7 @@ export default function LoginPage() {
                 up yet" is worse than no button — so it is not rendered.
                 Fill the NEXT_PUBLIC_FIREBASE_* variables and it comes back
                 on its own; the code behind it is untouched. */}
-            {googleConfigured() && (
+            {googleReady && (
               <>
                 <div className="auth-or"><span>{t("login.orDivider")}</span></div>
 
