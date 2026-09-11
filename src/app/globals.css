@@ -3400,3 +3400,166 @@ button.ed-row { cursor: pointer; }
   .pstat { padding: 13px; }
   .pstat-value { font-size: 1.45rem; }
 }
+
+/* ==================================================================
+   "One question, right now" — the only part of the landing page a
+   visitor can use rather than read.
+   ================================================================== */
+.try-card {
+  max-width: 760px; margin: 0 auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-top: 2px solid var(--cat, var(--primary));
+  border-radius: 4px; padding: 26px 28px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.try-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.try-course { font-size: .84rem; font-weight: 600; color: var(--cat, var(--primary)); }
+.try-count {
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.try-q {
+  font-size: 1.24rem; font-weight: 500; line-height: 1.35; color: var(--ink);
+  letter-spacing: -.01em;
+}
+
+.try-opts { display: flex; flex-direction: column; gap: 8px; }
+.try-opt {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: 13px 16px; border: 1px solid var(--border-strong);
+  border-radius: 10px; background: var(--surface);
+  font: inherit; font-size: .95rem; color: var(--ink);
+  transition: border-color .15s ease, background .15s ease;
+  /* Touch targets stay comfortable: this is the one control on the page a
+     visitor is asked to use with no account and no instructions. */
+  min-height: 48px;
+}
+.try-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--surface-2); }
+.try-opt:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.try-opt:disabled { cursor: default; }
+
+/* Colour is never the only signal — each state carries its own glyph. */
+.try-opt.is-right { border-color: #4f6f63; background: color-mix(in srgb, #4f6f63 8%, transparent); color: var(--ink); }
+.try-opt.is-wrong { border-color: #b8453f; background: color-mix(in srgb, #b8453f 7%, transparent); }
+.try-opt.is-dim { opacity: .5; }
+
+.try-mark { width: 18px; height: 18px; flex: none; display: grid; place-items: center; }
+.try-mark svg { width: 18px; height: 18px; }
+.try-opt.is-right .try-mark { color: #4f6f63; }
+.try-opt.is-wrong .try-mark { color: #b8453f; }
+
+.try-explain {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: 16px; border-top: 1px solid var(--border);
+}
+.try-verdict { font-size: .88rem; font-weight: 600; color: #b8453f; }
+.try-verdict.is-right { color: #4f6f63; }
+.try-explain p { font-size: .97rem; line-height: 1.6; color: var(--text-dim); }
+.try-after { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
+
+@media (max-width: 560px) {
+  .try-card { padding: 20px 18px; }
+  .try-after > * { flex: 1; text-align: center; }
+}
+
+/* ==================================================================
+   The catalogue's second reading: a shelf of spines.
+   Width encodes course hours; colour encodes the direction, on the
+   same `[data-cat]` set the cards already use.
+   ================================================================== */
+.cat-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.cat-view {
+  display: inline-flex; gap: 2px; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+}
+.cat-view button {
+  border: 0; background: none; cursor: pointer; font: inherit;
+  font-size: .82rem; color: var(--text-dim);
+  padding: 6px 14px; border-radius: 999px;
+  transition: background .15s ease, color .15s ease;
+}
+.cat-view button[aria-pressed="true"] {
+  background: var(--surface); color: var(--ink); font-weight: 600;
+  box-shadow: var(--card-lift);
+}
+.cat-view button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+.shelf-wrap { display: flex; flex-direction: column; }
+
+.shelf-scale {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  font-size: .78rem; color: var(--text-faint); margin-bottom: 14px;
+}
+.shelf-scale-bars { display: inline-flex; align-items: flex-end; gap: 3px; }
+.shelf-scale-bars i { height: 13px; background: var(--border-strong); border-radius: 1px; display: block; }
+.shelf-scale-ends { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Spines stand on the board and scroll as one row: a shelf that wraps is
+   not a shelf, and the width encoding stops being comparable across lines. */
+.shelf {
+  display: flex; align-items: flex-end; gap: 4px;
+  overflow-x: auto; padding: 0 2px 2px;
+  min-height: 250px;
+}
+.spine {
+  flex: none; height: 240px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--cat, var(--primary)) 45%, transparent);
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--cat, var(--primary)) 12%, var(--surface));
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: space-between; padding: 12px 4px;
+  transition: transform .16s ease, background .16s ease;
+}
+.spine:hover { transform: translateY(-7px); background: color-mix(in srgb, var(--cat, var(--primary)) 20%, var(--surface)); }
+.spine.is-open { transform: translateY(-14px); background: color-mix(in srgb, var(--cat, var(--primary)) 26%, var(--surface)); }
+.spine:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.spine-title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-size: .84rem; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-height: 196px;
+}
+.spine-hours {
+  font-family: var(--font-mono); font-size: .68rem;
+  color: var(--cat, var(--primary)); font-variant-numeric: tabular-nums;
+}
+
+/* The board. Without it the spines float instead of standing on something. */
+.shelf-board {
+  height: 5px; border-radius: 2px; background: var(--border-strong);
+  margin-bottom: 18px;
+}
+
+.shelf-open {
+  border: 1px solid var(--border); border-top: 2px solid var(--cat, var(--primary));
+  border-radius: 4px; background: var(--surface); padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 9px; align-items: flex-start;
+  max-width: 640px;
+}
+.shelf-open-cat { font-size: .8rem; font-weight: 600; color: var(--cat, var(--primary)); }
+.shelf-open h3 { font-size: 1.1rem; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+.shelf-open p { font-size: .93rem; line-height: 1.55; color: var(--text-dim); }
+.shelf-open-figs {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center;
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums; margin: 2px 0 4px;
+}
+.shelf-open-figs b { color: var(--text); font-weight: 500; }
+.shelf-open-fmt,
+.shelf-open-cert {
+  font-family: var(--font-sans, inherit); border: 1px solid var(--border);
+  border-radius: 3px; padding: 2px 7px;
+}
+.shelf-open-cert { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 32%, transparent); }
+.shelf-hint { font-size: .86rem; color: var(--text-faint); }
+
+@media (max-width: 560px) {
+  .spine { height: 190px; }
+  .spine-title { max-height: 150px; }
+}

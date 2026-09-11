@@ -7,6 +7,7 @@ import { Empty, ErrorNote, Loading } from "@/components/ui";
 import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
+import { Shelf } from "@/components/Shelf";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -32,6 +33,9 @@ export default function ProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  /* The grid stays the default: it carries the figures people compare on.
+     The shelf is the second reading — the catalogue as a body of work. */
+  const [shelf, setShelf] = useState(false);
 
   useEffect(() => { setAuthed(Boolean(getAccessToken())); }, []);
 
@@ -120,11 +124,30 @@ export default function ProgramsPage() {
           )}
 
           {!loading && programs.length > 0 && (
-            <span className="faint cat-count">
-              {t("pr.found").replace("{n}", String(programs.length))}
-            </span>
+            <div className="cat-bar">
+              <span className="faint cat-count">
+                {t("pr.found").replace("{n}", String(programs.length))}
+              </span>
+              <div className="cat-view" role="group" aria-label={t("shelf.view")}>
+                <button
+                  type="button"
+                  aria-pressed={!shelf}
+                  onClick={() => setShelf(false)}
+                >
+                  {t("shelf.grid")}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={shelf}
+                  onClick={() => setShelf(true)}
+                >
+                  {t("shelf.shelf")}
+                </button>
+              </div>
+            </div>
           )}
 
+          {shelf ? <Shelf programs={programs} /> : (
           <div className="prog-grid">
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
@@ -194,6 +217,7 @@ export default function ProgramsPage() {
               );
             })}
           </div>
+          )}
       </div>
     </main>
   );

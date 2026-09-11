@@ -6,6 +6,7 @@ import { Brand } from "@/components/Nav";
 import { Sky } from "@/components/Sky";
 import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
+import { TryQuestion } from "@/components/TryQuestion";
 import { AiTeaser, ClosingCall, PathCards, Roadmap, Wellbeing } from "./Landing";
 import { CareerProgress, OpportunityShowcase, ProgramShowcase } from "./Showcase";
 
@@ -65,6 +66,7 @@ export default function LandingPage() {
 
       <AiTeaser />
       <PathCards />
+      <TryQuestion />
       <Roadmap />
       <ProgramShowcase />
       <CareerProgress />

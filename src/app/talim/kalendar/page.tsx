@@ -30,6 +30,8 @@ import {
   type EventKind,
 } from "@/content/learning";
 import { useMockData } from "@/components/learning/useMockData";
+import { StudyYearView } from "@/components/learning/StudyYear";
+import { WeekGrid } from "@/components/learning/WeekGrid";
 import {
   EmptyState,
   ErrorState,
@@ -40,12 +42,13 @@ import {
   monthKey,
 } from "@/components/learning/ui";
 
-type View = "month" | "week" | "list";
+type View = "month" | "week" | "list" | "year";
 
 const VIEWS: { id: View; label: MessageKey }[] = [
   { id: "month", label: "lms.cal.month" },
   { id: "week", label: "lms.cal.week" },
   { id: "list", label: "lms.cal.list" },
+  { id: "year", label: "lms.cal.year" },
 ];
 
 /** Kind → the stripe that carries it. `assignment` is the unmodified pip. */
@@ -222,7 +225,7 @@ export default function CalendarPage() {
     );
   }
 
-  const grid = view !== "list";
+  const grid = view === "month";
   const todayKey = iso(today);
 
   return (
@@ -232,35 +235,43 @@ export default function CalendarPage() {
       <div className="lms-cal-head">
         {/* Announced politely: paging with the keyboard otherwise changes the
             whole grid without saying what it changed to. */}
-        <h2 className="lms-cal-month" aria-live="polite">{heading}</h2>
+        <h2 className="lms-cal-month" aria-live="polite">
+          {view === "year" ? t("lms.cal.yearHeading") : heading}
+        </h2>
 
-        <button
-          type="button"
-          className="lms-icon-btn"
-          aria-label={t("lms.cal.prev")}
-          title={t("lms.cal.prev")}
-          onClick={() => step(-1)}
-        >
-          <span aria-hidden="true">‹</span>
-        </button>
-        <button
-          type="button"
-          className="lms-icon-btn"
-          aria-label={t("lms.cal.today")}
-          title={t("lms.cal.today")}
-          onClick={() => setAnchor(today)}
-        >
-          <span aria-hidden="true">◉</span>
-        </button>
-        <button
-          type="button"
-          className="lms-icon-btn"
-          aria-label={t("lms.cal.next")}
-          title={t("lms.cal.next")}
-          onClick={() => step(1)}
-        >
-          <span aria-hidden="true">›</span>
-        </button>
+        {/* The year view is anchored to today by construction, so there is
+            nothing to page to and no "jump to today" to offer. */}
+        {view !== "year" && (
+          <>
+          <button
+            type="button"
+            className="lms-icon-btn"
+            aria-label={t("lms.cal.prev")}
+            title={t("lms.cal.prev")}
+            onClick={() => step(-1)}
+          >
+            <span aria-hidden="true">‹</span>
+          </button>
+          <button
+            type="button"
+            className="lms-icon-btn"
+            aria-label={t("lms.cal.today")}
+            title={t("lms.cal.today")}
+            onClick={() => setAnchor(today)}
+          >
+            <span aria-hidden="true">◉</span>
+          </button>
+          <button
+            type="button"
+            className="lms-icon-btn"
+            aria-label={t("lms.cal.next")}
+            title={t("lms.cal.next")}
+            onClick={() => step(1)}
+          >
+            <span aria-hidden="true">›</span>
+          </button>
+          </>
+        )}
 
         <div
           className="lms-seg"
@@ -281,16 +292,20 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {grid ? (
+      {view === "year" ? (
+        <StudyYearView anchor={today} />
+      ) : view === "week" ? (
+        <WeekGrid days={days} byDate={byDate} today={today} />
+      ) : grid ? (
         <section aria-label={t("lms.cal.title")}>
-          <div className={`lms-month ${view === "week" ? "lms-week" : ""}`.trim()}>
+          <div className="lms-month">
             {weekdays.map((label, index) => (
               <div className="lms-month-wd" key={`wd-${index}`}>{label}</div>
             ))}
 
             {days.map((day) => {
               const key = iso(day);
-              const outside = view === "month" && day.getMonth() !== anchor.getMonth();
+              const outside = day.getMonth() !== anchor.getMonth();
               const isToday = key === todayKey;
               return (
                 <div
@@ -304,7 +319,7 @@ export default function CalendarPage() {
                 >
                   <span className="lms-day-n">{day.getDate()}</span>
                   {(byDate.get(key) ?? []).map((event) => (
-                    <Pip key={event.id} event={event} withTime={view === "week"} />
+                    <Pip key={event.id} event={event} withTime={false} />
                   ))}
                 </div>
               );

@@ -33,6 +33,7 @@ const MAIN: NavItem[] = [
   { href: "/talim", label: "lms.nav.dashboard", icon: "◉" },
   { href: "/talim/kurslar", label: "lms.nav.courses", icon: "▤" },
   { href: "/talim/kalendar", label: "lms.nav.calendar", icon: "▦" },
+  { href: "/talim/kundalik", label: "lms.nav.diary", icon: "✎" },
   { href: "/talim/maqsadlar", label: "lms.nav.goals", icon: "◎" },
   { href: "/talim/yutuqlar", label: "lms.nav.achievements", icon: "✦" },
   { href: "/talim/yordamchi", label: "lms.nav.assistant", icon: "◈" },
@@ -86,6 +87,7 @@ function useCrumbs(pathname: string): { href?: string; label: string }[] {
 
     const map: Record<string, MessageKey> = {
       kalendar: "lms.nav.calendar",
+      kundalik: "lms.nav.diary",
       maqsadlar: "lms.nav.goals",
       yutuqlar: "lms.nav.achievements",
       yordamchi: "lms.nav.assistant",

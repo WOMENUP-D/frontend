@@ -1475,3 +1475,361 @@ html[data-theme="dark"] body[data-section="learning"] .sky-layer { opacity: 0.24
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ==================================================================
+   The year view: a rolling twelve months of study, ending today.
+
+   Sized in one place — `--yc` is the square and `--yg` the gap, and
+   every track below is derived from them, so the grid can be retuned
+   without hunting through six rules that have to agree.
+   ================================================================== */
+.lms-year { display: flex; flex-direction: column; gap: 14px; --yc: 13px; --yg: 3px; }
+
+.lms-year-stats {
+  display: flex; gap: 0; margin-bottom: 18px;
+}
+.lms-year-stats > div {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 0 22px; border-left: 1px solid var(--border);
+}
+.lms-year-stats > div:first-child { padding-left: 0; border-left: 0; }
+.lms-year-stats b {
+  font-family: var(--font-mono); font-size: 1.6rem; font-weight: 500;
+  color: var(--ink); line-height: 1; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.lms-year-stats .lms-year-now { color: var(--primary); }
+.lms-year-stats span { font-size: .78rem; color: var(--text-faint); }
+
+/* 53 columns do not fit a phone. The grid keeps its true size and the
+   container scrolls, rather than squeezing squares below the point
+   where a shade can be told from its neighbour. */
+.lms-year-scroll { overflow-x: auto; overflow-y: hidden; }
+.lms-year-grid-wrap { min-width: calc(34px + 53 * (var(--yc) + var(--yg))); }
+
+.lms-year-months {
+  display: flex; margin-left: 34px; height: 17px;
+}
+.lms-year-months > span {
+  width: calc(var(--yc) + var(--yg)); flex: none;
+  font-family: var(--font-mono); font-size: .68rem; color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.lms-year-body { display: flex; gap: 8px; }
+
+.lms-year-days {
+  display: grid; grid-template-rows: repeat(7, var(--yc)); gap: var(--yg);
+  width: 26px; flex: none;
+}
+.lms-year-days > span {
+  font-family: var(--font-mono); font-size: .62rem; color: var(--text-faint);
+  line-height: var(--yc); text-align: right;
+}
+
+.lms-year-grid { display: flex; gap: var(--yg); }
+.lms-year-col { display: grid; grid-template-rows: repeat(7, var(--yc)); gap: var(--yg); }
+
+.lms-year-cell {
+  width: var(--yc); height: var(--yc); border-radius: 2px;
+  border: 0; padding: 0; cursor: pointer; display: block;
+  transition: box-shadow .12s ease;
+}
+.lms-year-cell:hover { box-shadow: 0 0 0 1.5px var(--border-strong); }
+.lms-year-cell.is-today { box-shadow: 0 0 0 1.5px var(--text-faint); }
+.lms-year-cell.is-picked { box-shadow: 0 0 0 2px var(--ink); }
+.lms-year-cell:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+/* A day that has not happened yet holds its slot and draws nothing. */
+.lms-year-gap { background: transparent; cursor: default; pointer-events: none; }
+
+.lms-year-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-top: 14px; margin-left: 34px;
+}
+.lms-year-note { font-size: .78rem; color: var(--text-faint); }
+.lms-year-scale {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: .78rem; color: var(--text-faint);
+}
+.lms-year-scale i { display: inline-flex; gap: var(--yg); }
+.lms-year-scale b {
+  width: var(--yc); height: var(--yc); border-radius: 2px; display: block;
+}
+
+.lms-year-day-head {
+  display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px;
+}
+.lms-year-day-head h3 {
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 500;
+  color: var(--ink); letter-spacing: -.01em;
+}
+.lms-year-today-tag { font-size: .82rem; color: var(--primary); font-weight: 600; }
+.lms-year-day-meta {
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  margin-left: auto; font-variant-numeric: tabular-nums;
+}
+
+.lms-year-entries { list-style: none; margin: 0; padding: 0; }
+.lms-year-entries li {
+  display: grid; grid-template-columns: 56px 1fr auto; gap: 16px;
+  align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border);
+}
+.lms-year-entries li:last-child { border-bottom: 0; }
+.lms-year-time,
+.lms-year-mins {
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.lms-year-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lms-year-what b { font-size: .93rem; font-weight: 600; color: var(--ink); }
+.lms-year-what i { font-style: normal; font-size: .8rem; }
+.lms-year-empty { margin-top: 6px; }
+
+@media (max-width: 720px) {
+  .lms-year-stats > div { padding: 0 14px; }
+  .lms-year-entries li { grid-template-columns: 48px 1fr; row-gap: 4px; }
+  .lms-year-mins { grid-column: 2; }
+}
+
+/* ==================================================================
+   The week as an hour grid.
+
+   `--wk-rail` is the time gutter and is referenced from the now-dot's
+   own offset calculation, so the marker stays on its column whatever
+   the rail is retuned to.
+   ================================================================== */
+.lms-wk { display: flex; flex-direction: column; gap: 14px; --wk-rail: 62px; }
+.lms-wk-card { overflow: hidden; }
+
+.lms-wk-head {
+  display: grid; grid-template-columns: var(--wk-rail) repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+.lms-wk-day {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 11px 6px 10px; border-left: 1px solid var(--border);
+}
+.lms-wk-day b {
+  font-family: var(--font-mono); font-size: .95rem; font-weight: 500;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.lms-wk-day i { font-style: normal; font-size: .74rem; color: var(--text-faint); }
+.lms-wk-day.is-today { background: var(--band); }
+.lms-wk-day.is-today b,
+.lms-wk-day.is-today i { color: var(--primary); }
+
+.lms-wk-body {
+  display: grid; grid-template-columns: var(--wk-rail) repeat(7, 1fr);
+  position: relative;
+}
+
+.lms-wk-rail { display: flex; flex-direction: column; }
+.lms-wk-rail > span { position: relative; display: block; }
+.lms-wk-rail i {
+  position: absolute; right: 10px; top: -7px; font-style: normal;
+  font-family: var(--font-mono); font-size: .68rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.lms-wk-col { position: relative; border-left: 1px solid var(--border); }
+.lms-wk-col.is-today { background: color-mix(in srgb, var(--band) 55%, transparent); }
+.lms-wk-slot { display: block; border-top: 1px solid var(--surface-2); }
+
+/* An event is a block, not a pip: its height is how long it runs, which is
+   the one thing a week view exists to show. */
+.lms-wk-ev {
+  position: absolute; left: 5px; right: 5px;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 6px 8px; border: 0; border-left: 3px solid var(--primary);
+  border-radius: 4px; background: var(--surface-2); cursor: pointer;
+  overflow: hidden; text-align: left;
+  transition: box-shadow .12s ease;
+}
+.lms-wk-ev b {
+  font-size: .78rem; font-weight: 600; color: var(--ink); line-height: 1.25;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.lms-wk-ev i {
+  font-style: normal; font-family: var(--font-mono); font-size: .68rem;
+  color: var(--text-faint); font-variant-numeric: tabular-nums;
+}
+.lms-wk-ev:hover { box-shadow: 0 0 0 1px var(--border-strong); }
+.lms-wk-ev.is-picked { box-shadow: 0 0 0 1.5px var(--ink); }
+.lms-wk-ev:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.lms-wk-ev.is-done { opacity: .55; }
+
+/* Kind carries the stripe, on the same semantic set the rest of the section
+   uses — never a decorative colour. */
+.lms-wk-class      { border-left-color: #6d5480; }
+.lms-wk-exam       { border-left-color: #8e4a5c; }
+.lms-wk-assignment { border-left-color: #4f6f63; }
+.lms-wk-deadline   { border-left-color: #a9683f; }
+
+.lms-wk-now { position: absolute; left: 0; right: 0; height: 0; pointer-events: none; }
+.lms-wk-now-time {
+  position: absolute; left: 8px; top: -8px;
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 500;
+  color: #b8453f; font-variant-numeric: tabular-nums;
+}
+.lms-wk-now-line {
+  position: absolute; left: var(--wk-rail); right: 0; top: 0;
+  height: 1.5px; background: #b8453f; display: block;
+}
+.lms-wk-now-dot {
+  position: absolute; top: -3.5px; width: 8px; height: 8px;
+  border-radius: 50%; background: #b8453f; display: block;
+}
+
+.lms-wk-detail { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.lms-wk-tag {
+  font-size: .74rem; padding: 4px 11px; border-radius: 999px;
+  border: 1px solid var(--border-strong); color: var(--text-dim);
+  border-left-width: 3px; white-space: nowrap;
+}
+.lms-wk-detail-what { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.lms-wk-detail-what b { font-size: .98rem; font-weight: 600; color: var(--ink); }
+.lms-wk-detail-what i { font-style: normal; font-size: .84rem; color: var(--text-dim); }
+.lms-wk-detail-when {
+  font-family: var(--font-mono); font-size: .8rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* Seven columns of hour grid do not fit a phone. The card scrolls sideways
+   rather than crushing a 90-minute class into an unreadable sliver. */
+@media (max-width: 860px) {
+  .lms-wk-card { overflow-x: auto; }
+  .lms-wk-head,
+  .lms-wk-body { min-width: 720px; }
+}
+
+/* ==================================================================
+   The study diary. Dates run down the margin the way they do on paper,
+   so a year of entries can be scanned by edge rather than read through.
+   ================================================================== */
+.lms-diary { display: flex; flex-direction: column; gap: 32px; }
+
+.lms-diary-mhead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border-strong);
+  margin-bottom: 4px;
+}
+.lms-diary-mhead h2 {
+  font-family: var(--font-display); font-size: 1.35rem; font-weight: 500;
+  color: var(--ink); letter-spacing: -.01em; text-transform: capitalize;
+}
+.lms-diary-mhead span {
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.lms-diary-list { list-style: none; margin: 0; padding: 0; }
+.lms-diary-item {
+  display: grid; grid-template-columns: 56px 1fr; gap: 20px;
+  padding: 20px 0; border-bottom: 1px solid var(--border);
+}
+.lms-diary-item:last-child { border-bottom: 0; }
+
+.lms-diary-when {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding-top: 2px;
+}
+.lms-diary-when b {
+  font-family: var(--font-mono); font-size: 1.3rem; font-weight: 500;
+  color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.lms-diary-when i {
+  font-style: normal; font-size: .68rem; color: var(--text-faint);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+
+.lms-diary-body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lms-diary-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.lms-diary-lesson { font-size: 1rem; font-weight: 600; color: var(--ink); }
+.lms-diary-course { font-size: .84rem; }
+.lms-diary-mins {
+  font-family: var(--font-mono); font-size: .76rem; color: var(--text-faint);
+  margin-left: auto; font-variant-numeric: tabular-nums;
+}
+.lms-diary-gained { font-size: .96rem; line-height: 1.6; color: var(--text); }
+
+/* What did not go well is marked, not hidden: it is the line that makes the
+   entry worth re-reading. Carried by a rule and a label, never colour alone. */
+.lms-diary-hard {
+  font-size: .92rem; line-height: 1.6; color: var(--text-dim);
+  padding-left: 14px; border-left: 2px solid var(--border-strong);
+}
+.lms-diary-hard span {
+  display: block; font-size: .76rem; font-weight: 600;
+  color: var(--text-faint); margin-bottom: 2px;
+}
+
+@media (max-width: 560px) {
+  .lms-diary-item { grid-template-columns: 44px 1fr; gap: 14px; }
+  .lms-diary-mins { margin-left: 0; }
+}
+
+/* ==================================================================
+   The ladder: first lesson → job. A rail with the reached rungs
+   filled, the current one marked, and the rest left legible.
+   ================================================================== */
+.lms-ladder { margin-bottom: 34px; }
+.lms-ladder-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin-bottom: 14px;
+}
+.lms-ladder-head h2 {
+  font-family: var(--font-display); font-size: 1.3rem; font-weight: 500;
+  color: var(--ink); letter-spacing: -.01em;
+}
+.lms-ladder-head span {
+  font-family: var(--font-mono); font-size: .78rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.lms-ladder-list { list-style: none; margin: 0; padding: 0; }
+.lms-rung {
+  display: grid; grid-template-columns: 26px 1fr auto auto;
+  gap: 14px; align-items: center;
+  padding: 14px 0; position: relative;
+}
+/* The rail is drawn between the markers, not behind the whole row, so it
+   stops cleanly at the last rung instead of trailing off the card. */
+.lms-rung::before {
+  content: ""; position: absolute; left: 12px; top: 0; bottom: 0;
+  width: 1.5px; background: var(--border-strong);
+}
+.lms-rung:first-child::before { top: 50%; }
+.lms-rung:last-child::before { bottom: 50%; }
+.lms-rung.is-done::before { background: var(--primary); }
+
+.lms-rung-mark {
+  width: 26px; height: 26px; border-radius: 50%; position: relative; z-index: 1;
+  display: grid; place-items: center; flex: none;
+  border: 1.5px solid var(--border-strong); background: var(--surface);
+  color: var(--on-primary);
+}
+.lms-rung-mark svg { width: 15px; height: 15px; }
+.lms-rung.is-done .lms-rung-mark { background: var(--primary); border-color: var(--primary); }
+.lms-rung.is-now .lms-rung-mark {
+  border-color: var(--primary); border-width: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.lms-rung-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lms-rung-body b { font-size: 1rem; font-weight: 600; color: var(--ink); }
+.lms-rung-body i { font-style: normal; font-size: .86rem; color: var(--text-dim); line-height: 1.5; }
+/* Still ahead, and still readable: what is left is the useful half. */
+.lms-rung.is-ahead .lms-rung-body b { color: var(--text-dim); font-weight: 500; }
+
+.lms-rung-now {
+  font-size: .74rem; font-weight: 600; color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  border-radius: 999px; padding: 3px 10px; white-space: nowrap;
+}
+.lms-rung-cta { white-space: nowrap; }
+
+@media (max-width: 620px) {
+  .lms-rung { grid-template-columns: 26px 1fr; row-gap: 8px; }
+  .lms-rung-now,
+  .lms-rung-cta { grid-column: 2; justify-self: start; }
+}

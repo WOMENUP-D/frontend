@@ -28,6 +28,7 @@ import {
   type Achievement,
 } from "@/content/learning";
 import { useMockData } from "@/components/learning/useMockData";
+import { Ladder } from "@/components/learning/Ladder";
 import {
   EmptyState,
   ErrorState,
@@ -125,6 +126,8 @@ export default function AchievementsPage() {
         <>
           {/* ---- what she has ---------------------------------------- */}
           <section className="lms-sec">
+            <Ladder />
+
             <SectionHead title={t("lms.ach.earned")} />
             {earned.length ? (
               <div className="lms-badges">

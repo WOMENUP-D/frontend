@@ -84,6 +84,24 @@ export interface CalendarEvent {
   /** ISO date, local. Times are separate so an all-day deadline can omit one. */
   date: string;
   time?: string;
+  /** How long it runs. Only the hour grid needs it; everywhere else an event
+   *  is a point in the day. Omitted falls back to `eventMinutes` below. */
+  minutes?: number;
+}
+
+/**
+ * How tall an event is on an hour grid.
+ *
+ * A deadline has no duration — it is a moment — but a moment drawn as a
+ * zero-height block is invisible, so it gets the shortest slot that can still
+ * carry a line of text. The others fall back to what that kind of session
+ * actually runs for.
+ */
+export function eventMinutes(event: CalendarEvent): number {
+  if (event.minutes) return event.minutes;
+  if (event.kind === "class") return 90;
+  if (event.kind === "exam") return 60;
+  return 30;
 }
 
 export interface Achievement {
