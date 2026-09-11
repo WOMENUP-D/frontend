@@ -15,7 +15,9 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-RUN mkdir -p /app/.next/cache && chown node:node /app/.next/cache
+RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    && mkdir -p /app/.next/cache \
+    && chown node:node /app/.next/cache
 ARG REVISION
 LABEL org.opencontainers.image.source="https://github.com/WOMENUP-D/frontend" org.opencontainers.image.revision=$REVISION
 USER node
