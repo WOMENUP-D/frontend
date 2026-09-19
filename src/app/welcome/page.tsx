@@ -3,7 +3,7 @@
 /**
  * First-run onboarding, shown once after sign-in.
  *
- * Two short steps, and only the first is required. Identity comes first — name,
+ * Three steps, and only the first is required. Identity comes first — name,
  * surname, age, region — because age is what decides which health content she
  * may be shown at all, and region is what makes a vacancy or a grant relevant
  * to her rather than to Tashkent.
@@ -11,13 +11,21 @@
  * The second step is what the assistant personalises on, and it is skippable:
  * an unfinished profile costs her some tailoring, and blocking her at the door
  * would cost her the portal.
+ *
+ * The third is the learning questionnaire, which used to be a page of its own
+ * behind a nav tab called "diagnostics". A woman who has just made an account
+ * should meet the questions, not a tab she has to notice and decide to open —
+ * and the plan cannot be built until they are answered, so asking anywhere
+ * else means asking twice. `?step=assessment` opens straight on it, which is
+ * how the cabinet sends her back to revise without redoing her profile.
  */
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAccessToken } from "@/services/api";
+import { getAccessToken, staffHome } from "@/services/api";
 import { takeGoogleName } from "@/services/auth";
 import { portal } from "@/services/portal";
+import { Questionnaire } from "@/components/Questionnaire";
 import { useI18n, type MessageKey } from "@/i18n";
 import {
   BirthDateField,
@@ -70,7 +78,20 @@ export default function WelcomePage() {
   const { t } = useI18n();
   const router = useRouter();
 
-  const [stage, setStage] = useState<1 | 2>(1);
+  /* `?step=assessment` lands straight on the questions. That is the path the
+     cabinet uses to send her back to revise — redoing name and birth date to
+     reach them would be asking for what the portal already has.
+
+     Read off the address rather than through `useSearchParams`, which would
+     put this page behind a Suspense boundary for one string that is available
+     the moment it mounts. The catalogue reads its category filter the same
+     way. */
+  const [stage, setStage] = useState<1 | 2 | 3>(1);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("step") === "assessment") {
+      setStage(3);
+    }
+  }, []);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birth, setBirth] = useState<BirthParts>(EMPTY_BIRTH);
@@ -107,7 +128,7 @@ export default function WelcomePage() {
       .me()
       .then((me) => {
         const roles = (me as { roles?: string[] }).roles ?? [];
-        if (roles.some((r) => r !== "user" && r !== "mother")) router.replace("/admin");
+        if (roles.some((r) => r !== "user" && r !== "mother")) router.replace(staffHome());
       })
       .catch(() => undefined);
   }, [router]);
@@ -132,10 +153,10 @@ export default function WelcomePage() {
         direction: withDetails ? direction : "",
         consent_ai_personalisation: true,
       });
-      // Onboarding ends in the feed. Her plan and her score live one tab
-      // away and are worth opening deliberately; the first thing the portal
-      // owes her after she has answered its questions is something to read.
-      router.push("/yangiliklar");
+      // On to the questions. The profile alone cannot build a plan, and
+      // sending her to the feed here is what used to leave the assessment
+      // sitting behind a tab nobody opened.
+      setStage(3);
     } catch {
       setError(t("asst.err"));
     } finally {
@@ -155,18 +176,28 @@ export default function WelcomePage() {
         <section className="auth-card stack">
           <div className="stack" style={{ gap: 6 }}>
             <span className="eyebrow">
-              {t("wel.step")} {stage} / 2
+              {t("wel.step")} {stage} / 3
             </span>
             <h1 className="auth-title" style={{ fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)" }}>
-              {t(stage === 1 ? "wel.title1" : "wel.title2")}
+              {t(stage === 1 ? "wel.title1" : stage === 2 ? "wel.title2" : "lq.title")}
             </h1>
-            <p className="muted small">{t(stage === 1 ? "wel.lead1" : "wel.lead2")}</p>
+            <p className="muted small">
+              {t(stage === 1 ? "wel.lead1" : stage === 2 ? "wel.lead2" : "lq.lead")}
+            </p>
             <div className="wel-progress" aria-hidden="true">
-              <span className="wel-progress-fill" style={{ width: stage === 1 ? "50%" : "100%" }} />
+              <span
+                className="wel-progress-fill"
+                style={{ width: `${(stage / 3) * 100}%` }}
+              />
             </div>
           </div>
 
-          {stage === 1 ? (
+          {stage === 3 ? (
+            /* The questions themselves. Onboarding ends when they do: the feed
+               is the first thing the portal owes her once it has stopped
+               asking. */
+            <Questionnaire onDone={() => router.push("/yangiliklar")} />
+          ) : stage === 1 ? (
             <>
               <div className="wel-row">
                 <div className="field">

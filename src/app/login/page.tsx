@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { ApiError, getRoles } from "@/services/api";
+import { ApiError, getRoles, staffHome } from "@/services/api";
 import { googleLogin, passwordLogin, register } from "@/services/auth";
 import {
   completeGoogleRedirect,
@@ -244,7 +244,7 @@ export default function LoginPage() {
       // A coordinator signing in here belongs in the panel, not in a cabinet
       // she does not have.
       const staff = getRoles().some((role) => role !== "user" && role !== "mother");
-      router.push(staff ? "/admin" : HOME);
+      router.push(staff ? staffHome() : HOME);
     } catch (err) {
       setError(localiseError(err, mode === "signup" ? "login.errRegister" : "login.errLogin"));
     } finally {

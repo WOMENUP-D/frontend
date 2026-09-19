@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test:e2e": "node --test \"e2e/**/*.test.mjs\""
   },
   "dependencies": {
     "firebase": "^12.18.0",

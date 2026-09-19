@@ -18,18 +18,27 @@ import {
   portal,
   type AssistantProfile,
   type AssistantReply,
+  type CoachContext,
+  type CoachReply,
   type GuestAllowance,
 } from "@/services/portal";
 import { ErrorNote } from "@/components/ui";
+import { CoachPanel, CoachReferences, suggestionText } from "@/components/Coach";
 import { useI18n, type MessageKey } from "@/i18n";
 
 type Route = "auto" | "portal" | "education" | "health";
-type Tab = Route | "daily";
+type Tab = Route | "daily" | "coach";
 
 /** The tabs are filters over one door, not separate assistants: "auto" lets the
  *  router choose, the rest pin the capability for a woman who already knows
- *  what she wants — and skip the routing call while they are at it. */
+ *  what she wants — and skip the routing call while they are at it.
+ *
+ *  "Coach" leads because it is the only one that already knows her: it reads
+ *  her score, her skills and her courses before she has typed anything. It
+ *  needs an account for the same reason — there is nothing to coach without a
+ *  record. */
 const TABS: ReadonlyArray<[Tab, MessageKey]> = [
+  ["coach", "asst.tabCoach"],
   ["auto", "asst.tabAuto"],
   ["education", "asst.tabEducation"],
   ["health", "asst.tabHealth"],
@@ -50,6 +59,9 @@ interface Turn {
   reply?: AssistantReply;
   detail?: AssistantReply;
   detailPending?: boolean;
+  /** Present when the Coach answered: its references are real records, already
+   *  resolved on the server. */
+  coach?: CoachReply;
 }
 
 export default function AssistantPage() {
@@ -57,7 +69,11 @@ export default function AssistantPage() {
   const language = locale === "uz-Cyrl" ? "uz" : locale;
 
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<Tab>("auto");
+  /* A signed-in woman opens on the Coach: it is the only surface that already
+     knows her, and the first thing she should see is a true statement about
+     herself rather than an empty box. A guest is moved to the open door below,
+     because there is nothing to coach without a record. */
+  const [tab, setTab] = useState<Tab>("coach");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -65,6 +81,11 @@ export default function AssistantPage() {
   const [profile, setProfile] = useState<AssistantProfile | null>(null);
   const [allowance, setAllowance] = useState<GuestAllowance | null>(null);
   const [daily, setDaily] = useState<AssistantReply | null>(null);
+  const [coach, setCoach] = useState<CoachContext | null>(null);
+  const [coachFailed, setCoachFailed] = useState(false);
+  /* The listing she came from, when she pressed "Ask the Coach" on one. Sent
+     with her questions so the answer is about that real record. */
+  const [about, setAbout] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const refreshProfile = useCallback(async () => {
@@ -79,8 +100,20 @@ export default function AssistantPage() {
   useEffect(() => {
     const signedIn = Boolean(getAccessToken());
     setAuthed(signedIn);
-    if (signedIn) void refreshProfile();
-    else portal.assistantGuestAllowance().then(setAllowance).catch(() => {});
+    // A page elsewhere can hand over a question — "what else do I need for
+    // this career?" — through `?ask=`. It is only put in the box: nothing is
+    // sent to the Coach until she presses send herself.
+    const params = new URLSearchParams(window.location.search);
+    const handed = params.get("ask");
+    if (signedIn && handed) setInput(handed.slice(0, 500));
+    const listing = params.get("about");
+    if (signedIn && listing && /^[0-9a-f-]{36}$/i.test(listing)) setAbout(listing);
+    if (signedIn) {
+      void refreshProfile();
+      return;
+    }
+    setTab("auto");
+    portal.assistantGuestAllowance().then(setAllowance).catch(() => {});
   }, [refreshProfile]);
 
   useEffect(() => {
@@ -92,6 +125,20 @@ export default function AssistantPage() {
     portal.assistantDaily(language).then(setDaily).catch(() => setError(t("asst.err")));
   }, [tab, daily, authed, t, language]);
 
+  /* Her situation is deterministic and cheap, so it is fetched as soon as the
+     Coach is opened rather than waiting for her to ask something. */
+  useEffect(() => {
+    if (tab !== "coach" || coach || !authed) return;
+    let live = true;
+    portal
+      .coachContext(language)
+      .then((value) => live && setCoach(value))
+      .catch(() => live && setCoachFailed(true));
+    return () => {
+      live = false;
+    };
+  }, [tab, coach, authed, language]);
+
   async function ask(question: string) {
     if (!question.trim() || busy) return;
 
@@ -101,6 +148,15 @@ export default function AssistantPage() {
     setError(null);
 
     try {
+      if (tab === "coach") {
+        const reply = await portal.coachAsk(question, language, about);
+        setTurns((prev) => [...prev, { role: "assistant", text: reply.message, coach: reply }]);
+        // Answering may have moved her on — a course enrolled in, a path
+        // started — so the panel is re-read rather than left stale.
+        portal.coachContext(language).then(setCoach).catch(() => {});
+        return;
+      }
+
       const route: Route = tab === "daily" ? "auto" : tab;
       const reply = await portal.assistantAsk(question, language, route);
       if (reply.guest_questions_left !== null) {
@@ -150,11 +206,15 @@ export default function AssistantPage() {
     <main className="wrap page stack" style={{ maxWidth: 880, margin: "0 auto" }}>
       <div>
         <span className="eyebrow">{t("asst.nav")}</span>
-        <h1 style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }}>{t("asst.title")}</h1>
-        <p className="muted small" style={{ maxWidth: 620 }}>{t("asst.subtitle")}</p>
+        <h1 style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }}>
+          {t(tab === "coach" ? "coach.title" : "asst.title")}
+        </h1>
+        <p className="muted small" style={{ maxWidth: 620 }}>
+          {t(tab === "coach" ? "coach.lead" : "asst.subtitle")}
+        </p>
       </div>
 
-      {authed && profile && <KnowsPanel profile={profile} />}
+      {authed && profile && tab !== "coach" && <KnowsPanel profile={profile} />}
 
       {authed === false && (
         <div className="notice notice-warn stack" style={{ gap: 8 }}>
@@ -186,6 +246,25 @@ export default function AssistantPage() {
 
       {error && <ErrorNote message={error} />}
 
+      {tab === "coach" && authed === false && (
+        <div className="notice notice-warn stack" style={{ gap: 8 }}>
+          <strong className="small">{t("coach.needsAccount")}</strong>
+          <Link href="/login" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+            {t("asst.signUp")}
+          </Link>
+        </div>
+      )}
+
+      {tab === "coach" && authed && (
+        coach ? (
+          <CoachPanel context={coach} />
+        ) : coachFailed ? (
+          <ErrorNote message={t("coach.err")} />
+        ) : (
+          <div className="card"><p className="muted small">{t("common.loading")}</p></div>
+        )
+      )}
+
       {tab === "daily" ? (
         <div className="card stack">
           {daily ? (
@@ -202,12 +281,35 @@ export default function AssistantPage() {
             {turns.length === 0 && (
               <div className="stack" style={{ gap: 10 }}>
                 {tab === "auto" && <p className="muted small">{t("asst.autoHint")}</p>}
-                <div className="row" style={{ gap: 8 }}>
-                {SUGGESTIONS[tab].map((key) => (
-                  <button key={key} type="button" className="chip" onClick={() => ask(t(key))}>
-                    {t(key)}
-                  </button>
-                ))}
+                <div className="row coach-suggestions" style={{ gap: 8 }}>
+                  {/* The Coach's questions come from her own state — the server
+                      only offers one when the thing it refers to exists, so
+                      there is never "what is next on my path" for a woman who
+                      is on none. The other tabs keep their fixed list. */}
+                  {tab === "coach"
+                    ? (coach?.suggestions ?? []).map((suggestion) => {
+                        const text = suggestionText(suggestion, t);
+                        return (
+                          <button
+                            key={suggestion.key}
+                            type="button"
+                            className="chip"
+                            onClick={() => ask(text)}
+                          >
+                            {text}
+                          </button>
+                        );
+                      })
+                    : SUGGESTIONS[tab as Route].map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          className="chip"
+                          onClick={() => ask(t(key))}
+                        >
+                          {t(key)}
+                        </button>
+                      ))}
                 </div>
               </div>
             )}
@@ -285,6 +387,31 @@ function KnowsPanel({ profile }: { profile: AssistantProfile }) {
 function AssistantTurn({ turn }: { turn: Turn }) {
   const { t } = useI18n();
   const detail = turn.detail;
+
+  // A coaching answer has its own shape: prose, then the real records it
+  // points at. Nothing here is a card the model composed — every reference was
+  // resolved against the catalogue on the server.
+  if (turn.coach) {
+    return (
+      <div className="stack" style={{ gap: 12 }}>
+        <div className="bubble-ai stack" style={{ gap: 10 }}>
+          {!turn.coach.personalised && (
+            <span className="badge badge-grey">{t("asst.generic")}</span>
+          )}
+          {/* Said out loud rather than hidden: an answer the provider did not
+              write is still true, and she is owed the difference. */}
+          {!turn.coach.generated && !turn.coach.escalated && (
+            <span className="faint small">{t("coach.offline")}</span>
+          )}
+          <p style={{ whiteSpace: "pre-wrap" }}>{turn.text}</p>
+          {turn.coach.unsupported && (
+            <p className="faint small">{t("coach.unsupported")}</p>
+          )}
+          <CoachReferences references={turn.coach.references} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stack" style={{ gap: 12 }}>

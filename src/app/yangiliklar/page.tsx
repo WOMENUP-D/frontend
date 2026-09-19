@@ -26,16 +26,14 @@
  */
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAccessToken } from "@/services/api";
 import {
   portal,
   type ForYouFeed,
-  type NewsDetail,
   type NewsPost,
   type PersonalisedNewsPost,
 } from "@/services/portal";
-import { NewsBody } from "@/components/NewsBody";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
 import { useI18n } from "@/i18n";
 import { newsCategoryKey, newsTopicKey, timeAgo } from "@/utils/format";
@@ -96,29 +94,17 @@ function Reasons({ reasons }: { reasons: string[] }) {
 
 function Post({ post, reasons }: { post: NewsPost; reasons?: string[] }) {
   const { t, tx, locale } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [full, setFull] = useState<NewsDetail | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
 
-  /** The body is only fetched once, and only if she opens the post. Shipping
-   *  every article to draw a feed is what makes a feed slow on a regional
-   *  connection. */
-  const expand = useCallback(() => {
-    setOpen(true);
-    if (full || loading) return;
-    setLoading(true);
-    setFailed(false);
-    portal
-      .newsPost(post.slug)
-      .then(setFull)
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
-  }, [full, loading, post.slug]);
+  /* An article opens on its own page rather than unfolding inside the card.
+     Expanding in place was fine when the feed was one column; in a grid it
+     shoves every neighbour down the page, and the reader loses her place in
+     the row she was scanning. The page also gives the article a URL that can
+     be sent to somebody, which the panel never had. */
+  const href = `/yangiliklar/${post.slug}`;
 
   const title = tx(post.title_i18n);
   const summary = tx(post.summary_i18n);
-  const clipped = !open && summary.length > CAPTION_LIMIT;
+  const clipped = summary.length > CAPTION_LIMIT;
 
   return (
     <article className="news-post">
@@ -169,33 +155,17 @@ function Post({ post, reasons }: { post: NewsPost; reasons?: string[] }) {
           {clipped && (
             <>
               {" "}
-              <button type="button" className="news-inline-more" onClick={expand}>
+              <Link href={href} className="news-inline-more">
                 {t("news.moreInline")}
-              </button>
+              </Link>
             </>
           )}
         </p>
 
-        {open && loading && <Loading rows={1} />}
-        {open && failed && <ErrorNote message={t("common.error")} />}
-        {open && full && <NewsBody post={full} />}
-
         <div className="news-actions">
-          {open ? (
-            <>
-              <button type="button" className="news-plain" onClick={() => setOpen(false)}>
-                {t("news.collapse")}
-              </button>
-              {/* A permalink, so a post can be sent to somebody. */}
-              <Link href={`/yangiliklar/${post.slug}`} className="news-plain">
-                {t("news.openPage")} ↗
-              </Link>
-            </>
-          ) : (
-            <button type="button" className="news-plain" onClick={expand} aria-expanded={false}>
-              {t("news.readMore")}
-            </button>
-          )}
+          <Link href={href} className="news-plain">
+            {t("news.readMore")}
+          </Link>
           {post.reading_minutes && (
             <span className="faint news-readtime">
               {post.reading_minutes} {t("news.minutes")}

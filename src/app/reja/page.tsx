@@ -36,8 +36,41 @@ async function waitForDraft(cancelled: () => boolean): Promise<Plan | null> {
   return null;
 }
 
+/**
+ * Is this plan plainly not in the language she is reading?
+ *
+ * Asked this way round on purpose. "What language is it in" cannot be
+ * answered for a Latin-script plan — Uzbek and English look alike to a
+ * script test — but "is it obviously the wrong one" can, and that is the only
+ * question worth acting on.
+ *
+ * New plans record the language they were written in and are compared
+ * directly. Older ones record nothing, and those are precisely the rows
+ * stranded in the wrong language, so treating "unknown" as "leave it" would
+ * skip the only plans that need fixing. For them the script decides: Russian
+ * is Cyrillic, Uzbek Latin and English are not.
+ *
+ * Where the script cannot settle it — a Latin plan read in Uzbek or English —
+ * the answer is no. An unnecessary rebuild costs a model call and replaces a
+ * draft she may be part-way through reading.
+ */
+function looksWrongLanguage(plan: Plan, reading: string): boolean {
+  const recorded = plan.rationale?.language;
+  if (typeof recorded === "string" && recorded) return recorded !== reading;
+
+  const sample = `${plan.title} ${plan.summary ?? ""}`;
+  const cyrillic = (sample.match(/[\u0400-\u04FF]/g) ?? []).length;
+  const latin = (sample.match(/[A-Za-z]/g) ?? []).length;
+  if (cyrillic + latin < 12) return false;   // too little text to judge
+
+  const isCyrillic = cyrillic > latin;
+  // Reading Russian but the plan carries no Cyrillic, or reading a Latin
+  // locale and the plan is Cyrillic. Both are unambiguous.
+  return reading === "ru" ? !isCyrillic : isCyrillic;
+}
+
 export default function PlanPage() {
-  const { t, apiLocale } = useI18n();
+  const { t, tu, apiLocale } = useI18n();
   /* Read through a ref inside the mount effect rather than added to its
      dependency list. Widening that list restarts the effect on a language
      switch, and neither guard in it stops a second generation: `cancelled`
@@ -115,6 +148,46 @@ export default function PlanPage() {
     return () => { cancelled = true; };
   }, []);
 
+  /**
+   * A proposal follows the language she is reading in.
+   *
+   * The plan is written by the model in one language and stored as plain
+   * text, so switching the site to Russian used to leave a Uzbek roadmap on
+   * the screen. Regenerating is the honest fix rather than translating in the
+   * browser: the roadmap names programmes and deadlines, and a machine
+   * translation of those in the client would drift from the catalogue.
+   *
+   * Only ever a DRAFT. An accepted plan is hers — rebuilding it because she
+   * changed the interface language would throw away something she agreed to,
+   * so an active plan keeps its language and the "rebuild" button stays the
+   * way to change it deliberately.
+   *
+   * Both guards are refs so that neither retriggers the effect. `rebuilding`
+   * stops a second call while the first is in flight; `attempted` stops the
+   * loop that would otherwise follow if the model came back in the wrong
+   * language anyway — one try per locale, then the plan is left as it is
+   * rather than regenerated forever.
+   */
+  const rebuilding = useRef(false);
+  const attempted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!draft || busy || rebuilding.current) return;
+    if (!looksWrongLanguage(draft, apiLocale)) return;
+    if (attempted.current.has(apiLocale)) return;
+
+    attempted.current.add(apiLocale);
+    rebuilding.current = true;
+    setBusy(true);
+    portal
+      .generatePlan("6m", apiLocale)
+      .then(setDraft)
+      .catch(() => setError(t("plan.errMake")))
+      .finally(() => {
+        rebuilding.current = false;
+        setBusy(false);
+      });
+  }, [draft, apiLocale, busy, t]);
+
   async function generate() {
     setBusy(true); setError(null);
     try {
@@ -187,11 +260,30 @@ export default function PlanPage() {
             </div>
           )}
 
+          {/* An accepted plan in another language is offered, never replaced.
+              A draft is rewritten silently above — it is disposable — but this
+              one she agreed to, and rebuilding it on a language switch would
+              throw away something she chose. So the page says what it can do
+              and waits to be asked. */}
+          {!draft && looksWrongLanguage(shown, apiLocale) && (
+            <div className="notice">
+              {t("plan.otherLang")}{" "}
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={generate}
+                disabled={busy}
+              >
+                {busy ? t("common.loading") : t("plan.rebuildHere")}
+              </button>
+            </div>
+          )}
+
           <div className="card card-accent stack">
             <div className="spread">
               <div className="stack" style={{ gap: 4 }}>
-                <h2 style={{ fontSize: "1.25rem" }}>{shown.title}</h2>
-                {shown.summary && <p className="muted small">{shown.summary}</p>}
+                <h2 style={{ fontSize: "1.25rem" }}>{tu(shown.title)}</h2>
+                {shown.summary && <p className="muted small">{tu(shown.summary)}</p>}
               </div>
               <span className={shown.generated_by_ai ? "badge badge-gold" : "badge badge-grey"}>
                 {t(shown.generated_by_ai ? "plan.byAi" : "plan.byRules")}
@@ -224,10 +316,10 @@ export default function PlanPage() {
                   index={position + 1}
                   done={done}
                   arrow={false}
-                  title={item.action}
+                  title={tu(item.action)}
                   meta={
                     <>
-                      {item.description}
+                      {tu(item.description)}
                       {item.due_date && (
                         <>
                           {item.description ? " · " : ""}
