@@ -2,13 +2,18 @@
   "name": "womanup-frontend",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "postcss": "^8.5.23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
-    "test:e2e": "node --test \"e2e/**/*.test.mjs\""
+    "test:e2e": "node --test \"e2e/**/*.test.mjs\"",
+    "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {
     "firebase": "^12.18.0",

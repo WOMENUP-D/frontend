@@ -26,6 +26,7 @@ import {
 } from "@/components/BirthDateField";
 import { useI18n, type MessageKey } from "@/i18n";
 import { showDemo } from "@/services/env";
+import { loadFirebaseConfig } from "@/services/firebase";
 
 /** Where a signed-in learner lands. The feed is the portal's first tab, and
  *  it is the one screen that has something on it before she has done any
