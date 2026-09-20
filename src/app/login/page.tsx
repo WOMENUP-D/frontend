@@ -33,14 +33,27 @@ import { loadFirebaseConfig } from "@/services/firebase";
  *  work — which is exactly the state she is in one second after registering. */
 const HOME = "/yangiliklar";
 
-const DEMO_ACCOUNTS = [
-  {
-    email: "demo@womanup.uz",
-    password: "WomanUP2026",
-    label: "login.roleUser",
-    hint: "login.hintUser",
-  },
-] as const;
+/**
+ * The ready-made account for a demonstration build.
+ *
+ * Written against `process.env.NEXT_PUBLIC_DEMO` directly rather than through
+ * `showDemo()`: the compiler replaces the variable at build time and drops the
+ * whole branch, so a production bundle carries no password at all. Behind a
+ * function call it could not know that, and the credentials shipped to every
+ * visitor of the sign-in page — where the administrator's password was the
+ * same string with one character added.
+ */
+const DEMO_ACCOUNTS =
+  process.env.NEXT_PUBLIC_DEMO === "true"
+    ? ([
+        {
+          email: "demo@womanup.uz",
+          password: "WomanUP2026",
+          label: "login.roleUser",
+          hint: "login.hintUser",
+        },
+      ] as const)
+    : ([] as const);
 
 /** Good enough to catch a typo before a code is sent nowhere; the address is
  *  proved by the code arriving, not by this. */
