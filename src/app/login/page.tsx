@@ -13,15 +13,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { ApiError, getRoles } from "@/services/api";
-import { googleLogin, passwordLogin, register } from "@/services/auth";
-import {
-  completeGoogleRedirect,
-  GoogleCancelled,
-  googleConfigured,
-  requestGoogleIdToken,
-} from "@/services/googleAuth";
+import { passwordLogin, register } from "@/services/auth";
 import { portal } from "@/services/portal";
 import {
   BirthDateField,
@@ -71,18 +65,6 @@ const REGIONS: ReadonlyArray<[string, MessageKey]> = [
   ["surkhandarya", "reg.surkhandarya"],
 ];
 
-/** Google's own mark, inline: the button must not depend on a remote asset. */
-function GoogleMark() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5Z"/>
-      <path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-2.8-.4-4.1H24v7.8h12.4c-.3 2.1-1.6 5.2-4.6 7.3l7.6 5.9c4.5-4.2 6.7-10.3 6.7-16.9Z"/>
-      <path fill="#FBBC05" d="M10.4 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6.1C1 16.3 0 20 0 24s1 7.7 2.6 10.8l7.8-6.1Z"/>
-      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2 1.4-4.8 2.4-8.3 2.4-6.4 0-11.7-3.7-13.6-9.9l-7.8 6.1C6.5 42.6 14.6 48 24 48Z"/>
-    </svg>
-  );
-}
-
 export default function LoginPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -96,8 +78,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [googleBusy, setGoogleBusy] = useState(false);
-  const [googleReady, setGoogleReady] = useState(false);
 
   /** The API speaks English to developers; the login screen must not. The OTP
    *  throttle is the one error a real user hits routinely, so it gets its own
@@ -111,82 +91,6 @@ export default function LoginPage() {
     }
     return t(fallback);
   }
-
-  /** Sign in with Google.
-   *
-   *  `googleBusy` is its own flag rather than the shared `busy` one, so the
-   *  popup and the phone form cannot be fired at once, and a second click
-   *  while the popup is open is ignored instead of opening a second popup.
-   *
-   *  With no OAuth client configured the button stays visible and says so —
-   *  the same degrade-rather-than-fail rule the rest of the portal follows.
-   */
-  async function continueWithGoogle() {
-    if (busy || googleBusy) return;
-    if (!googleConfigured()) {
-      setError(t("login.googleSoon"));
-      return;
-    }
-
-    setGoogleBusy(true);
-    setError(null);
-    try {
-      const idToken = await requestGoogleIdToken();
-      // `null` means the browser refused the popup and Firebase sent her off
-      // on a full-page redirect. There is nothing to do here; the result is
-      // picked up when she comes back.
-      if (idToken === null) return;
-      await finishGoogle(idToken);
-    } catch (err) {
-      if (err instanceof GoogleCancelled) {
-        // She closed the popup. Nothing went wrong; say nothing.
-      } else if (err instanceof ApiError) {
-        setError(
-          err.status === 409
-            ? t("login.googleStaff")
-            : err.status === 503
-              ? t("login.googleDown")
-              : err.status === 429
-                ? t("login.tooSoon").replace("{n}", "60")
-                : t("login.googleErr"),
-        );
-      } else {
-        setError(t("login.googleBlocked"));
-      }
-    } finally {
-      setGoogleBusy(false);
-    }
-  }
-
-  /** Exchange a Firebase token for our session and decide where she lands.
-   *
-   *  A brand-new account still has to say how old she is and where she lives —
-   *  Google supplies neither — so she finishes onboarding; everyone else goes
-   *  straight to the feed.
-   */
-  async function finishGoogle(idToken: string) {
-    const session = await googleLogin(idToken);
-    router.push(session.onboarding_completed ? HOME : "/welcome");
-  }
-
-  // Coming back from a redirect sign-in. Silent when there is nothing waiting.
-  useEffect(() => {
-    let cancelled = false;
-    loadFirebaseConfig().then(() => {
-      if (!cancelled) setGoogleReady(googleConfigured());
-      return completeGoogleRedirect();
-    })
-      .then((idToken) => {
-        if (!idToken || cancelled) return;
-        setGoogleBusy(true);
-        return finishGoogle(idToken).finally(() => setGoogleBusy(false));
-      })
-      .catch(() => setError(t("login.googleErr")));
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   /* Opening an account and agreeing to the privacy policy are one act: the
      account cannot lawfully exist without a basis for holding her data, so the
@@ -209,7 +113,7 @@ export default function LoginPage() {
 
   /** Register or sign in, then decide where she lands. */
   async function submit() {
-    if (busy || googleBusy || !valid) return;
+    if (busy || !valid) return;
     setBusy(true);
     setError(null);
     try {
@@ -380,7 +284,7 @@ export default function LoginPage() {
             <button
               className="btn btn-primary btn-block btn-lg"
               onClick={submit}
-              disabled={busy || googleBusy || !valid}
+              disabled={busy || !valid}
             >
               {t(
                 busy
@@ -390,27 +294,6 @@ export default function LoginPage() {
                     : "login.doLogin",
               )}
             </button>
-            {/* Google sign-in appears only once Firebase is configured.
-                Until the project has credentials there is nothing behind the
-                button, and a button that answers every click with "not set
-                up yet" is worse than no button — so it is not rendered.
-                Fill the NEXT_PUBLIC_FIREBASE_* variables and it comes back
-                on its own; the code behind it is untouched. */}
-            {googleReady && (
-              <>
-                <div className="auth-or"><span>{t("login.orDivider")}</span></div>
-
-                <button
-                  className="btn btn-outline btn-block btn-lg"
-                  onClick={continueWithGoogle}
-                  disabled={busy || googleBusy}
-                >
-                  {googleBusy ? <span className="spinner" aria-hidden="true" /> : <GoogleMark />}
-                  {t(googleBusy ? "login.googleWait" : "login.google")}
-                </button>
-              </>
-            )}
-
             <button
               className="btn btn-ghost btn-block btn-sm"
               onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
