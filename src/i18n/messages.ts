@@ -251,11 +251,8 @@ export const messages = {
 
   // ---- login --------------------------------------------------------
   "login.title":      { uz: "Kirish", ru: "Вход", en: "Sign in" },
-  "login.subtitle":   { uz: "Telefon raqami va bir martalik kod — parol kerak emas.", ru: "Номер телефона и одноразовый код — пароль не нужен.", en: "A phone number and a one-time code — no password needed." },
   "login.email":      { uz: "Elektron pochta", ru: "Электронная почта", en: "Email address" },
-  "login.getCode":    { uz: "Kod olish", ru: "Получить код", en: "Get a code" },
   "login.sending":    { uz: "Yuborilmoqda…", ru: "Отправляем…", en: "Sending…" },
-  "login.codeLabel":  { uz: "Tasdiqlash kodi", ru: "Код подтверждения", en: "Confirmation code" },
   "login.confirm":    { uz: "Tasdiqlash va kirish", ru: "Подтвердить и войти", en: "Confirm and sign in" },
   "login.checking":   { uz: "Tekshirilmoqda…", ru: "Проверяем…", en: "Checking…" },
   "login.changeEmail":{ uz: "Pochtani oʻzgartirish", ru: "Изменить почту", en: "Change email" },
@@ -266,8 +263,6 @@ export const messages = {
   "login.hintUser":   { uz: "diagnostika topshirilgan", ru: "диагностика пройдена", en: "assessment completed" },
   "login.hintAdmin":  { uz: "boshqaruv paneli", ru: "панель управления", en: "management dashboard" },
   "login.anyEmail":   { uz: "Istalgan boshqa pochta bilan yangi akkaunt ochsangiz ham boʻladi.", ru: "Можно завести новый аккаунт с любой другой почтой.", en: "You can also open a new account with any other address." },
-  "login.errCode":    { uz: "Kod yuborilmadi", ru: "Код не отправлен", en: "The code was not sent" },
-  "login.errConfirm": { uz: "Kod tasdiqlanmadi", ru: "Код не подтверждён", en: "The code was not confirmed" },
 
   // ---- cabinet ------------------------------------------------------
   "cab.title":        { uz: "Shaxsiy kabinet", ru: "Личный кабинет", en: "Personal cabinet" },
@@ -716,7 +711,6 @@ export const messages = {
   "foot.org":         { uz: "Oʻzbekiston Iqtisodiy Assambleyasi", ru: "Экономическая ассамблея Узбекистана", en: "Economic Assembly of Uzbekistan" },
 
   // ---- Sign-in and welcome ---------------------------------------
-  "login.tooSoon":     { uz: "Yangi kod soʻrashdan oldin {n} soniya kuting.", ru: "Подождите {n} секунд, прежде чем запросить новый код.", en: "Wait {n} seconds before requesting a new code." },
   "login.newHint":     { uz: "Birinchi marta kiryapsizmi? Koddan keyin ism, familiya va viloyatni soʻraymiz — bir daqiqadan kam.", ru: "Входите впервые? После кода спросим имя, фамилию и регион — меньше минуты.", en: "First time here? After the code we ask for your name, surname and region — under a minute." },
   "login.signupTitle": { uz: "Roʻyxatdan oʻtish", ru: "Регистрация", en: "Sign up" },
   "login.agreeLead":   { uz: "Roʻyxatdan oʻtish orqali men quyidagi hujjatni oʻqiganimni va shartlariga rozi ekanimni tasdiqlayman:", ru: "Регистрируясь, я подтверждаю, что прочитала и принимаю:", en: "By signing up I confirm that I have read and accept the:" },
@@ -741,7 +735,6 @@ export const messages = {
   "login.googleStaff": { uz: "Bu xodim akkaunti — login va parol bilan kiring.", ru: "Это служебный аккаунт — войдите по логину и паролю.", en: "This is a staff account — sign in with your login and password." },
   "login.badge":       { uz: "Bir daqiqada kiring", ru: "Вход за минуту", en: "Sign in in a minute" },
   "login.lead":        { uz: "Pochta va parol — boshqa hech narsa kerak emas. Kutish yoʻq.", ru: "Почта и пароль — больше ничего не нужно. Ждать не придётся.", en: "An address and a password — nothing else, and no waiting." },
-  "login.codeSentTo":  { uz: "Kod yuborildi", ru: "Код отправлен на номер", en: "Code sent to" },
   "login.or":          { uz: "yoki", ru: "или", en: "or" },
   "login.google":      { uz: "Google orqali davom etish", ru: "Продолжить через Google", en: "Continue with Google" },
   "login.terms":       { uz: "Davom etish orqali siz foydalanish shartlari va maxfiylik siyosatiga rozilik bildirasiz.", ru: "Продолжая, вы соглашаетесь с условиями использования и политикой конфиденциальности.", en: "By continuing you accept the terms of use and the privacy policy." },
