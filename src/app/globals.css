@@ -1532,6 +1532,21 @@ p { margin: 0; }
 }
 .input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
 
+/* Password with a show/hide eye inside its right edge. The button is 44px
+   square for a thumb; the input keeps that much room so text never runs
+   under it. */
+.password-field { position: relative; }
+.password-field .input { padding-right: 52px; }
+.password-field .input::-ms-reveal { display: none; }
+.password-toggle {
+  position: absolute; top: 50%; right: 4px; transform: translateY(-50%);
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 0; border-radius: var(--radius-sm); background: transparent;
+  color: var(--text-dim); cursor: pointer; transition: color .2s;
+}
+.password-toggle:hover, .password-toggle[aria-pressed="true"] { color: var(--primary); }
+.password-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: -4px; }
+
 /* A native select paints the OS's own double arrow, which on macOS is a grey
    box with a bevel — the one control on the page that belongs to a different
    design. Draw our own chevron instead. The mark is inline so it cannot be
