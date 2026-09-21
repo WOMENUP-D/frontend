@@ -800,6 +800,8 @@ export const messages = {
   "sl.lead":      { uz: "Login va parol bilan kiring. Xizmat akkauntiga SMS kod kerak emas.", ru: "Войдите по логину и паролю. Служебному аккаунту SMS-код не нужен.", en: "Sign in with a login and a password. A staff account needs no SMS code." },
   "sl.login":     { uz: "Login", ru: "Логин", en: "Login" },
   "sl.password":  { uz: "Parol", ru: "Пароль", en: "Password" },
+  "pw.show":      { uz: "Parolni koʻrsatish", ru: "Показать пароль", en: "Show password" },
+  "pw.hide":      { uz: "Parolni yashirish", ru: "Скрыть пароль", en: "Hide password" },
   "sl.submit":    { uz: "Kirish", ru: "Войти", en: "Sign in" },
   "sl.checking":  { uz: "Tekshirilmoqda…", ru: "Проверяем…", en: "Checking…" },
   "sl.wrong":     { uz: "Login yoki parol notoʻgʻri", ru: "Неверный логин или пароль", en: "Wrong login or password" },
