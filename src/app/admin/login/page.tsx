@@ -16,6 +16,7 @@ import { useState } from "react";
 import { ApiError, setTokens } from "@/services/api";
 import { staffLogin } from "@/services/auth";
 import { useI18n } from "@/i18n";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function StaffLoginPage() {
   const { t } = useI18n();
@@ -71,10 +72,8 @@ export default function StaffLoginPage() {
 
           <div className="field">
             <label className="label" htmlFor="password">{t("sl.password")}</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
-              className="input input-lg"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && void submit()}

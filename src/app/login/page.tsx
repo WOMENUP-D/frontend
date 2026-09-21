@@ -25,6 +25,7 @@ import {
   type BirthParts,
 } from "@/components/BirthDateField";
 import { useI18n, type MessageKey } from "@/i18n";
+import { PasswordInput } from "@/components/PasswordInput";
 import { showDemo } from "@/services/env";
 import { loadFirebaseConfig } from "@/services/firebase";
 
@@ -253,10 +254,8 @@ export default function LoginPage() {
 
             <div className="field">
               <label className="label" htmlFor="password">{t("login.password")}</label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
-                className="input input-lg"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 onKeyDown={(event) => event.key === "Enter" && void submit()}
