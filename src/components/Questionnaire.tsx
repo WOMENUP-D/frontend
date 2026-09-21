@@ -3,47 +3,49 @@
 /**
  * The learning questionnaire.
  *
- * The old screen asked eighteen variations of "rate yourself from 'not at all'
- * to 'excellent'" — answerable without thinking and useless for deciding what
- * to teach her. These questions ask what she wants to learn, why, how much time
- * she has and what she can already do.
+ * It asks what she wants to learn, why, how much time she has and what she can
+ * already do — not eighteen variations of "rate yourself from poor to
+ * excellent", which are answerable without thinking and useless for deciding
+ * what to teach her.
  *
  * One question at a time on purpose: seventeen fields on one screen is a form,
- * and forms get abandoned. Answers are saved as she goes, so closing the tab
- * costs her nothing.
+ * and forms get abandoned. Answers are saved as she goes, so leaving costs her
+ * nothing and coming back resumes at the first gap rather than the start.
+ *
+ * This used to be a page of its own at `/diagnostika`, reached by a nav tab and
+ * a button in the cabinet. It is a component now because the questions belong
+ * where the account is created — a woman who has just signed up should meet
+ * them, not a tab she has to notice and decide to open. `/welcome` mounts it as
+ * its last step, and the cabinet sends her back to the same place to revise.
  */
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getAccessToken } from "@/services/api";
 import { clearPlanGenerating, markPlanGenerating } from "@/services/planDraft";
-import { portal, type LqQuestion, type Questionnaire } from "@/services/portal";
+import { portal, type LqQuestion, type Questionnaire as Survey } from "@/services/portal";
 import { useI18n, type MessageKey } from "@/i18n";
-import { Loading, NeedsAuth } from "@/components/ui";
+import { Loading } from "@/components/ui";
 
 type Answers = Record<string, unknown>;
-type Stage = "form" | "done";
 
-export default function DiagnosticPage() {
+export function Questionnaire({
+  onDone,
+  onProgress,
+}: {
+  /** Called once the last required answer lands. The host decides where she
+   *  goes next — onboarding sends her to the feed, a revisit stays put. */
+  onDone: () => void;
+  /** Lets the host draw its own progress: `(answered, total)`. */
+  onProgress?: (index: number, total: number) => void;
+}) {
   const { t, tx, apiLocale } = useI18n();
-  const router = useRouter();
 
-  const [authed, setAuthed] = useState<boolean | null>(null);
-  const [survey, setSurvey] = useState<Questionnaire | null>(null);
+  const [survey, setSurvey] = useState<Survey | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
   const [index, setIndex] = useState(0);
-  const [stage, setStage] = useState<Stage>("form");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getAccessToken();
-    setAuthed(Boolean(token));
-    if (!token) {
-      setLoading(false);
-      return;
-    }
     Promise.all([portal.questionnaire(), portal.learningProfile()])
       .then(([q, profile]) => {
         setSurvey(q);
@@ -53,12 +55,16 @@ export default function DiagnosticPage() {
           (item) => item.required && !hasAnswer(profile.answers?.[item.id]),
         );
         setIndex(firstGap === -1 ? 0 : firstGap);
-        if (profile.completed) setStage("done");
       })
       .finally(() => setLoading(false));
   }, []);
 
   const question = survey?.questions[index];
+
+  useEffect(() => {
+    if (survey) onProgress?.(index, survey.questions.length);
+  }, [index, survey, onProgress]);
+
   const sectionTitle = useMemo(() => {
     if (!survey || !question) return "";
     const section = survey.sections.find((s) => s.id === question.section);
@@ -91,111 +97,58 @@ export default function DiagnosticPage() {
     setBusy(true);
     try {
       const saved = await portal.saveLearning(next);
-      setStage(saved.completed ? "done" : "form");
       if (saved.completed) {
         // The roadmap starts building the moment the assessment is finished,
-        // not when she asks for it. Generation is a slow model call, so the
-        // point of firing it here is that the wait overlaps with reading this
-        // screen — by the time she opens the roadmap the draft is usually there.
-        // Deliberately not awaited: nothing on this page depends on it, and
-        // blocking the results behind a minute of spinner would be worse than
-        // the click it replaces.
+        // not when she asks for it. Generation is a slow model call, so firing
+        // it here means the wait overlaps with whatever she reads next.
+        // Deliberately not awaited: nothing here depends on it, and blocking
+        // her behind a minute of spinner would be worse than the click it
+        // replaces.
         markPlanGenerating();
         void portal.generatePlan("6m", apiLocale).catch(() => {
           // The roadmap page generates its own draft if this never lands, so a
           // failure here costs a wait, not the plan.
           clearPlanGenerating();
         });
+        onDone();
+        return;
       }
-      if (!saved.completed) {
-        const gap = survey.questions.findIndex((q) => saved.missing.includes(q.id));
-        if (gap !== -1) setIndex(gap);
-      }
+      const gap = survey.questions.findIndex((q) => saved.missing.includes(q.id));
+      if (gap !== -1) setIndex(gap);
     } finally {
       setBusy(false);
     }
   }
 
-  if (authed === false) {
-    return (
-      <main className="wrap page">
-        <NeedsAuth />
-      </main>
-    );
-  }
-  if (loading || !survey) {
-    return (
-      <main className="wrap page">
-        <Loading rows={4} />
-      </main>
-    );
-  }
+  if (loading || !survey || !question) return <Loading rows={4} />;
 
-  /* ------------------------------------------------------------- finished */
-  if (stage === "done") {
-    return (
-      <main className="wrap page lq-narrow stack" style={{ gap: 18 }}>
-        <span className="eyebrow">{t("lq.doneBadge")}</span>
-        <h1 className="lq-h1">{t("lq.doneTitle")}</h1>
-        <p className="muted">{t("lq.doneLead")}</p>
-
-        <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-lg" onClick={() => router.push("/reja")}>
-            {t("lq.toPlan")}
-          </button>
-          <Link href="/yordamchi" className="btn btn-ghost">
-            {t("asst.nav")}
-          </Link>
-        </div>
-
-        {/* Her answers are not frozen: what she wants to learn changes, and a
-            questionnaire she cannot revisit is one she has to be honest in
-            once and for ever. */}
-        <button
-          className="btn btn-ghost btn-sm"
-          style={{ alignSelf: "start" }}
-          onClick={() => {
-            setStage("form");
-            setIndex(0);
-          }}
-        >
-          {t("lq.review")}
-        </button>
-      </main>
-    );
-  }
-
-  /* ------------------------------------------------------ the form itself */
   const total = survey.questions.length;
-  const answered = hasAnswer(answers[question!.id]);
+  const answered = hasAnswer(answers[question.id]);
 
   return (
-    <main className="wrap page lq-narrow stack" style={{ gap: 16 }}>
+    <div className="stack" style={{ gap: 16 }}>
       <div className="spread">
-        <span className="eyebrow">{t("lq.title")}</span>
+        <span className="badge badge-grey">{sectionTitle}</span>
         <span className="faint">
           {index + 1} / {total}
         </span>
       </div>
+
       <div className="lq-progress">
         <span style={{ width: `${((index + 1) / total) * 100}%` }} />
       </div>
-      {index === 0 && <p className="muted small">{t("lq.lead")}</p>}
 
-      <div className="card stack" style={{ gap: 16 }}>
-        <span className="badge badge-grey">{sectionTitle}</span>
-        <h2 className="lq-q">{tx(question!.text_i18n)}</h2>
+      <h2 className="lq-q">{tx(question.text_i18n)}</h2>
 
-        <QuestionInput
-          question={question!}
-          value={answers[question!.id]}
-          onChange={(value) => set(value)}
-          onCommit={(value) => {
-            const next = set(value);
-            void save(next);
-          }}
-        />
-      </div>
+      <QuestionInput
+        question={question}
+        value={answers[question.id]}
+        onChange={(value) => set(value)}
+        onCommit={(value) => {
+          const next = set(value);
+          void save(next);
+        }}
+      />
 
       <div className="spread">
         <button
@@ -206,7 +159,7 @@ export default function DiagnosticPage() {
           ← {t("lq.back")}
         </button>
         <div className="row" style={{ gap: 10 }}>
-          {!question!.required && !answered && (
+          {!question.required && !answered && (
             <button className="btn btn-ghost btn-sm" onClick={advance} disabled={busy}>
               {t("lq.skip")}
             </button>
@@ -214,13 +167,13 @@ export default function DiagnosticPage() {
           <button
             className="btn btn-primary"
             onClick={advance}
-            disabled={busy || (question!.required && !answered)}
+            disabled={busy || (question.required && !answered)}
           >
             {index + 1 === total ? t("lq.finish") : t("lq.next")} →
           </button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

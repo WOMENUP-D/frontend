@@ -20,13 +20,13 @@ import { Sky } from "./Sky";
  *
  * Two exceptions, both deliberate. The landing page draws its own copy against
  * its hero, so rendering here as well would stack two canopies on one screen.
- * And the management screens stay bare: a coordinator reading a table of
- * regional figures is working, and a branch behind the numbers is something to
- * read past.
+ * And the management screens — the panel and an organisation's workspace —
+ * stay bare: a coordinator reading a table of regional figures is working, and
+ * a branch behind the numbers is something to read past.
  */
 export function AmbientSakura() {
   const pathname = usePathname();
-  if (pathname === "/" || pathname.startsWith("/admin")) return null;
+  if (pathname === "/" || pathname.startsWith("/admin") || pathname.startsWith("/hamkor")) return null;
   /* Same three layers as the landing page, at a fraction of the weight.
      The landing hero keeps its copy in the left half and leaves the right to
      the canopy, so the branch can be drawn at full strength there. Every

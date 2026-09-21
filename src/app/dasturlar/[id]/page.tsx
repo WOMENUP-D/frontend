@@ -248,8 +248,13 @@ export default function ProgramPage() {
               <div className="card stack" style={{ gap: 10 }}>
                 <span className="eyebrow">{t("pd.skills")}</span>
                 <div className="row" style={{ gap: 7, flexWrap: "wrap" }}>
-                  {program.skills_taught.map((skill) => (
-                    <span key={skill} className="badge badge-grey">{skill}</span>
+                  {/* Named from the skill taxonomy, so the card reads in her
+                      language; a skill nobody has curated yet keeps the word
+                      the author wrote. */}
+                  {(program.skills ?? []).map((skill) => (
+                    <span key={skill.slug ?? skill.label} className="badge badge-grey">
+                      {tx(skill.name_i18n) || skill.label}
+                    </span>
                   ))}
                 </div>
               </div>

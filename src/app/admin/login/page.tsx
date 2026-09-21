@@ -13,9 +13,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ApiError, setTokens } from "@/services/api";
+import { ApiError, setTokens, staffHome } from "@/services/api";
 import { staffLogin } from "@/services/auth";
 import { useI18n } from "@/i18n";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function StaffLoginPage() {
   const { t } = useI18n();
@@ -32,7 +33,7 @@ export default function StaffLoginPage() {
     try {
       const tokens = await staffLogin(login.trim(), password);
       setTokens(tokens.access_token, tokens.refresh_token);
-      router.push("/admin");
+      router.push(staffHome());
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 429
@@ -71,10 +72,8 @@ export default function StaffLoginPage() {
 
           <div className="field">
             <label className="label" htmlFor="password">{t("sl.password")}</label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
-              className="input input-lg"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && void submit()}

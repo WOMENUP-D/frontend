@@ -8,22 +8,6 @@ export interface TokenPair {
   expires_in: number;
 }
 
-export async function requestOtp(
-  identifier: { phone?: string; email?: string },
-  language = "uz",
-) {
-  return api.post<{ detail: string }>("/auth/otp/request", { ...identifier, language });
-}
-
-export async function verifyOtp(
-  identifier: { phone?: string; email?: string },
-  code: string,
-) {
-  const tokens = await api.post<TokenPair>("/auth/otp/verify", { ...identifier, code });
-  setTokens(tokens.access_token, tokens.refresh_token);
-  return tokens;
-}
-
 export interface GoogleTokenPair extends TokenPair {
   is_new_user: boolean;
   onboarding_completed: boolean;

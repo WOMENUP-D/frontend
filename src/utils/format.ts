@@ -8,7 +8,22 @@ export const formatKey = (v: string) => `fmt.${v}` as MessageKey;
 export const sourceKey = (v: string) => `src.${v}` as MessageKey;
 export const typeKey = (v: string) => `typ.${v}` as MessageKey;
 export const regionKey = (v: string) => `reg.${v}` as MessageKey;
+
+/** The fourteen regions, in the order the region pickers list them. */
+export const REGIONS = [
+  "tashkent_city", "tashkent_region", "andijan", "bukhara", "fergana",
+  "jizzakh", "karakalpakstan", "kashkadarya", "khorezm", "namangan",
+  "navoi", "samarkand", "sirdarya", "surkhandarya",
+] as const;
 export const kpiKey = (v: string) => `kpi.${v}` as MessageKey;
+
+/** How well a skill is backed: stated, learned, assessed, verified. */
+export const skillStatusKey = (v: string) => `skill.status.${v}` as MessageKey;
+/** What backs it: a course, a certificate, a mentor. */
+export const evidenceKindKey = (v: string) => `skill.ev.${v}` as MessageKey;
+/** Skill level shares the learning section's vocabulary — one set of words
+ *  covers a course and the skill it teaches. */
+export const proficiencyKey = (v: string) => `lms.level.${v}` as MessageKey;
 
 /** The interest values the onboarding stores are Uzbek phrases rather than
  *  slugs, so they need a lookup rather than a prefix. Without it they reach the

@@ -8,17 +8,22 @@
  * nothing she can act on this evening, while "finish the Spring Boot module"
  * does. So the reason and the steps sit inside the card, not behind a link.
  *
- * The one decision worth defending: the percentage is DERIVED from the steps
- * and the stored `goal.percent` is ignored. The dataset carries both, and they
- * disagree — a goal with one of two steps ticked says 75%. The same rule that
- * governs course progress applies here: one source of truth, and it is the one
- * she can change. Ticking a step therefore moves the number immediately, which
- * is the whole point of a checklist.
+ * The one decision worth defending: nothing on this screen is claimed, it is
+ * all read. The percentage is derived from the steps, and each step is derived
+ * from the lessons, the streak or the weekly hours that complete it — the
+ * stored `goal.percent` and the old tick boxes are both gone. Ticking used to
+ * let her mark "finish the Spring Boot module" done without opening it, which
+ * made this the one screen in the section where progress was a claim rather
+ * than a fact. Finishing a lesson now moves the goal, and the two cannot
+ * disagree because there is only one of them.
+ *
+ * The steps the platform genuinely cannot see — refreshing a CV, sending an
+ * application — say so. Showing them as merely unfinished would be a guess
+ * dressed as a reading.
  */
 
-import { useState } from "react";
 import { useI18n } from "@/i18n";
-import { goals, learner, type Goal } from "@/content/learning";
+import { goalStepState, goals, learner, type Goal } from "@/content/learning";
 import { useMockData } from "@/components/learning/useMockData";
 import {
   Bar,
@@ -38,14 +43,6 @@ export default function GoalsPage() {
     weekly: { done: learner.weeklyDoneHours, target: learner.weeklyTargetHours },
   }));
 
-  /* Ticks live in the component until there is an endpoint to send them to.
-     Keyed as `${goalId}:${index}` and read as an override on the dataset, so
-     nothing has to be seeded when the data lands and a reload honestly
-     forgets — better than pretending a change was saved. */
-  const [ticks, setTicks] = useState<Record<string, boolean>>({});
-  const toggle = (key: string, current: boolean) =>
-    setTicks((previous) => ({ ...previous, [key]: !current }));
-
   if (error) {
     return (
       <>
@@ -59,15 +56,13 @@ export default function GoalsPage() {
     return (
       <>
         <Head />
-        {/* Shaped like the real split, so the page does not jump. */}
-        <div className="lms-split">
-          <div className="lms-col">
-            <Skeleton height={300} radius={18} />
-            <Skeleton height={218} radius={18} />
-          </div>
-          <div className="lms-col">
-            <Skeleton height={148} radius={18} />
-          </div>
+        {/* Shaped like the real page, so nothing jumps when it lands. */}
+        <div style={{ marginBottom: 22 }}>
+          <Skeleton height={96} radius={18} />
+        </div>
+        <div className="lms-goal-grid">
+          <Skeleton height={330} radius={18} />
+          <Skeleton height={330} radius={18} />
         </div>
       </>
     );
@@ -79,16 +74,35 @@ export default function GoalsPage() {
     <>
       <Head />
 
-      <div className="lms-split">
-        <div className="lms-col">
-          {items.length ? (
-            items.map((goal) => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                ticks={ticks}
-                onToggle={toggle}
+      {/* The weekly target sits above the goals, not beside them. It is the
+          one figure she checks every day, and in a side column it was pushed
+          level with the first card and lost — while taking the width the
+          goals needed to sit two to a row. */}
+      <section className="lms-card lms-card-pad lms-weekly">
+        <div className="lms-weekly-main">
+          <SectionHead title={t("lms.goal.weekly")} />
+          <div className="lms-weekly-bar">
+            <strong>
+              {weekly.done} / {weekly.target} {t("common.hours")}
+            </strong>
+            <div style={{ flex: 1 }}>
+              <Bar
+                percent={Math.min(100, Math.round((weekly.done / weekly.target) * 100))}
+                done={weekly.done >= weekly.target}
               />
+            </div>
+          </div>
+        </div>
+        <div className="lms-weekly-streak">
+          <b>{learner.streakDays}</b>
+          <span>{t("lms.goal.streak")}</span>
+        </div>
+      </section>
+
+      <div className="lms-goal-grid">
+        {items.length ? (
+            items.map((goal) => (
+<GoalCard key={goal.id} goal={goal} />
             ))
           ) : (
             <EmptyState
@@ -105,27 +119,6 @@ export default function GoalsPage() {
               }
             />
           )}
-        </div>
-
-        <div className="lms-col">
-          {/* The weekly target is a habit, not a goal — it never finishes, so it
-              stays out of the list and keeps its own small card. */}
-          <section className="lms-card lms-card-pad">
-            <SectionHead title={t("lms.goal.weekly")} />
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <strong style={{ fontSize: "0.95rem", whiteSpace: "nowrap" }}>
-                {weekly.done} / {weekly.target} {t("common.hours")}
-              </strong>
-              <div style={{ flex: 1 }}>
-                <Bar
-                  percent={weekly.target ? (weekly.done / weekly.target) * 100 : 0}
-                  done={weekly.done >= weekly.target}
-                />
-              </div>
-            </div>
-            <span className="lms-stat-label">{t("lms.stats.streak")}: {learner.streakDays} {t("lms.days")}</span>
-          </section>
-        </div>
       </div>
     </>
   );
@@ -138,21 +131,13 @@ function Head() {
   return <PageHead title={t("lms.goals.title")} lead={t("lms.goals.lead")} />;
 }
 
-function GoalCard({
-  goal,
-  ticks,
-  onToggle,
-}: {
-  goal: Goal;
-  ticks: Record<string, boolean>;
-  onToggle: (key: string, current: boolean) => void;
-}) {
+function GoalCard({ goal }: { goal: Goal }) {
   const { t, tx } = useI18n();
 
-  const steps = goal.steps.map((step, index) => {
-    const key = `${goal.id}:${index}`;
-    return { key, title: step.title, done: ticks[key] ?? step.done };
-  });
+  const steps = goal.steps.map((step, index) => ({
+    key: `${goal.id}:${index}`,
+    ...goalStepState(step),
+  }));
   const doneCount = steps.filter((step) => step.done).length;
   const percent = steps.length ? Math.round((doneCount / steps.length) * 100) : 0;
 
@@ -184,21 +169,26 @@ function GoalCard({
         <span className="lms-stat-label" style={{ marginTop: 0, marginBottom: 10 }}>
           {t("lms.goal.steps")} · {doneCount} / {steps.length}
         </span>
+        {/* A reading, not a control. Nothing here is clickable, because
+            nothing here is hers to assert — the lessons decide. */}
         <ul className="lms-steps">
           {steps.map((step) => (
-            <li key={step.key} className={step.done ? "lms-step-done" : undefined}>
-              <button
-                type="button"
-                className="lms-step lms-step-btn"
-                aria-pressed={step.done}
-                onClick={() => onToggle(step.key, step.done)}
-              >
-                {/* The glyph lives in the markup and is hidden by colour until
-                    the step is done — that is what `.lms-step-done .lms-tick`
-                    reveals. */}
+            <li
+              key={step.key}
+              className={[
+                step.done ? "lms-step-done" : "",
+                step.tracked ? "" : "lms-step-untracked",
+              ].join(" ").trim() || undefined}
+            >
+              <span className="lms-step">
                 <span className="lms-tick" aria-hidden="true">✓</span>
-                <span>{tx(step.title)}</span>
-              </button>
+                <span className="lms-step-text">{tx(step.title)}</span>
+                {step.tracked ? (
+                  step.detail && <span className="lms-step-detail">{step.detail}</span>
+                ) : (
+                  <span className="lms-step-detail">{t("lms.goal.manual")}</span>
+                )}
+              </span>
             </li>
           ))}
         </ul>
