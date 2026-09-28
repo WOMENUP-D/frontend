@@ -168,7 +168,9 @@ export default function ProgramsPage() {
             </div>
           )}
 
-          {shelf ? <Shelf programs={programs} /> : (
+          {/* An empty grid is still a grid: it held a row of blank space between
+              the filters and what is actually on the page. */}
+          {programs.length > 0 && (shelf ? <Shelf programs={programs} /> : (
           <div className="prog-grid">
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
@@ -238,7 +240,7 @@ export default function ProgramsPage() {
               );
             })}
           </div>
-          )}
+          ))}
 
           <PartnerCourses />
       </div>

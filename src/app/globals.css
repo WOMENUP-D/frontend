@@ -1917,6 +1917,13 @@ button.ed-row { cursor: pointer; }
    portal's own programmes never need: that the card leaves the site, and that
    the teaching is in a language most of this audience is still learning. */
 .partner-section { margin-top: 46px; }
+/* When the catalogue is empty this section is the page, and the margins of
+   three nested blocks stacked into 94px of nothing above it. */
+.cat-results > .partner-section:first-child { margin-top: 0; padding-top: 6px; }
+@media (max-width: 700px) {
+  .partner-section { margin-top: 26px; padding-block: 18px 26px; }
+  .cat-results > .partner-section:first-child { padding-top: 2px; }
+}
 /* Twenty-five cards is seven screens on a phone. The one cut that matters to
    this reader is the language she can actually follow, so it is the one
    offered — and it scrolls in a single row like the catalogue's own. */
