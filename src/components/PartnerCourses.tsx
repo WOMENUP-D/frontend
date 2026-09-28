@@ -25,18 +25,110 @@ type Course = {
   provider: string;
   /** Borrows the catalogue's colour for the same subject. */
   cat: string;
-  length: MessageKey;
+  /** The language she will actually be taught in. */
+  lang: "uz" | "ru" | "en";
+  /** Both optional: a local platform often states neither. */
+  level?: MessageKey;
+  length?: MessageKey;
   /** A certificate at the end, or a set of courses rather than one course. */
-  kind: "certificate" | "course" | "collection" | "free";
+  kind: "certificate" | "course" | "collection" | "free" | "freeCourse";
 };
 
 const COURSES: ReadonlyArray<Course> = [
+  // --- Ўзбекча: Ochiq Kurs, бесплатная узбекская платформа ---
+  {
+    href: "https://ochiqkurs.uz/malaka/pythonda-dasturlash-asoslari/",
+    title: "Pythonda dasturlash asoslari",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/htmlda-dasturlash/",
+    title: "HTMLda dasturlash",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/css-asoslari/",
+    title: "CSS asoslari",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/javascript-darslari/",
+    title: "JavaScript darslari",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/django-asoslari/",
+    title: "Django asoslari",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/postgresql-darslari-pgadminda/",
+    title: "PostgreSQL darslari (pgAdminda)",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/docker/",
+    title: "Docker",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://ochiqkurs.uz/malaka/ai-agentlar-qurish-kursi/",
+    title: "AI agentlar qurish kursi",
+    provider: "Ochiq Kurs",
+    cat: "digital_safety",
+    lang: "uz",
+    kind: "freeCourse",
+  },
+
+  // --- Деньги и язык: то, что сделано для жителей Узбекистана ---
+  {
+    href: "https://direktor.uz/uz/learn",
+    title: "Kichik biznes uchun moliyaviy savodxonlik",
+    provider: "Direktor.uz · NORMA, Savdo-sanoat palatasi, IFC",
+    cat: "financial_literacy",
+    lang: "uz",
+    length: "pc.len.11lessons",
+    kind: "freeCourse",
+  },
+  {
+    href: "https://migrant.spbu.ru/uzb",
+    title: "Rus tili: 64 ta darsda",
+    provider: "Sankt-Peterburg davlat universiteti",
+    cat: "international",
+    lang: "uz",
+    length: "pc.len.64lessons",
+    kind: "freeCourse",
+  },
+
   // --- Профессия и занятость ---
   {
     href: "https://www.coursera.org/professional-certificates/google-data-analytics",
     title: "Google Data Analytics",
     provider: "Google",
     cat: "vocational_skills",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.6m",
     kind: "certificate",
   },
@@ -45,6 +137,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "English for Career Development",
     provider: "University of Pennsylvania",
     cat: "vocational_skills",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.4w",
     kind: "course",
   },
@@ -53,6 +147,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Digital Marketing Specialist",
     provider: "Coursera Career Academy",
     cat: "vocational_skills",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.path",
     kind: "collection",
   },
@@ -63,6 +159,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Financial Markets",
     provider: "Yale University · Robert Shiller",
     cat: "financial_literacy",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.3w",
     kind: "course",
   },
@@ -71,6 +169,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Financial Planning for Young Adults",
     provider: "University of Illinois",
     cat: "financial_literacy",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.2w",
     kind: "course",
   },
@@ -79,6 +179,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Personal Finance",
     provider: "Khan Academy",
     cat: "financial_literacy",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.own",
     kind: "free",
   },
@@ -89,6 +191,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Google Digital Marketing & E-commerce",
     provider: "Google",
     cat: "entrepreneurship",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.6m",
     kind: "certificate",
   },
@@ -97,6 +201,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Foundations of Digital Marketing and E-commerce",
     provider: "Google",
     cat: "entrepreneurship",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.1w",
     kind: "course",
   },
@@ -105,6 +211,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "IBM UI/UX Designer",
     provider: "IBM",
     cat: "digital_safety",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.4m",
     kind: "certificate",
   },
@@ -113,6 +221,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Introduction to Cybersecurity Tools & Cyberattacks",
     provider: "IBM",
     cat: "digital_safety",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.1w",
     kind: "course",
   },
@@ -123,6 +233,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "The Science of Well-Being",
     provider: "Yale University · Laurie Santos",
     cat: "health",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.1w",
     kind: "course",
   },
@@ -131,6 +243,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Child Nutrition and Cooking",
     provider: "Stanford Online",
     cat: "health",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.1w",
     kind: "course",
   },
@@ -139,6 +253,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Everyday Parenting: The ABCs of Child Rearing",
     provider: "Yale University",
     cat: "parenting",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.2w",
     kind: "course",
   },
@@ -149,6 +265,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Successful Negotiation: Essential Strategies and Skills",
     provider: "University of Michigan",
     cat: "leadership",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.2w",
     kind: "course",
   },
@@ -157,6 +275,8 @@ const COURSES: ReadonlyArray<Course> = [
     title: "Inspiring and Motivating Individuals",
     provider: "University of Michigan",
     cat: "leadership",
+    lang: "en",
+    level: "pc.beginner",
     length: "pc.len.2w",
     kind: "course",
   },
@@ -168,6 +288,13 @@ const KIND: Record<Course["kind"], MessageKey> = {
   course: "pc.kind.course",
   collection: "pc.kind.collection",
   free: "pc.kind.free",
+  freeCourse: "pc.kind.freeCourse",
+};
+
+const LANGUAGE: Record<Course["lang"], MessageKey> = {
+  uz: "pc.lang.uz",
+  ru: "pc.lang.ru",
+  en: "pc.lang.en",
 };
 
 /** Whose site it is, read off the address rather than typed twice. */
@@ -203,10 +330,11 @@ export function PartnerCourses() {
             <span className="partner-provider">{course.provider}</span>
             <h3 className="partner-title">{course.title}</h3>
             <span className="partner-meta">
-              {t("pc.beginner")} · {t(course.length)} · {t(KIND[course.kind])}
+              {[course.level, course.length].filter(Boolean).map((key) => t(key!) + " · ")}
+              {t(KIND[course.kind])}
             </span>
             <span className="partner-foot">
-              <span className="partner-lang">{t("pc.english")}</span>
+              <span className="partner-lang">{t(LANGUAGE[course.lang])}</span>
               <span className="partner-host">
                 {host(course.href)}
                 <span aria-hidden="true"> ↗</span>
