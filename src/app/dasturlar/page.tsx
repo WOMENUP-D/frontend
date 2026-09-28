@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
 import { Shelf } from "@/components/Shelf";
+import { PartnerCourses } from "@/components/PartnerCourses";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -218,6 +219,8 @@ export default function ProgramsPage() {
             })}
           </div>
           )}
+
+          <PartnerCourses />
       </div>
     </main>
   );
