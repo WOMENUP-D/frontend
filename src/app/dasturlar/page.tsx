@@ -133,10 +133,14 @@ export default function ProgramsPage() {
           {error && <ErrorNote message={t(error)} />}
           {loading && <Loading rows={3} />}
 
-          {/* One message at a time. A failed request used to print both "could
-              not load the programmes" and "nothing found — try another filter",
-              which are different things and the second one is not true. */}
-          {!loading && !error && programs.length === 0 && (
+          {/* One message at a time, and only when it is true.
+              A failed request used to print both "could not load the
+              programmes" and "nothing found — try another filter", which are
+              different things. And "try another filter" is only advice worth
+              giving when a filter is on: with an empty catalogue it sent a
+              reader round a loop that no tap could end, so the page goes
+              straight to the courses below instead. */}
+          {!loading && !error && programs.length === 0 && (category || query) && (
             <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
           )}
 
