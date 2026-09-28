@@ -1916,6 +1916,11 @@ button.ed-row { cursor: pointer; }
    Same panels as the directions, one step quieter, and carrying two facts the
    portal's own programmes never need: that the card leaves the site, and that
    the teaching is in a language most of this audience is still learning. */
+.prog-more {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-top: 18px;
+}
+
 .partner-section { margin-top: 46px; }
 /* When the catalogue is empty this section is the page, and the margins of
    three nested blocks stacked into 94px of nothing above it. */

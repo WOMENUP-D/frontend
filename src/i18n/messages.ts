@@ -799,6 +799,8 @@ export const messages = {
   "sl.title":     { uz: "Boshqaruv paneli", ru: "Панель управления", en: "Management panel" },
   "sl.lead":      { uz: "Login va parol bilan kiring. Xizmat akkauntiga SMS kod kerak emas.", ru: "Войдите по логину и паролю. Служебному аккаунту SMS-код не нужен.", en: "Sign in with a login and a password. A staff account needs no SMS code." },
   "sl.login":     { uz: "Login", ru: "Логин", en: "Login" },
+  "pr.more":      { uz: "Yana koʻrsatish", ru: "Показать ещё", en: "Show more" },
+  "pr.shown":     { uz: "{total} tadan {n} tasi", ru: "Показано {n} из {total}", en: "{n} of {total} shown" },
   "pc.title":     { uz: "Hamkor kurslari", ru: "Курсы партнёров", en: "Partner courses" },
   "pc.lead":      {
     uz: "Oʻzbek, rus va ingliz tilidagi ochiq kurslar — mahalliy platformalardan ham, jahon universitetlaridan ham. Har biri hamkor saytida ochiladi: roʻyxatdan oʻtish ham, sertifikat ham oʻsha yerda.",

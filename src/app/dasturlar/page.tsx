@@ -22,9 +22,28 @@ const CATEGORIES = [
    means here. */
 const MAX_WEEKS = 12;
 
+/** Enough to fill a screen twice over, small enough to arrive on a phone. */
+const PAGE_SIZE = 24;
+
+/** Whose site a course lives on, read off its address rather than stored twice. */
+function hostOf(url: string) {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
 export default function ProgramsPage() {
   const { t, tx, locale } = useI18n();
   const [programs, setPrograms] = useState<Program[]>([]);
+  /* How many the catalogue holds for this filter, and how many pages of them
+     have been asked for. Before this the page showed the first fifty and said
+     "50 found" — with 794 in the catalogue that is both a small lie and 744
+     courses nobody could reach. */
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   // What is actually asked of the server. Typing "бухгалтерия" fired eleven
@@ -72,17 +91,43 @@ export default function ProgramsPage() {
       .catch(() => setCatalogueHasAny(null));
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ size: "50" });
+  /** One page of the catalogue for the filters as they stand. */
+  function pageQuery(number: number) {
+    const params = new URLSearchParams({ size: String(PAGE_SIZE), page: String(number) });
     if (category) params.set("category", category);
     if (query) params.set("search", query);
+    return `?${params}`;
+  }
 
-    portal.programs(`?${params}`)
-      .then((page) => setPrograms(page.items))
+  useEffect(() => {
+    setLoading(true);
+    setPage(1);
+    portal.programs(pageQuery(1))
+      .then((result) => {
+        setPrograms(result.items);
+        setTotal(result.total);
+      })
       .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, query]);
+
+  /** The next page, appended — the list she is reading does not jump. */
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const result = await portal.programs(pageQuery(next));
+      setPrograms((current) => [...current, ...result.items]);
+      setTotal(result.total);
+      setPage(next);
+    } catch {
+      setError("pr.errLoad");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (!getAccessToken()) return;
@@ -159,7 +204,7 @@ export default function ProgramsPage() {
           {!loading && programs.length > 0 && (
             <div className="cat-bar">
               <span className="faint cat-count">
-                {t("pr.found").replace("{n}", String(programs.length))}
+                {t("pr.found").replace("{n}", String(total || programs.length))}
               </span>
               <div className="cat-view" role="group" aria-label={t("shelf.view")}>
                 <button
@@ -195,9 +240,23 @@ export default function ProgramsPage() {
                   <span className="prog-cat">{t(categoryKey(program.category))}</span>
 
                   {/* The title is the link, so the whole card does not have to be
-                      one — an enrol button inside a clickable card is a trap. */}
+                      one — an enrol button inside a clickable card is a trap.
+                      A course that is not ours links to where it actually is:
+                      there is no page of ours to send her to, and finding that
+                      out after the tap is worse than reading it before. */}
                   <h3 className="prog-title">
-                    <Link href={`/dasturlar/${program.id}`}>{tx(program.title_i18n)}</Link>
+                    {program.external_url ? (
+                      <a
+                        href={program.external_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${tx(program.title_i18n)} — ${t("pc.opens")} ${hostOf(program.external_url)}`}
+                      >
+                        {tx(program.title_i18n)}
+                      </a>
+                    ) : (
+                      <Link href={`/dasturlar/${program.id}`}>{tx(program.title_i18n)}</Link>
+                    )}
                   </h3>
                   <p className="prog-goal">{tx(program.goal_i18n)}</p>
 
@@ -234,10 +293,24 @@ export default function ProgramsPage() {
                       )}
                     </span>
                     <div className="prog-actions">
-                      <Link className="btn btn-outline btn-sm" href={`/dasturlar/${program.id}`}>
-                        {t("pr.details")}
-                      </Link>
-                      {authed && (
+                      {program.external_url ? (
+                        /* No "details" and no "enrol": we hold neither. What we
+                           can honestly offer is the address it lives at. */
+                        <a
+                          className="btn btn-outline btn-sm"
+                          href={program.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {hostOf(program.external_url)}
+                          <span aria-hidden="true"> ↗</span>
+                        </a>
+                      ) : (
+                        <Link className="btn btn-outline btn-sm" href={`/dasturlar/${program.id}`}>
+                          {t("pr.details")}
+                        </Link>
+                      )}
+                      {authed && !program.external_url && (
                         <button
                           className={isEnrolled ? "btn btn-ghost btn-sm" : "btn btn-primary btn-sm"}
                           onClick={() => enroll(program)}
@@ -253,6 +326,19 @@ export default function ProgramsPage() {
             })}
           </div>
           ))}
+
+          {!loading && programs.length > 0 && programs.length < total && (
+            <div className="prog-more">
+              <button className="btn btn-outline" onClick={loadMore} disabled={loadingMore}>
+                {t(loadingMore ? "common.loading" : "pr.more")}
+              </button>
+              <span className="faint small">
+                {t("pr.shown")
+                  .replace("{n}", String(programs.length))
+                  .replace("{total}", String(total))}
+              </span>
+            </div>
+          )}
 
           <PartnerCourses />
       </div>
