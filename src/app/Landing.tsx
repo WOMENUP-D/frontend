@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { Blossom } from "@/components/Blossom";
 import { useI18n, type MessageKey } from "@/i18n";
+import { DirectionMark, type MarkKind } from "@/components/DirectionMark";
 
 /* ------------------------------------------------ the AI companion, drawn */
 
@@ -71,13 +72,13 @@ export function AiTeaser() {
    colour, which is the same colour the programme cards carry — one system
    across the two pages rather than six identical boxes here and a grid
    there. */
-const DIRECTIONS: ReadonlyArray<{ icon: string; t: MessageKey; d: MessageKey; cat: string }> = [
-  { icon: "❖", t: "dir.work.t", d: "dir.work.d", cat: "vocational_skills" },
-  { icon: "◈", t: "dir.biz.t", d: "dir.biz.d", cat: "entrepreneurship" },
-  { icon: "✿", t: "dir.health.t", d: "dir.health.d", cat: "health" },
-  { icon: "⌂", t: "dir.family.t", d: "dir.family.d", cat: "parenting" },
-  { icon: "◉", t: "dir.digital.t", d: "dir.digital.d", cat: "digital_safety" },
-  { icon: "★", t: "dir.lead.t", d: "dir.lead.d", cat: "leadership" },
+const DIRECTIONS: ReadonlyArray<{ t: MessageKey; d: MessageKey; cat: MarkKind }> = [
+  { t: "dir.work.t", d: "dir.work.d", cat: "vocational_skills" },
+  { t: "dir.biz.t", d: "dir.biz.d", cat: "entrepreneurship" },
+  { t: "dir.health.t", d: "dir.health.d", cat: "health" },
+  { t: "dir.family.t", d: "dir.family.d", cat: "parenting" },
+  { t: "dir.digital.t", d: "dir.digital.d", cat: "digital_safety" },
+  { t: "dir.lead.t", d: "dir.lead.d", cat: "leadership" },
 ];
 
 export function PathCards() {
@@ -85,25 +86,30 @@ export function PathCards() {
   return (
     <section className="section">
       <div className="wrap">
-        <div className="sec-head">
+        <div className="sec-head sec-head-counted">
           <h2>{t("landing.faceTitle")}</h2>
           <p>{t("landing.faceLead")}</p>
+          <span className="sec-count" aria-hidden="true">
+            ({DIRECTIONS.length})
+          </span>
         </div>
 
         <div className="face-grid">
           {/* No "view programmes →" line under each one: the card is already
               the link, and six copies of the same sentence told a reader
               nothing the cursor did not. */}
-          {DIRECTIONS.map((item) => (
+          {DIRECTIONS.map((item, index) => (
             <Link
               key={item.t}
               href={`/dasturlar?category=${item.cat}`}
               className="face-card"
               data-cat={item.cat}
             >
-              <span className="face-ico" aria-hidden="true">
-                {item.icon}
+              {/* The six are a route, not a menu, so they are counted. */}
+              <span className="face-num" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
               </span>
+              <DirectionMark kind={item.cat} />
               <h3>{t(item.t)}</h3>
               <p>{t(item.d)}</p>
             </Link>

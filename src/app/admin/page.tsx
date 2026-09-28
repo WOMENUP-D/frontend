@@ -7,7 +7,7 @@ import { portal, type AdminFilters, type TrafficReport } from "@/services/portal
 import { AdminUsers } from "./AdminUsers";
 import { AdminAudit } from "./AdminAudit";
 import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type MessageKey } from "@/i18n";
 import { kpiKey, regionKey } from "@/utils/format";
 
 interface Overview {
@@ -45,7 +45,12 @@ export default function AdminPage() {
   const [filters, setFilters] = useState<AdminFilters>({});
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -75,7 +80,7 @@ export default function AdminPage() {
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 403) setForbidden(true);
-        else setError(t("ad.errLoad"));
+        else setError("ad.errLoad");
       })
       .finally(() => setLoading(false));
   }, [filters, days]);
@@ -176,7 +181,7 @@ export default function AdminPage() {
       </nav>
 
       <div className="aw-main">
-        {error && <ErrorNote message={error} />}
+        {error && <ErrorNote message={t(error)} />}
 
         {tab === "users" ? (
           <>

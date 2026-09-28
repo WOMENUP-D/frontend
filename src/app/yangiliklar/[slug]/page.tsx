@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { portal, type NewsDetail } from "@/services/portal";
 import { NewsBody } from "@/components/NewsBody";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type MessageKey } from "@/i18n";
 import { newsCategoryKey, timeAgo } from "@/utils/format";
 
 export default function NewsPostPage() {
@@ -26,7 +26,12 @@ export default function NewsPostPage() {
   const [post, setPost] = useState<NewsDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -38,7 +43,7 @@ export default function NewsPostPage() {
       .catch((cause: { status?: number }) => {
         if (cancelled) return;
         if (cause?.status === 404) setMissing(true);
-        else setError(t("common.error"));
+        else setError("common.error");
       })
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -53,7 +58,7 @@ export default function NewsPostPage() {
       </Link>
 
       {loading && <Loading rows={3} />}
-      {error && <ErrorNote message={error} />}
+      {error && <ErrorNote message={t(error)} />}
       {missing && (
         <Empty
           title={t("news.notFound")}

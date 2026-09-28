@@ -125,25 +125,25 @@
    mood and puts four legible steps between the page and a raised control.
    ------------------------------------------------------------------ */
 [data-theme="dark"] {
-  --navy:          #e9a7b5;
-  --navy-2:        #f2bcc7;
-  --navy-3:        #f7d0d8;
-  --gold:          #e9a7b5;
-  --gold-soft:     #b86b7d;
+  --navy:          #f0aebd;
+  --navy-2:        #f6c6d1;
+  --navy-3:        #fadbe2;
+  --gold:          #f0aebd;
+  --gold-soft:     #d894a4;
   /* The two colours that only exist after dark: the burgundy the night is
      lit from underneath with, and the champagne a highlight is struck in. */
-  --deep:          #542936;
-  --champagne:     #d9c4a5;
+  --deep:          #5b2c3b;
+  --champagne:     #e6cfab;
 
-  --bg:            #211e29;
-  --bg-2:          #2a2634;
-  --band:          #2a2634;
-  --surface:       #383243;
-  --surface-2:     #393343;
-  --control:       #363042;
-  --border:        #453e51;
-  --border-strong: #5b5369;
-  --pane:          rgba(58, 52, 72, .82);
+  --bg:            #17131c;
+  --bg-2:          #251f2d;
+  --band:          #251f2d;
+  --surface:       #34293e;
+  --surface-2:     #413553;
+  --control:       #211b29;
+  --border:        #4f435f;
+  --border-strong: #726382;
+  --pane:          rgba(41,33,49,.88);
   --pane-edge:     rgba(245, 241, 238, .16);
   --pane-inner:    rgba(245, 241, 238, .10);
   --pane-shadow:   0 28px 70px -30px rgba(0, 0, 0, .85);
@@ -153,30 +153,30 @@
      visible through them and the ones on the right did not, so a row of
      identical cards no longer looked identical. Same colour, no alpha: it is
      exactly --surface, so nothing about the palette moves. */
-  --glass:         #383243;
+  --glass:         #34293e;
   --hairline:      inset 0 1px 0 rgba(245, 241, 238, .06);
 
-  --text:          #e2dce4;
-  --ink:           #f8f5f8;
-  --text-dim:      #b9b0be;
-  /* 5:1 on a card, which is the lightest surface it lands on. */
-  --text-faint:    #a29aa9;
+  --text:          #efe8ef;
+  --ink:           #fdfbfd;
+  --text-dim:      #cec2d4;
+  /* 5.4:1 on a card, which is the lightest surface it lands on. */
+  --text-faint:    #b7abbf;
 
-  --danger:        #ef8279;
-  --warning:       #e9a7b5;
-  --success:       #5fd0a2;
-  --on-gold:       #211e29;
-  --primary:       #e9a7b5;
-  --primary-hover: #f2bcc7;
-  --on-primary:    #211e29;
+  --danger:        #f79389;
+  --warning:       #f0c27a;
+  --success:       #6ad8ab;
+  --on-gold:       #17131c;
+  --primary:       #f0aebd;
+  --primary-hover: #f6c6d1;
+  --on-primary:    #17131c;
   /* Inverted with everything else: after dark the one loud button is ivory. */
-  --contrast:      #f8f5f8;
-  --on-contrast:   #211e29;
-  --strip-bg:      #383243;
-  --strip-fg:      #e9a7b5;
+  --contrast:      #fdfbfd;
+  --on-contrast:   #17131c;
+  --strip-bg:      #34293e;
+  --strip-fg:      #f0aebd;
 
-  --grad:          linear-gradient(135deg, #b86b7d 0%, #e9a7b5 130%);
-  --grad-soft:     linear-gradient(135deg, rgba(233,167,181,.13), rgba(84,41,54,.30));
+  --grad:          linear-gradient(135deg,#8a4257 0%,#f0aebd 130%);
+  --grad-soft:     linear-gradient(135deg,rgba(240,174,189,.14),rgba(91,44,59,.34));
   --glow:          0 14px 40px -18px rgba(233,167,181,.30);
   --shadow-sm:     0 1px 2px rgba(0,0,0,.55);
   --card-lift:     0 2px 12px -3px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.45);
@@ -187,8 +187,8 @@
   --radius:        14px;
   --radius-sm:     10px;
   --radius-lg:     20px;
-  --header-bg:     rgba(33, 30, 41, .78);
-  --ring:          rgba(233,167,181,.22);
+  --header-bg:     rgba(23,19,28,.82);
+  --ring:          rgba(240,174,189,.28);
   --petal-peak:    .42;
 }
 
@@ -359,6 +359,13 @@ body {
   opacity: .15;
 }
 [data-theme="dark"] .sakura-ambient { opacity: .16; }
+/* Same reasoning for the ambient copy of the branch. */
+@media (max-width: 700px) {
+  .sakura-ambient { opacity: .07; }
+  [data-theme="dark"] .sakura-ambient { opacity: .08; }
+  .sakura-behind > .sakura { opacity: .09; }
+  [data-theme="dark"] .sakura-behind > .sakura { opacity: .1; }
+}
 .sakura-ambient .sakura-anchor {
   position: absolute;
   top: -40px; right: -12vw;
@@ -1277,6 +1284,12 @@ p { margin: 0; }
   font-size: 1.3rem;
 }
 
+.empty-card { align-items: center; padding: 26px 24px; gap: 9px; }
+.empty-ico { width: 38px; height: 38px; border-radius: 10px; font-size: 1.05rem; margin: 0 auto; }
+@media (max-width: 700px) {
+  .empty-card { padding: 20px 16px; }
+}
+
 /* ---------- Forms ---------- */
 .field { display: flex; flex-direction: column; gap: 7px; }
 .label {
@@ -1657,6 +1670,34 @@ button.ed-row { cursor: pointer; }
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
   margin-top: 4px;
 }
+/* On a phone ten categories wrapped into five rows — 212px, a third of the
+   screen, before a single programme was visible, and every chip was under the
+   44px a thumb needs. One row that scrolls sideways costs 56px and each chip
+   is big enough to hit.
+
+   Opt-in, because the same chips are also how she picks several interests in
+   the feed settings — there, hiding the rest behind a sideways scroll would be
+   the wrong trade. */
+@media (max-width: 700px) {
+  .cat-scroll {
+    flex-wrap: nowrap; justify-content: flex-start;
+    /* The header centres its children, which makes a flex child as wide as its
+       content — 1386px here — so `overflow-x` never had anything to clip and
+       the row simply hung off both sides of the screen. It has to be told to
+       take the width it is given. */
+    align-self: stretch; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-block: 3px;
+  }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-scroll .chip {
+    flex: none; scroll-snap-align: start;
+    min-height: 44px; padding-block: 10px;
+  }
+}
 .cat-results { max-width: 980px; margin: 0 auto; }
 .cat-count { align-self: flex-start; }
 
@@ -1777,32 +1818,187 @@ button.ed-row { cursor: pointer; }
   display: grid; place-items: center; font-size: .8rem;
 }
 
-/* ---------- Directions, as cards ---------- */
+/* ---------- Directions, as cards ----------
+   Six panels of one slab rather than six boxes on a page: the gap is small
+   enough that the row reads as one object cut into parts, there is no border
+   and no shadow, and each panel is simply its own colour — the direction's,
+   mixed into the surface. What fills it is a woman, drawn at the size of an
+   illustration and cut by the panel's own edge, so the eye has something to
+   rest on instead of six identical rectangles of text.
+
+   The order matters too: these are a route through the portal, not a menu, so
+   they are numbered, and the section says how many there are. */
 .face-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(258px, 100%), 1fr));
-  gap: 16px;
+  gap: 10px;
+  /* The branch is drawn behind the whole page, and a blossom landing in the
+     10px seam between two rows read as a rendering fault. The slab is opaque;
+     the garden continues above and below it. */
+  background: var(--bg);
 }
 @media (min-width: 1000px) { .face-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-/* The same object as a programme card, one level up: white on the warm page,
-   a coloured top edge naming the direction, and no lift. The page and the
-   card now differ in value, so the edge can stop shouting. */
+
 .face-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-top: 2px solid var(--cat, var(--primary));
-  border-radius: 4px; padding: 22px;
-  display: flex; flex-direction: column; gap: 11px;
+  position: relative; overflow: hidden; isolation: isolate;
+  /* The panel is the direction's own colour, not a white box with a coloured
+     detail. On paper the surface is white, so the tint has to be strong enough
+     that the panel's edge is at least as legible as the figure inside it. */
+  background: color-mix(in srgb, var(--cat, var(--primary)) 22%, var(--surface));
+  border: 0; border-radius: 12px;
+  padding: 24px;
+  min-height: 252px;
+  box-shadow: none;
+  display: flex; flex-direction: column;
   text-decoration: none;
-  transition: border-color .15s ease;
+  transition: background .18s ease;
 }
-.face-card:hover { border-color: var(--border-strong); border-top-color: var(--cat, var(--primary)); }
-.face-ico {
-  width: 34px; height: 34px; border-radius: 8px; flex: none;
-  display: grid; place-items: center;
-  background: color-mix(in srgb, var(--cat, var(--primary)) 10%, transparent);
-  color: var(--cat, var(--primary)); font-size: 1rem;
+.face-card:hover {
+  background: color-mix(in srgb, var(--cat, var(--primary)) 30%, var(--surface));
 }
-.face-card h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
-.face-card p { color: var(--text-dim); font-size: .9rem; line-height: 1.6; flex: 1; }
+[data-theme="dark"] .face-card {
+  /* In sRGB a tenth of a pale colour over deep plum came out plum six times:
+     the six panels differed by 1.02:1 and the section read as one field. Mixed
+     in oklab the hue survives at the same lightness, so 03 reads green and 05
+     reads blue without any panel getting lighter than the others. */
+  background: color-mix(in oklab, var(--cat, var(--primary)) 15%, var(--surface));
+}
+[data-theme="dark"] .face-card:hover {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 23%, var(--surface));
+}
+.face-card:focus-visible { outline: 2px solid var(--cat, var(--primary)); outline-offset: -3px; }
+
+/* 01 … 06. Small, quiet, and the only thing at the top of the panel. */
+.face-num {
+  font-size: .78rem; font-weight: 600; letter-spacing: .16em;
+  color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+
+/* She sits behind the words, in the direction's colour, and runs off the
+   card's corner so she reads as part of something larger. */
+.face-mark {
+  position: absolute; right: -14%; bottom: -6%;
+  width: 58%; aspect-ratio: 1; z-index: -1;
+  color: var(--cat, var(--primary)); fill: currentColor;
+  opacity: .30; pointer-events: none;
+}
+[data-theme="dark"] .face-mark { opacity: .34; }
+
+.face-card h3 {
+  margin-top: auto; padding-top: 18px;
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(1.15rem, 1.5vw, 1.35rem); line-height: 1.2;
+  letter-spacing: -.01em; color: var(--ink);
+  max-width: 52%;
+}
+.face-card p {
+  margin-top: 7px; max-width: min(28ch, 52%);
+  color: var(--text-dim); font-size: .9rem; line-height: 1.55;
+}
+
+/* On a phone the panel turns landscape: the figure keeps the right-hand
+   corner and the words keep the left, so nothing is read through her. */
+@media (max-width: 700px) {
+  .face-grid { gap: 8px; }
+  .face-card { min-height: 160px; padding: 17px; }
+  .face-card h3, .face-card p { max-width: 62%; }
+  .face-mark { width: 40%; right: -6%; bottom: -5%; }
+}
+
+/* Near-square where there is room for it. At 1.57:1 the figure had nowhere to
+   be oversized and the middle void — the thing this composition is built on —
+   was 75px of nothing. Written after the base rule on purpose: inside a media
+   query it carries no extra weight, and the earlier version lost to it. */
+@media (min-width: 1000px) {
+  .face-card { min-height: 264px; }
+}
+
+/* ---------- Courses that are not ours ----------
+   Same panels as the directions, one step quieter, and carrying two facts the
+   portal's own programmes never need: that the card leaves the site, and that
+   the teaching is in a language most of this audience is still learning. */
+.partner-section { margin-top: 46px; }
+/* When the catalogue is empty this section is the page, and the margins of
+   three nested blocks stacked into 94px of nothing above it. */
+.cat-results > .partner-section:first-child { margin-top: 0; padding-top: 6px; }
+@media (max-width: 700px) {
+  .partner-section { margin-top: 26px; padding-block: 18px 26px; }
+  .cat-results > .partner-section:first-child { padding-top: 2px; }
+}
+/* Twenty-five cards is seven screens on a phone. The one cut that matters to
+   this reader is the language she can actually follow, so it is the one
+   offered — and it scrolls in a single row like the catalogue's own. */
+.partner-langs {
+  display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px;
+}
+@media (max-width: 700px) {
+  .partner-langs {
+    flex-wrap: nowrap; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none; padding-block: 3px;
+  }
+  .partner-langs::-webkit-scrollbar { display: none; }
+  .partner-langs .chip { flex: none; scroll-snap-align: start; min-height: 44px; padding-block: 10px; }
+}
+.partner-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px; background: var(--bg);
+}
+@media (min-width: 1000px) { .partner-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .partner-grid { gap: 8px; }
+  .partner-card { padding: 16px; min-height: 0; }
+  .partner-title { font-size: 1.05rem; }
+  .partner-foot { padding-top: 12px; }
+}
+.partner-card {
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--cat, var(--primary)) 16%, var(--surface));
+  border: 0; border-radius: 12px; padding: 20px; min-height: 176px;
+  text-decoration: none; transition: background .18s ease;
+}
+[data-theme="dark"] .partner-card {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 12%, var(--surface));
+}
+.partner-card:hover {
+  background: color-mix(in srgb, var(--cat, var(--primary)) 24%, var(--surface));
+}
+[data-theme="dark"] .partner-card:hover {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 20%, var(--surface));
+}
+.partner-card:focus-visible { outline: 2px solid var(--cat, var(--primary)); outline-offset: -3px; }
+.partner-provider {
+  font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+  color: var(--text-dim);
+}
+.partner-title {
+  margin-top: 6px;
+  font-family: var(--font-display); font-weight: 500;
+  font-size: 1.12rem; line-height: 1.25; letter-spacing: -.01em; color: var(--ink);
+}
+.partner-meta {
+  margin-top: 10px; font-size: .85rem; line-height: 1.5; color: var(--text-dim);
+}
+.partner-foot {
+  margin-top: auto; padding-top: 16px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  font-size: .8rem; color: var(--text-dim);
+}
+.partner-host { font-weight: 600; white-space: nowrap; }
+
+/* The count, the way a contents page gives one. */
+.sec-head-counted { position: relative; max-width: none; padding-right: 96px; }
+.sec-head-counted h2, .sec-head-counted p { max-width: 68ch; }
+.sec-count {
+  position: absolute; right: 0; top: -.08em;
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15;
+  color: var(--text-faint); font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .sec-head-counted { padding-right: 56px; }
+  .sec-count { font-size: 1.15rem; }
+}
 
 /* ---------- The roadmap ----------
    Six stages drawn along one dotted line rather than listed. The line is what
@@ -1950,6 +2146,15 @@ button.ed-row { cursor: pointer; }
 /* The branch is the light source in this composition, so it is no longer
    dimmed the way it was when the page behind it was pale. */
 [data-theme="dark"] .sakura-hero { opacity: 1; }
+
+/* On a phone the branch is fixed behind a single narrow column, so every
+   heading below the first screen is read off a blossom. Same garden, stepped
+   back — this has to sit after the rule above, which restores it to full
+   strength after dark. */
+@media (max-width: 700px) {
+  .sakura-hero { opacity: .5; }
+  [data-theme="dark"] .sakura-hero { opacity: .5; }
+}
 [data-theme="dark"] .sakura-ambient { opacity: .34; }
 
 /* ---------- Glass ----------
@@ -1959,7 +2164,6 @@ button.ed-row { cursor: pointer; }
 [data-theme="dark"] .card,
 [data-theme="dark"] .tile,
 [data-theme="dark"] .showcase-card,
-[data-theme="dark"] .face-card,
 [data-theme="dark"] .well-item,
 [data-theme="dark"] .well-note,
 [data-theme="dark"] .ai-window,
@@ -1981,7 +2185,6 @@ button.ed-row { cursor: pointer; }
 /* Hover moves the edge toward the blossom rather than lifting the card off
    the page — the whole surface is meant to stay flat and quiet. */
 [data-theme="dark"] .tile:hover,
-[data-theme="dark"] .face-card:hover,
 [data-theme="dark"] .card:hover,
 [data-theme="dark"] .stat-pill-link:hover {
   border-color: var(--gold-soft);
@@ -2341,6 +2544,13 @@ button.ed-row { cursor: pointer; }
      strip stops being its ceiling and it can take the size it wants. */
 }
 
+/* Below 1560px the column runs to the window edge and the disc sits under the
+   headline's first letter — 1.2:1 under the "П". Wider windows move it into the
+   margin, where it can be itself. */
+@media (max-width: 1559px) {
+  [data-theme="dark"] .sky-layer { opacity: .5; }
+}
+
 /* There is a body in the sky after dark and nothing by day.
    The layer is hidden rather than emptied: the haze is a glow with no edge of
    its own, so left behind without a disc inside it, it is a bright smudge in
@@ -2354,6 +2564,13 @@ button.ed-row { cursor: pointer; }
      match, so the strip moves down with them. */
   .sky-layer { width: 68px; height: 68px; top: 132px; left: 16px; }
   .sky-haze { width: 460px; height: 460px; margin: -230px 0 0 -230px; }
+}
+@media (max-width: 700px) {
+  /* No moon on a phone. It is fixed, the page scrolls under it, and every
+     heading below the first screen was being read off its face — white type on
+     moonlight, 1.1:1. One 68px ornament is not worth that, and the branch
+     still carries the garden here. */
+  .sky-layer, [data-theme="dark"] .sky-layer { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

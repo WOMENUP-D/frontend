@@ -37,7 +37,7 @@ import {
 } from "@/services/portal";
 import { NewsBody } from "@/components/NewsBody";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type MessageKey } from "@/i18n";
 import { newsCategoryKey, newsTopicKey, timeAgo } from "@/utils/format";
 
 /** Section order, not alphabetical: what she came to read comes before what
@@ -220,7 +220,12 @@ export default function NewsFeedPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [authed, setAuthed] = useState(false);
   // The sections open under the search field rather than sitting above the
   // feed permanently: they are a way of narrowing what she is reading, and a
@@ -266,7 +271,7 @@ export default function NewsFeedPage() {
         setTotal(result.total);
         setError(null);
       })
-      .catch(() => !cancelled && setError(t("common.error")))
+      .catch(() => !cancelled && setError("common.error"))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -310,7 +315,7 @@ export default function NewsFeedPage() {
         />
 
         {filtersOpen && (
-          <div className="cat-filters news-sections">
+          <div className="cat-filters cat-scroll news-sections">
             {SECTIONS.map((key) => {
               const count = key ? counts[key] : Object.values(counts).reduce((a, b) => a + b, 0);
               // A section with nothing in it is a chip that opens on an empty
@@ -361,7 +366,7 @@ export default function NewsFeedPage() {
       </header>
 
       <div className="news-feed">
-        {error && <ErrorNote message={error} />}
+        {error && <ErrorNote message={t(error)} />}
 
         {!loading && posts.length === 0 && !error && (
           <Empty title={t("news.empty")} hint={t("news.emptyHint")} />

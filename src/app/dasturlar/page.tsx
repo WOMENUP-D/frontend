@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
 import { Shelf } from "@/components/Shelf";
+import { PartnerCourses } from "@/components/PartnerCourses";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -30,8 +31,17 @@ export default function ProgramsPage() {
   // requests and the list flickered under her hands on every one of them.
   const [query, setQuery] = useState("");
   const [enrolled, setEnrolled] = useState<Set<string>>(new Set());
+  /* Whether the catalogue holds anything at all, asked once and without
+     filters. With an empty catalogue every category answers "nothing found —
+     try another filter", and no filter can end that loop. */
+  const [catalogueHasAny, setCatalogueHasAny] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [authed, setAuthed] = useState(false);
   /* The grid stays the default: it carries the figures people compare on.
      The shelf is the second reading — the catalogue as a body of work. */
@@ -56,6 +66,13 @@ export default function ProgramsPage() {
   }, [search]);
 
   useEffect(() => {
+    portal
+      .programs("?size=1")
+      .then((page) => setCatalogueHasAny((page.total ?? page.items.length) > 0))
+      .catch(() => setCatalogueHasAny(null));
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({ size: "50" });
     if (category) params.set("category", category);
@@ -63,7 +80,7 @@ export default function ProgramsPage() {
 
     portal.programs(`?${params}`)
       .then((page) => setPrograms(page.items))
-      .catch(() => setError(t("pr.errLoad")))
+      .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
   }, [category, query]);
 
@@ -80,7 +97,7 @@ export default function ProgramsPage() {
     try {
       await portal.enroll(program.id);
       setEnrolled((prev) => new Set(prev).add(program.id));
-    } catch { setError(t("pr.errEnroll")); }
+    } catch { setError("pr.errEnroll"); }
   }
 
   return (
@@ -102,12 +119,20 @@ export default function ProgramsPage() {
           aria-label={t("pr.search")}
         />
 
-        <div className="cat-filters">
+        {/* The row scrolls sideways on a phone, so the chosen category can sit
+            off-screen — after arriving from a direction card it always did. */}
+        <div className="cat-filters cat-scroll">
           {CATEGORIES.map((key) => (
             <button
               key={key || "all"}
+              ref={(node) => {
+                if (node && category === key) {
+                  node.scrollIntoView({ block: "nearest", inline: "center" });
+                }
+              }}
               onClick={() => setCategory(key)}
               className={category === key ? "chip chip-on" : "chip"}
+              aria-pressed={category === key}
             >
               {key ? t(categoryKey(key)) : t("common.all")}
             </button>
@@ -116,12 +141,20 @@ export default function ProgramsPage() {
       </header>
 
       <div className="cat-results stack" style={{ gap: 14 }}>
-          {error && <ErrorNote message={error} />}
+          {error && <ErrorNote message={t(error)} />}
           {loading && <Loading rows={3} />}
 
-          {!loading && programs.length === 0 && (
-            <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
-          )}
+          {/* One message at a time, and only when it is true.
+              A failed request used to print both "could not load the
+              programmes" and "nothing found — try another filter", which are
+              different things. And "try another filter" is only advice worth
+              giving when a filter is on: with an empty catalogue it sent a
+              reader round a loop that no tap could end, so the page goes
+              straight to the courses below instead. */}
+          {!loading && !error && programs.length === 0 && (category || query)
+            && catalogueHasAny !== false && (
+              <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
+            )}
 
           {!loading && programs.length > 0 && (
             <div className="cat-bar">
@@ -147,7 +180,9 @@ export default function ProgramsPage() {
             </div>
           )}
 
-          {shelf ? <Shelf programs={programs} /> : (
+          {/* An empty grid is still a grid: it held a row of blank space between
+              the filters and what is actually on the page. */}
+          {programs.length > 0 && (shelf ? <Shelf programs={programs} /> : (
           <div className="prog-grid">
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
@@ -217,7 +252,9 @@ export default function ProgramsPage() {
               );
             })}
           </div>
-          )}
+          ))}
+
+          <PartnerCourses />
       </div>
     </main>
   );
