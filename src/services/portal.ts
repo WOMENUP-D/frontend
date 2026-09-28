@@ -59,6 +59,9 @@ export interface Program {
   learning_outcomes: Array<Record<string, string>>;
   has_certificate: boolean;
   provider: string | null;
+  /** Set when the course belongs to somebody else and lives on their site. */
+  external_url?: string | null;
+  source?: string | null;
 }
 
 /** One card in the news feed. The body is deliberately absent: the feed is
