@@ -31,6 +31,10 @@ export default function ProgramsPage() {
   // requests and the list flickered under her hands on every one of them.
   const [query, setQuery] = useState("");
   const [enrolled, setEnrolled] = useState<Set<string>>(new Set());
+  /* Whether the catalogue holds anything at all, asked once and without
+     filters. With an empty catalogue every category answers "nothing found —
+     try another filter", and no filter can end that loop. */
+  const [catalogueHasAny, setCatalogueHasAny] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
     /* The key, not the sentence. Translating at the moment the request fails
      froze whatever language was current then — and the locale is restored from
@@ -60,6 +64,13 @@ export default function ProgramsPage() {
     const timer = setTimeout(() => setQuery(search.trim()), 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  useEffect(() => {
+    portal
+      .programs("?size=1")
+      .then((page) => setCatalogueHasAny((page.total ?? page.items.length) > 0))
+      .catch(() => setCatalogueHasAny(null));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -140,9 +151,10 @@ export default function ProgramsPage() {
               giving when a filter is on: with an empty catalogue it sent a
               reader round a loop that no tap could end, so the page goes
               straight to the courses below instead. */}
-          {!loading && !error && programs.length === 0 && (category || query) && (
-            <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
-          )}
+          {!loading && !error && programs.length === 0 && (category || query)
+            && catalogueHasAny !== false && (
+              <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
+            )}
 
           {!loading && programs.length > 0 && (
             <div className="cat-bar">
