@@ -125,7 +125,10 @@ export default function ProgramsPage() {
           {error && <ErrorNote message={t(error)} />}
           {loading && <Loading rows={3} />}
 
-          {!loading && programs.length === 0 && (
+          {/* One message at a time. A failed request used to print both "could
+              not load the programmes" and "nothing found — try another filter",
+              which are different things and the second one is not true. */}
+          {!loading && !error && programs.length === 0 && (
             <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
           )}
 
