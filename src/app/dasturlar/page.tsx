@@ -32,7 +32,12 @@ export default function ProgramsPage() {
   const [query, setQuery] = useState("");
   const [enrolled, setEnrolled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [authed, setAuthed] = useState(false);
   /* The grid stays the default: it carries the figures people compare on.
      The shelf is the second reading — the catalogue as a body of work. */
@@ -64,7 +69,7 @@ export default function ProgramsPage() {
 
     portal.programs(`?${params}`)
       .then((page) => setPrograms(page.items))
-      .catch(() => setError(t("pr.errLoad")))
+      .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
   }, [category, query]);
 
@@ -81,7 +86,7 @@ export default function ProgramsPage() {
     try {
       await portal.enroll(program.id);
       setEnrolled((prev) => new Set(prev).add(program.id));
-    } catch { setError(t("pr.errEnroll")); }
+    } catch { setError("pr.errEnroll"); }
   }
 
   return (
@@ -117,7 +122,7 @@ export default function ProgramsPage() {
       </header>
 
       <div className="cat-results stack" style={{ gap: 14 }}>
-          {error && <ErrorNote message={error} />}
+          {error && <ErrorNote message={t(error)} />}
           {loading && <Loading rows={3} />}
 
           {!loading && programs.length === 0 && (

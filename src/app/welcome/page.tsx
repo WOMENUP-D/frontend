@@ -82,7 +82,12 @@ export default function WelcomePage() {
   const [goal, setGoal] = useState("");
   const [direction, setDirection] = useState(DIRECTIONS[0][0]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const birthRef = useRef<HTMLSelectElement>(null);
 
@@ -137,7 +142,7 @@ export default function WelcomePage() {
       // owes her after she has answered its questions is something to read.
       router.push("/yangiliklar");
     } catch {
-      setError(t("asst.err"));
+      setError("asst.err");
     } finally {
       setBusy(false);
     }

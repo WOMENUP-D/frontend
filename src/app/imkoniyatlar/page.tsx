@@ -6,7 +6,7 @@ import { Suspense, useEffect, useState } from "react";
 import { getAccessToken } from "@/services/api";
 import { portal, type Opportunity, type OpportunityMatch } from "@/services/portal";
 import { EdRow, EdRows, Empty, ErrorNote, Loading } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type MessageKey } from "@/i18n";
 import { daysLeft, money, regionKey, sourceKey, typeKey } from "@/utils/format";
 
 const SOURCE_BADGE: Record<string, string> = {
@@ -52,7 +52,12 @@ function OpportunitiesView() {
   const [consents, setConsents] = useState<Record<string, boolean>>({});
   const [applied, setApplied] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
@@ -94,7 +99,7 @@ function OpportunitiesView() {
       await portal.setConsent(scope, true);
       setConsents(await portal.consentStatus());
       setNote(t("op.okConsent"));
-    } catch { setError(t("op.errConsent")); }
+    } catch { setError("op.errConsent"); }
   }
 
   async function apply(opportunity: Opportunity) {
@@ -104,10 +109,8 @@ function OpportunitiesView() {
       setApplied((prev) => new Set(prev).add(opportunity.id));
       setNote(t("op.okApplied"));
     } catch (err) {
-      const message = err && typeof err === "object" && "status" in err && err.status === 403
-        ? t("op.errNoConsent")
-        : t("op.errApply");
-      setError(message);
+      const refused = err && typeof err === "object" && "status" in err && err.status === 403;
+      setError(refused ? "op.errNoConsent" : "op.errApply");
     }
   }
 
@@ -218,7 +221,7 @@ function OpportunitiesView() {
       </div>
 
       {note && <div className="notice notice-green">{note}</div>}
-      {error && <ErrorNote message={error} />}
+      {error && <ErrorNote message={t(error)} />}
 
       {regions.length > 1 && (
         <div className="stack" style={{ gap: 8 }}>
