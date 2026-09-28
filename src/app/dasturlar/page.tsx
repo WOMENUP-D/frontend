@@ -108,12 +108,20 @@ export default function ProgramsPage() {
           aria-label={t("pr.search")}
         />
 
-        <div className="cat-filters">
+        {/* The row scrolls sideways on a phone, so the chosen category can sit
+            off-screen — after arriving from a direction card it always did. */}
+        <div className="cat-filters cat-scroll">
           {CATEGORIES.map((key) => (
             <button
               key={key || "all"}
+              ref={(node) => {
+                if (node && category === key) {
+                  node.scrollIntoView({ block: "nearest", inline: "center" });
+                }
+              }}
               onClick={() => setCategory(key)}
               className={category === key ? "chip chip-on" : "chip"}
+              aria-pressed={category === key}
             >
               {key ? t(categoryKey(key)) : t("common.all")}
             </button>

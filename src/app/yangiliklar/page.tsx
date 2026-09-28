@@ -315,7 +315,7 @@ export default function NewsFeedPage() {
         />
 
         {filtersOpen && (
-          <div className="cat-filters news-sections">
+          <div className="cat-filters cat-scroll news-sections">
             {SECTIONS.map((key) => {
               const count = key ? counts[key] : Object.values(counts).reduce((a, b) => a + b, 0);
               // A section with nothing in it is a chip that opens on an empty

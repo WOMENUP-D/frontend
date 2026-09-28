@@ -1664,6 +1664,34 @@ button.ed-row { cursor: pointer; }
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
   margin-top: 4px;
 }
+/* On a phone ten categories wrapped into five rows — 212px, a third of the
+   screen, before a single programme was visible, and every chip was under the
+   44px a thumb needs. One row that scrolls sideways costs 56px and each chip
+   is big enough to hit.
+
+   Opt-in, because the same chips are also how she picks several interests in
+   the feed settings — there, hiding the rest behind a sideways scroll would be
+   the wrong trade. */
+@media (max-width: 700px) {
+  .cat-scroll {
+    flex-wrap: nowrap; justify-content: flex-start;
+    /* The header centres its children, which makes a flex child as wide as its
+       content — 1386px here — so `overflow-x` never had anything to clip and
+       the row simply hung off both sides of the screen. It has to be told to
+       take the width it is given. */
+    align-self: stretch; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-block: 3px;
+  }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-scroll .chip {
+    flex: none; scroll-snap-align: start;
+    min-height: 44px; padding-block: 10px;
+  }
+}
 .cat-results { max-width: 980px; margin: 0 auto; }
 .cat-count { align-self: flex-start; }
 
@@ -1883,11 +1911,33 @@ button.ed-row { cursor: pointer; }
    portal's own programmes never need: that the card leaves the site, and that
    the teaching is in a language most of this audience is still learning. */
 .partner-section { margin-top: 46px; }
+/* Twenty-five cards is seven screens on a phone. The one cut that matters to
+   this reader is the language she can actually follow, so it is the one
+   offered — and it scrolls in a single row like the catalogue's own. */
+.partner-langs {
+  display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px;
+}
+@media (max-width: 700px) {
+  .partner-langs {
+    flex-wrap: nowrap; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none; padding-block: 3px;
+  }
+  .partner-langs::-webkit-scrollbar { display: none; }
+  .partner-langs .chip { flex: none; scroll-snap-align: start; min-height: 44px; padding-block: 10px; }
+}
 .partner-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
   gap: 10px; background: var(--bg);
 }
 @media (min-width: 1000px) { .partner-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .partner-grid { gap: 8px; }
+  .partner-card { padding: 16px; min-height: 0; }
+  .partner-title { font-size: 1.05rem; }
+  .partner-foot { padding-top: 12px; }
+}
 .partner-card {
   display: flex; flex-direction: column;
   background: color-mix(in srgb, var(--cat, var(--primary)) 16%, var(--surface));

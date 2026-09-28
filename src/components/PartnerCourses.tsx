@@ -16,6 +16,7 @@
  * taught in English.
  */
 
+import { useMemo, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 
 type Course = {
@@ -302,8 +303,21 @@ function host(href: string) {
   return new URL(href).host.replace(/^www\./, "");
 }
 
+/** Языки, которые реально есть в списке, плюс «все». */
+const LANG_FILTERS: ReadonlyArray<{ key: "all" | Course["lang"]; label: MessageKey }> = [
+  { key: "all", label: "common.all" },
+  { key: "uz", label: "pc.f.uz" },
+  { key: "ru", label: "pc.f.ru" },
+  { key: "en", label: "pc.f.en" },
+];
+
 export function PartnerCourses() {
   const { t } = useI18n();
+  const [lang, setLang] = useState<"all" | Course["lang"]>("all");
+  const shown = useMemo(
+    () => (lang === "all" ? COURSES : COURSES.filter((course) => course.lang === lang)),
+    [lang],
+  );
 
   return (
     <section className="section partner-section">
@@ -315,8 +329,29 @@ export function PartnerCourses() {
         </span>
       </div>
 
+      <div className="partner-langs" role="group" aria-label={t("pc.langFilter")}>
+        {LANG_FILTERS.map((option) => {
+          const count = option.key === "all"
+            ? COURSES.length
+            : COURSES.filter((course) => course.lang === option.key).length;
+          if (!count) return null;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              className={lang === option.key ? "chip chip-on" : "chip"}
+              aria-pressed={lang === option.key}
+              onClick={() => setLang(option.key)}
+            >
+              {t(option.label)}
+              <span className="chip-count">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="partner-grid">
-        {COURSES.map((course) => (
+        {shown.map((course) => (
           <a
             key={course.href}
             className="partner-card"
