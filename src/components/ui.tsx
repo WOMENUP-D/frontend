@@ -81,8 +81,11 @@ export function DimensionRow({
 
 export function Empty({ title, hint, action }: { title: string; hint?: string; action?: ReactNode }) {
   return (
-    <div className="card center stack" style={{ alignItems: "center", padding: 40 }}>
-      <div className="card-ico" style={{ margin: "0 auto" }}>✦</div>
+    /* An empty result is not an event. It used to be a 40px-padded panel with
+       a 50px mark in it — on a phone, most of the screen given to an apology
+       for something that had not gone wrong. Same words, a third of the room. */
+    <div className="card center stack empty-card">
+      <div className="card-ico empty-ico">✦</div>
       <h3>{title}</h3>
       {hint && <p className="muted small" style={{ maxWidth: 460 }}>{hint}</p>}
       {action}
