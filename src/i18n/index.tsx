@@ -40,7 +40,7 @@ const DEFAULT: Locale = "uz";
  * stored letter untouched — the API, the search index and the exports keep
  * the official character; only the pixels change.
  */
-function typeset(text: string): string {
+export function typeset(text: string): string {
   return text.replace(/[\u02BB\u02BC]/g, "\u2018");
 }
 

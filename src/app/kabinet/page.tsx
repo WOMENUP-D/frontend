@@ -13,6 +13,7 @@ import {
 import { DimensionRow, EdRow, EdRows, Empty, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
+import { CareerHistory } from "@/components/CareerHistory";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
@@ -73,31 +74,6 @@ interface Account {
  * disappears is the identity panel: she has a WomanUP ID from the moment she
  * signs up, and that is enough for the card to be about someone.
  */
-/** Briefcase. Drawn rather than an emoji, so it takes the text colour and does
- *  not change shape between platforms. */
-function IconWork() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2.5" y="7.5" width="19" height="12.5" rx="2.5" />
-      <path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7" />
-      <path d="M2.5 12.5h19" />
-    </svg>
-  );
-}
-
-/** Graduation cap. */
-function IconStudy() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 4 2.5 8.6 12 13.2l9.5-4.6L12 4Z" />
-      <path d="M6.6 10.8v4.6c0 1.6 2.4 2.9 5.4 2.9s5.4-1.3 5.4-2.9v-4.6" />
-      <path d="M21.5 8.6v5.2" />
-    </svg>
-  );
-}
-
 /**
  * The profile card.
  *
@@ -136,11 +112,6 @@ function ProfileDetails({
     ...(profile?.interests ?? []).map(label),
     ...(profile?.languages ?? []),
   ];
-  const experience = [
-    profile?.employment_status,
-    profile?.years_of_experience != null ? `${profile.years_of_experience} ${t("prof.years")}` : null,
-  ].filter(Boolean).join(" · ");
-  const education = [profile?.education_level, profile?.education_field].filter(Boolean).join(", ");
 
   return (
     <section className="pcard">
@@ -168,18 +139,10 @@ function ProfileDetails({
           </>
         )}
 
-        {experience && (
-          <div className="pcard-block">
-            <h3><IconWork /> {t("prof.experienceBlock")}</h3>
-            <p>{experience}</p>
-          </div>
-        )}
-        {education && (
-          <div className="pcard-block">
-            <h3><IconStudy /> {t("prof.education")}</h3>
-            <p>{education}</p>
-          </div>
-        )}
+        {/* Where she has worked and studied, place by place — the CV. It
+            replaces the one-line summary built from the questionnaire's codes
+            ("working · 3 years"), which said where she is but not the path. */}
+        <CareerHistory />
       </div>
     </section>
   );

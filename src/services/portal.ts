@@ -104,6 +104,8 @@ export interface PlanItem {
   status: string;
   due_date: string | null;
   program_id: string | null;
+  /** The course's own site, when it is hosted elsewhere (Stepik, a university). */
+  program_url?: string | null;
 }
 
 export interface Plan {
@@ -175,6 +177,12 @@ export interface LqQuestion {
   suggestions_i18n?: Array<Record<string, string>>;
   /** "set" replaces the field; "add" appends to a comma-separated list. */
   suggest_mode?: "set" | "add";
+  /** A short free-text line under the options, saved under its own id. */
+  detail?: {
+    id: string;
+    label_i18n: Record<string, string>;
+    placeholder_i18n: Record<string, string>;
+  };
 }
 export interface Questionnaire {
   version: number;
@@ -315,8 +323,42 @@ function guestId(): string {
   return id;
 }
 
+export interface WorkEntry {
+  id: string;
+  organization: string;
+  position: string;
+  location: string | null;
+  /** "YYYY-MM-01" — month-precise. */
+  start_date: string | null;
+  /** Null means "to the present". */
+  end_date: string | null;
+  description: string | null;
+}
+export type WorkEntryIn = Omit<WorkEntry, "id"> & { client_ref?: string };
+
+export interface StudyEntry {
+  id: string;
+  institution: string;
+  degree: string | null;
+  field_of_study: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+}
+export type StudyEntryIn = Omit<StudyEntry, "id"> & { client_ref?: string };
+
 export const portal = {
   me: () => api.get("/users/me"),
+  experience: () => api.get<WorkEntry[]>("/users/me/experience"),
+  addExperience: (body: WorkEntryIn) => api.post<WorkEntry>("/users/me/experience", body),
+  saveExperience: (id: string, body: WorkEntryIn) =>
+    api.put<WorkEntry>(`/users/me/experience/${id}`, body),
+  deleteExperience: (id: string) => api.delete(`/users/me/experience/${id}`),
+  education: () => api.get<StudyEntry[]>("/users/me/education"),
+  addEducation: (body: StudyEntryIn) => api.post<StudyEntry>("/users/me/education", body),
+  saveEducation: (id: string, body: StudyEntryIn) =>
+    api.put<StudyEntry>(`/users/me/education/${id}`, body),
+  deleteEducation: (id: string) => api.delete(`/users/me/education/${id}`),
   /** Defaults to the calendar year: a rolling 365-day window starts mid-month
    *  and gives nothing to compare against. */
   activity: (year: number = new Date().getFullYear()) =>

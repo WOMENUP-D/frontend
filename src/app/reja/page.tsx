@@ -229,7 +229,27 @@ export default function PlanPage() {
                   index={position + 1}
                   done={done}
                   arrow={false}
-                  title={item.action}
+                  title={
+                    // The step names a course: the name itself is the way in.
+                    // A course hosted elsewhere opens on its own site, in a new
+                    // tab, so the roadmap stays where she left it.
+                    item.program_url ? (
+                      <a
+                        href={item.program_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ed-title-link"
+                      >
+                        {item.action}
+                      </a>
+                    ) : item.program_id ? (
+                      <Link href={`/dasturlar/${item.program_id}`} className="ed-title-link">
+                        {item.action}
+                      </Link>
+                    ) : (
+                      item.action
+                    )
+                  }
                   meta={
                     <>
                       {item.description}
@@ -262,12 +282,23 @@ export default function PlanPage() {
                         // Asking her to then confirm it here is asking her to
                         // restate what the system just recorded, so the only
                         // thing offered is the way in.
-                        <Link
-                          href={`/dasturlar/${item.program_id}`}
-                          className="btn btn-outline btn-sm"
-                        >
-                          {t("plan.toCourse")}
-                        </Link>
+                        item.program_url ? (
+                          <a
+                            href={item.program_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline btn-sm"
+                          >
+                            {t("plan.toCourse")} ↗
+                          </a>
+                        ) : (
+                          <Link
+                            href={`/dasturlar/${item.program_id}`}
+                            className="btn btn-outline btn-sm"
+                          >
+                            {t("plan.toCourse")}
+                          </Link>
+                        )
                       ) : (
                         // A step with no course behind it. It carries no
                         // control either — status on this page is something the

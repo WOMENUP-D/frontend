@@ -73,8 +73,8 @@ export default function DiagnosticPage() {
     }
   }, []);
 
-  function set(value: unknown) {
-    const next = { ...answers, [question!.id]: value };
+  function set(value: unknown, id: string = question!.id) {
+    const next = { ...answers, [id]: value };
     setAnswers(next);
     return next;
   }
@@ -195,6 +195,23 @@ export default function DiagnosticPage() {
             void save(next);
           }}
         />
+
+        {question!.detail && (
+          <div className="field">
+            <label className="label" htmlFor={question!.detail.id}>
+              {tx(question!.detail.label_i18n)}
+            </label>
+            <input
+              id={question!.detail.id}
+              className="input"
+              value={typeof answers[question!.detail.id] === "string" ? (answers[question!.detail.id] as string) : ""}
+              placeholder={tx(question!.detail.placeholder_i18n)}
+              maxLength={160}
+              onChange={(event) => set(event.target.value, question!.detail!.id)}
+              onBlur={(event) => void save(set(event.target.value.trim(), question!.detail!.id))}
+            />
+          </div>
+        )}
       </div>
 
       <div className="spread">

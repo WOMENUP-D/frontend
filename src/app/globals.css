@@ -3534,3 +3534,69 @@ button.ed-row { cursor: pointer; }
   .spine { height: 190px; }
   .spine-title { max-height: 150px; }
 }
+
+/* A roadmap step that names a course: the name is the link. Same ink as the
+   other titles until it is pointed at, so a list of links does not read as a
+   page of underlines. */
+.ed-title-link { color: inherit; text-decoration: none; }
+.ed-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ed-title-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+/* ---------- Career history: the CV sections of the profile ----------
+   One line down the left joins the entries, because a working life is one
+   path and not a stack of cards. The place is set in the display face — it is
+   what a reader looks for first — and the dates sit quiet under it. The dot of
+   whatever is still running is filled; the ended ones are rings. */
+.cv { display: flex; flex-direction: column; gap: 10px; }
+.cv-empty { color: var(--text-faint); font-size: .92rem; }
+.cv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cv-item {
+  position: relative;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 0 0 18px 22px;
+  border-left: 1.5px solid var(--border);
+  margin-left: 5px;
+}
+.cv-item:last-child { border-left-color: transparent; padding-bottom: 4px; }
+.cv-item::before {
+  content: ""; position: absolute; left: -6.5px; top: 6px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--surface); border: 1.5px solid var(--border-strong);
+}
+.cv-item-current::before { background: var(--primary); border-color: var(--primary); }
+.cv-item-editing::before { border-color: var(--primary); }
+.cv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.cv-primary {
+  font-family: var(--font-display); font-size: 1.08rem; font-weight: 500;
+  line-height: 1.3; color: var(--ink); overflow-wrap: anywhere;
+}
+.cv-secondary { color: var(--text); font-size: .93rem; line-height: 1.45; }
+.cv-when { color: var(--text-faint); font-size: .84rem; line-height: 1.45; }
+.cv-desc {
+  color: var(--text-dim); font-size: .9rem; line-height: 1.58;
+  margin-top: 5px; white-space: pre-line; max-width: 62ch;
+}
+.cv-edit, .cv-add, .cv-delete {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  font: inherit; font-size: .85rem; font-weight: 600;
+}
+.cv-edit { color: var(--text-faint); flex: none; }
+.cv-edit:hover { color: var(--primary); }
+.cv-add { color: var(--primary); align-self: flex-start; display: inline-flex; gap: 7px; }
+.cv-add span { font-size: 1.05rem; line-height: 1; }
+.cv-add:hover { text-decoration: underline; text-underline-offset: 3px; }
+.cv-edit:focus-visible, .cv-add:focus-visible, .cv-delete:focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px;
+}
+
+.cv-form { display: flex; flex-direction: column; gap: 13px; padding-top: 1px; }
+.cv-dates { border: 0; margin: 0; padding: 0; display: grid; gap: 13px; grid-template-columns: 1fr; }
+@container (min-width: 520px) { .cv-dates { grid-template-columns: 1fr 1fr; } }
+.cv-when-pick { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; }
+.cv-when-pick select:disabled { opacity: .5; }
+.cv-form textarea { resize: vertical; min-height: 78px; font: inherit; }
+.cv-error { color: var(--danger); }
+.cv-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* Deleting is set apart at the far end, and asks once before it acts. */
+.cv-delete { color: var(--text-faint); margin-left: auto; }
+.cv-delete:hover, .cv-delete-armed { color: var(--danger); }
