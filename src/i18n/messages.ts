@@ -25,7 +25,6 @@ export const messages = {
   // ---- brand / chrome ----------------------------------------------
   "brand.tagline":    { uz: "Milliy rivojlanish dasturi", ru: "Национальная программа развития", en: "National development programme" },
   "demo.strip":       { uz: "DEMO — barcha maʼlumotlar shartli va namoyish uchun yaratilgan", ru: "ДЕМО — все данные условные и созданы для показа", en: "DEMO — all data is fictional and for demonstration only" },
-  "nav.news":         { uz: "Yangiliklar", ru: "Новости", en: "News" },
   "nav.cabinet":      { uz: "Kabinet", ru: "Кабинет", en: "Cabinet" },
   "nav.assessment":   { uz: "Diagnostika", ru: "Диагностика", en: "Assessment" },
   "nav.plan":         { uz: "Mening rejam", ru: "Мой план", en: "My plan" },
@@ -39,77 +38,9 @@ export const messages = {
   "nav.themeLight":   { uz: "Yorugʻ rejim", ru: "Светлая тема", en: "Light theme" },
   "nav.themeDark":    { uz: "Qorongʻi rejim", ru: "Тёмная тема", en: "Dark theme" },
 
-  // ---- news and announcements ---------------------------------------
-  "news.eyebrow":     { uz: "Yangiliklar va eʼlonlar", ru: "Новости и объявления", en: "News and announcements" },
-  "news.title":       { uz: "Bugun nimani bilish kerak", ru: "Что важно знать сегодня", en: "What is worth knowing today" },
-  "news.lead":        { uz: "Tibbiyot, salomatlik, ayollarning ilmiy kashfiyotlari va portal eʼlonlari — bitta lentada.", ru: "Медицина, здоровье, научные открытия женщин и объявления портала — в одной ленте.", en: "Medicine, health, women's discoveries in science and portal announcements — in one feed." },
-  "news.search":      { uz: "Mavzu boʻyicha qidirish", ru: "Поиск по теме", en: "Search by topic" },
-  "news.pinned":      { uz: "Muhim", ru: "Важное", en: "Pinned" },
-  "news.minutes":     { uz: "daq. oʻqish", ru: "мин чтения", en: "min read" },
-  "news.source":      { uz: "Manba", ru: "Источник", en: "Source" },
-  "news.sourceOpen":  { uz: "Manbani ochish", ru: "Открыть источник", en: "Open the source" },
-  "news.back":        { uz: "Lentaga qaytish", ru: "Вернуться в ленту", en: "Back to the feed" },
-  "news.readMore":    { uz: "Batafsil", ru: "Подробнее", en: "Read more" },
-  "news.collapse":    { uz: "Yigʻish", ru: "Свернуть", en: "Collapse" },
-  "news.openPage":    { uz: "Alohida sahifada", ru: "Отдельной страницей", en: "Open as a page" },
-  "news.moreInline":  { uz: "yana", ru: "ещё", en: "more" },
-  "news.more":        { uz: "Yana koʻrsatish", ru: "Показать ещё", en: "Show more" },
-  "news.empty":       { uz: "Bu boʻlimda hozircha post yoʻq", ru: "В этом разделе пока нет постов", en: "Nothing in this section yet" },
-  "news.emptyHint":   { uz: "Boshqa boʻlimni tanlang yoki qidiruvni tozalang.", ru: "Выберите другой раздел или очистите поиск.", en: "Pick another section or clear the search." },
-  "news.notFound":    { uz: "Post topilmadi", ru: "Пост не найден", en: "Post not found" },
-  "news.notFoundHint":{ uz: "Havola eskirgan boʻlishi mumkin — lentaga qayting.", ru: "Возможно, ссылка устарела — вернитесь в ленту.", en: "The link may be out of date — go back to the feed." },
-  /* Drawn under every medical post. The portal never gives a verdict, and
-     saying so on the page is part of that rule rather than a disclaimer
-     bolted on afterwards. */
-  "news.careNote":    { uz: "Bu maʼlumot tanishtirish uchun. U tashxis qoʻymaydi va davolashni tayinlamaydi — buni faqat shifokor qiladi.", ru: "Это информация для ознакомления. Она не ставит диагноз и не назначает лечение — это делает только врач.", en: "This is information, not medical advice. It does not diagnose or prescribe — only a doctor does that." },
-  "news.next":        { uz: "Keyingi qadam", ru: "Следующий шаг", en: "Next step" },
-  "news.nextLead":    { uz: "Rivojlanish balini oʻtkazing — reja shundan boshlanadi.", ru: "Пройдите Развитие-балл — с него начинается план.", en: "Take the Development Score — your plan starts there." },
-
-  "news.cat.all":         { uz: "Barchasi", ru: "Все", en: "All" },
-  "news.cat.health":      { uz: "Salomatlik", ru: "Здоровье", en: "Health" },
-  "news.cat.medicine":    { uz: "Tibbiyot", ru: "Медицина", en: "Medicine" },
-  "news.cat.science":     { uz: "Ayollar ilm-fanda", ru: "Женщины в науке", en: "Women in science" },
-  "news.cat.education":   { uz: "Taʼlim", ru: "Образование", en: "Education" },
-  "news.cat.career":      { uz: "Kasb va ish", ru: "Карьера", en: "Career" },
-  "news.cat.success_story": { uz: "Hikoyalar", ru: "Истории", en: "Stories" },
-  "news.cat.announcement":{ uz: "Eʼlonlar", ru: "Объявления", en: "Announcements" },
-
-  // ---- personalised feed -------------------------------------------
-  // The "For you" section ranks; it never hides. Everything it puts last is
-  // still in the feed below, in its section and in the search — which is why
-  // "Latest news" has a heading of its own now: the two lists answer
-  // different questions and a reader should be able to tell them apart.
-  "news.forYou":      { uz: "Siz uchun", ru: "Для вас", en: "For you" },
-  "news.forYouLead":  { uz: "Yoshingiz va qiziqishlaringizga qarab tanlandi.", ru: "Подобрано по вашему возрасту и интересам.", en: "Selected for your age and interests." },
-  "news.latest":      { uz: "Soʻnggi yangiliklar", ru: "Последние новости", en: "Latest news" },
-  "news.latestLead":  { uz: "Barcha yangiliklar — sana boʻyicha, hech nima yashirilmagan.", ru: "Все новости по дате — ничего не скрыто.", en: "Everything, newest first — nothing hidden." },
-
-  "news.forYouEmpty": { uz: "Yoshingiz va qiziqishlaringizni koʻrsating — lenta shunga qarab tartiblanadi.", ru: "Укажите возраст и интересы — и лента выстроится под вас.", en: "Tell us your age and interests, and this section will build itself." },
-  "news.prefs":       { uz: "Lenta sozlamalari", ru: "Настройки ленты", en: "News preferences" },
-  "news.prefsLead":   { uz: "Bu faqat tartibga taʼsir qiladi. Har qanday yangilik lentada, boʻlimlarda va qidiruvda ochiq qoladi.", ru: "Это влияет только на порядок. Любая новость остаётся доступной в ленте, разделах и поиске.", en: "This changes the order only. Every post stays available in the feed, the sections and the search." },
-  "news.prefsAge":    { uz: "Yoshingiz", ru: "Ваш возраст", en: "Your age" },
-  "news.prefsAgeAuto":{ uz: "Tugʻilgan sanangizdan olindi.", ru: "Взят из вашей даты рождения.", en: "Taken from your date of birth." },
-  "news.prefsInterests": { uz: "Qiziqishlaringiz", ru: "Ваши интересы", en: "Your interests" },
-  "news.prefsSave":   { uz: "Saqlash", ru: "Сохранить", en: "Save" },
-  "news.prefsSaved":  { uz: "Saqlandi", ru: "Сохранено", en: "Saved" },
-
   // Why a card is in the personalised section. Labels, never scores —
   // the weighting behind them is not something to put in front of a reader.
-  "news.why.age":       { uz: "Yoshingizga mos", ru: "Подходит вашему возрасту", en: "Suits your age" },
-  "news.why.important": { uz: "Muhim", ru: "Важно", en: "Important" },
 
-  "news.topic.science":              { uz: "Ilm-fan", ru: "Наука", en: "Science" },
-  "news.topic.medicine":             { uz: "Tibbiyot", ru: "Медицина", en: "Medicine" },
-  "news.topic.technology":           { uz: "Texnologiya", ru: "Технологии", en: "Technology" },
-  "news.topic.career":               { uz: "Kasb va ish", ru: "Карьера", en: "Career" },
-  "news.topic.education":            { uz: "Taʼlim", ru: "Образование", en: "Education" },
-  "news.topic.women_in_stem":        { uz: "Ayollar STEMda", ru: "Женщины в STEM", en: "Women in STEM" },
-  "news.topic.mental_health":        { uz: "Ruhiy salomatlik", ru: "Ментальное здоровье", en: "Mental health" },
-  "news.topic.reproductive_health":  { uz: "Reproduktiv salomatlik", ru: "Репродуктивное здоровье", en: "Reproductive health" },
-  "news.topic.prevention":           { uz: "Profilaktika va skrining", ru: "Профилактика и скрининг", en: "Prevention and screening" },
-  "news.topic.nutrition":            { uz: "Ovqatlanish", ru: "Питание", en: "Nutrition" },
-  "news.topic.menopause":            { uz: "Menopauza", ru: "Менопауза", en: "Menopause" },
-  "news.topic.family":               { uz: "Oila va onalik", ru: "Семья и материнство", en: "Family and motherhood" },
 
   // ---- auth gate ----------------------------------------------------
   "auth.required":    { uz: "Bu boʻlim uchun kirish kerak", ru: "Для этого раздела нужен вход", en: "This section requires signing in" },

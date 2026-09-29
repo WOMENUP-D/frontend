@@ -64,70 +64,6 @@ export interface Program {
   source?: string | null;
 }
 
-/** One card in the news feed. The body is deliberately absent: the feed is
- *  scrolled, and shipping every article to draw a list of cards is what makes
- *  a feed slow on a regional connection. */
-export interface NewsPost {
-  id: string;
-  slug: string;
-  category: string;
-  title_i18n: Record<string, string>;
-  summary_i18n: Record<string, string>;
-  /** A photograph when the editor attached one; the drawn cover otherwise. */
-  cover_url: string | null;
-  cover_tone: string;
-  cover_emblem: string;
-  source_name: string | null;
-  source_url: string | null;
-  tags: string[];
-  region: string | null;
-  reading_minutes: number | null;
-  is_pinned: boolean;
-  published_at: string | null;
-}
-
-export interface NewsDetail extends NewsPost {
-  /** Paragraphs, separated by blank lines. */
-  body_i18n: Record<string, string>;
-  is_adult_only: boolean;
-  /** Present for editors; the reader is never shown the personalisation
-   *  maths, so nothing in this app renders either of these. */
-  topics: string[];
-  age_relevance: Record<string, number>;
-}
-
-/** A card in the "For you" section. */
-export interface PersonalisedNewsPost extends NewsPost {
-  /** Why this post is here, as i18n keys — `interest:science`, `age`,
-   *  `important`. Keys rather than sentences because the feed is read in three
-   *  languages, and a score would not be an explanation. */
-  reasons: string[];
-}
-
-export interface ForYouFeed {
-  items: PersonalisedNewsPost[];
-  /** False when we know neither her age nor a single chosen subject. The
-   *  section is not drawn at all in that case: naming it after a reader who
-   *  supplied nothing would be a lie with a headline on it. */
-  personalised: boolean;
-  age_group: string | null;
-  interests: string[];
-}
-
-export interface NewsPreferences {
-  age: number | null;
-  age_group: string | null;
-  /** `birth_date` when it came from a real date of birth — in which case the
-   *  screen shows it as a fact rather than offering to overwrite it with a
-   *  worse number. */
-  age_source: string | null;
-  interests: string[];
-  available_interests: string[];
-  /** The six brackets, youngest first. The screen offers these rather than a
-   *  free number field: only the bracket is stored, so a typed 15 would read
-   *  back as 13 and look like the form had lost her answer. */
-  available_age_groups: string[];
-}
 
 export interface Opportunity {
   id: string;
@@ -416,32 +352,6 @@ export const portal = {
   program: (id: string) => api.get<ProgramDetail>(`/programs/${id}`),
   enroll: (programId: string) => api.post(`/programs/${programId}/enroll`),
   myEnrollments: () => api.get("/programs/me/enrollments"),
-
-  /** The feed, and the one screen the portal opens on. Public, like the
-   *  catalogue: a visitor reads the same feed she will keep reading once she
-   *  registers, so the first screen after sign-up is already familiar.
-   *
-   *  What she is *not* shown is decided on the server — adult health posts are
-   *  filtered out for a minor and for a reader whose age we do not know, so an
-   *  age-inappropriate card never reaches the browser to be hidden here. */
-  news: (params: { category?: string; search?: string; size?: number; page?: number } = {}) => {
-    const q = new URLSearchParams();
-    if (params.category) q.set("category", params.category);
-    if (params.search) q.set("search", params.search);
-    q.set("size", String(params.size ?? 20));
-    q.set("page", String(params.page ?? 1));
-    return api.get<Page<NewsPost>>(`/news?${q}`);
-  },
-  newsCounts: () => api.get<Record<string, number>>("/news/categories"),
-  newsPost: (slug: string) => api.get<NewsDetail>(`/news/${encodeURIComponent(slug)}`),
-
-  /** The personalised section. Ranking only: every post here is in the feed
-   *  above too, and everything it ranks last is still one tap away in the
-   *  feed, in its category and in search. */
-  newsForYou: (size = 6) => api.get<ForYouFeed>(`/news/for-you?size=${size}`),
-  newsPreferences: () => api.get<NewsPreferences>("/news/preferences"),
-  saveNewsPreferences: (body: { age?: number | null; interests?: string[] }) =>
-    api.put<NewsPreferences>("/news/preferences", body),
 
   opportunities: () => api.get<Page<Opportunity>>("/opportunities"),
   /** The landing page shows real listings to visitors, so this one must not

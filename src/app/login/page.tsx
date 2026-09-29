@@ -32,7 +32,7 @@ import { loadFirebaseConfig } from "@/services/firebase";
 /** Where a signed-in learner lands. The feed is the portal's first tab, and
  *  it is the one screen that has something on it before she has done any
  *  work — which is exactly the state she is in one second after registering. */
-const HOME = "/yangiliklar";
+const HOME = "/kabinet";
 
 /**
  * The ready-made account for a demonstration build.
