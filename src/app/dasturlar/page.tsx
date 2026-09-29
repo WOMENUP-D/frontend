@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
 import { Shelf } from "@/components/Shelf";
+import { PartnerCourses } from "@/components/PartnerCourses";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -21,17 +22,45 @@ const CATEGORIES = [
    means here. */
 const MAX_WEEKS = 12;
 
+/** Enough to fill a screen twice over, small enough to arrive on a phone. */
+const PAGE_SIZE = 24;
+
+/** Whose site a course lives on, read off its address rather than stored twice. */
+function hostOf(url: string) {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
 export default function ProgramsPage() {
   const { t, tx, locale } = useI18n();
   const [programs, setPrograms] = useState<Program[]>([]);
+  /* How many the catalogue holds for this filter, and how many pages of them
+     have been asked for. Before this the page showed the first fifty and said
+     "50 found" — with 794 in the catalogue that is both a small lie and 744
+     courses nobody could reach. */
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   // What is actually asked of the server. Typing "бухгалтерия" fired eleven
   // requests and the list flickered under her hands on every one of them.
   const [query, setQuery] = useState("");
   const [enrolled, setEnrolled] = useState<Set<string>>(new Set());
+  /* Whether the catalogue holds anything at all, asked once and without
+     filters. With an empty catalogue every category answers "nothing found —
+     try another filter", and no filter can end that loop. */
+  const [catalogueHasAny, setCatalogueHasAny] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [authed, setAuthed] = useState(false);
   /* The grid stays the default: it carries the figures people compare on.
      The shelf is the second reading — the catalogue as a body of work. */
@@ -56,16 +85,49 @@ export default function ProgramsPage() {
   }, [search]);
 
   useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams({ size: "50" });
+    portal
+      .programs("?size=1")
+      .then((page) => setCatalogueHasAny((page.total ?? page.items.length) > 0))
+      .catch(() => setCatalogueHasAny(null));
+  }, []);
+
+  /** One page of the catalogue for the filters as they stand. */
+  function pageQuery(number: number) {
+    const params = new URLSearchParams({ size: String(PAGE_SIZE), page: String(number) });
     if (category) params.set("category", category);
     if (query) params.set("search", query);
+    return `?${params}`;
+  }
 
-    portal.programs(`?${params}`)
-      .then((page) => setPrograms(page.items))
-      .catch(() => setError(t("pr.errLoad")))
+  useEffect(() => {
+    setLoading(true);
+    setPage(1);
+    portal.programs(pageQuery(1))
+      .then((result) => {
+        setPrograms(result.items);
+        setTotal(result.total);
+      })
+      .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, query]);
+
+  /** The next page, appended — the list she is reading does not jump. */
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const result = await portal.programs(pageQuery(next));
+      setPrograms((current) => [...current, ...result.items]);
+      setTotal(result.total);
+      setPage(next);
+    } catch {
+      setError("pr.errLoad");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (!getAccessToken()) return;
@@ -80,7 +142,7 @@ export default function ProgramsPage() {
     try {
       await portal.enroll(program.id);
       setEnrolled((prev) => new Set(prev).add(program.id));
-    } catch { setError(t("pr.errEnroll")); }
+    } catch { setError("pr.errEnroll"); }
   }
 
   return (
@@ -102,12 +164,20 @@ export default function ProgramsPage() {
           aria-label={t("pr.search")}
         />
 
-        <div className="cat-filters">
+        {/* The row scrolls sideways on a phone, so the chosen category can sit
+            off-screen — after arriving from a direction card it always did. */}
+        <div className="cat-filters cat-scroll">
           {CATEGORIES.map((key) => (
             <button
               key={key || "all"}
+              ref={(node) => {
+                if (node && category === key) {
+                  node.scrollIntoView({ block: "nearest", inline: "center" });
+                }
+              }}
               onClick={() => setCategory(key)}
               className={category === key ? "chip chip-on" : "chip"}
+              aria-pressed={category === key}
             >
               {key ? t(categoryKey(key)) : t("common.all")}
             </button>
@@ -116,17 +186,25 @@ export default function ProgramsPage() {
       </header>
 
       <div className="cat-results stack" style={{ gap: 14 }}>
-          {error && <ErrorNote message={error} />}
+          {error && <ErrorNote message={t(error)} />}
           {loading && <Loading rows={3} />}
 
-          {!loading && programs.length === 0 && (
-            <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
-          )}
+          {/* One message at a time, and only when it is true.
+              A failed request used to print both "could not load the
+              programmes" and "nothing found — try another filter", which are
+              different things. And "try another filter" is only advice worth
+              giving when a filter is on: with an empty catalogue it sent a
+              reader round a loop that no tap could end, so the page goes
+              straight to the courses below instead. */}
+          {!loading && !error && programs.length === 0 && (category || query)
+            && catalogueHasAny !== false && (
+              <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
+            )}
 
           {!loading && programs.length > 0 && (
             <div className="cat-bar">
               <span className="faint cat-count">
-                {t("pr.found").replace("{n}", String(programs.length))}
+                {t("pr.found").replace("{n}", String(total || programs.length))}
               </span>
               <div className="cat-view" role="group" aria-label={t("shelf.view")}>
                 <button
@@ -147,7 +225,9 @@ export default function ProgramsPage() {
             </div>
           )}
 
-          {shelf ? <Shelf programs={programs} /> : (
+          {/* An empty grid is still a grid: it held a row of blank space between
+              the filters and what is actually on the page. */}
+          {programs.length > 0 && (shelf ? <Shelf programs={programs} /> : (
           <div className="prog-grid">
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
@@ -160,9 +240,23 @@ export default function ProgramsPage() {
                   <span className="prog-cat">{t(categoryKey(program.category))}</span>
 
                   {/* The title is the link, so the whole card does not have to be
-                      one — an enrol button inside a clickable card is a trap. */}
+                      one — an enrol button inside a clickable card is a trap.
+                      A course that is not ours links to where it actually is:
+                      there is no page of ours to send her to, and finding that
+                      out after the tap is worse than reading it before. */}
                   <h3 className="prog-title">
-                    <Link href={`/dasturlar/${program.id}`}>{tx(program.title_i18n)}</Link>
+                    {program.external_url ? (
+                      <a
+                        href={program.external_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${tx(program.title_i18n)} — ${t("pc.opens")} ${hostOf(program.external_url)}`}
+                      >
+                        {tx(program.title_i18n)}
+                      </a>
+                    ) : (
+                      <Link href={`/dasturlar/${program.id}`}>{tx(program.title_i18n)}</Link>
+                    )}
                   </h3>
                   <p className="prog-goal">{tx(program.goal_i18n)}</p>
 
@@ -199,10 +293,24 @@ export default function ProgramsPage() {
                       )}
                     </span>
                     <div className="prog-actions">
-                      <Link className="btn btn-outline btn-sm" href={`/dasturlar/${program.id}`}>
-                        {t("pr.details")}
-                      </Link>
-                      {authed && (
+                      {program.external_url ? (
+                        /* No "details" and no "enrol": we hold neither. What we
+                           can honestly offer is the address it lives at. */
+                        <a
+                          className="btn btn-outline btn-sm"
+                          href={program.external_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {hostOf(program.external_url)}
+                          <span aria-hidden="true"> ↗</span>
+                        </a>
+                      ) : (
+                        <Link className="btn btn-outline btn-sm" href={`/dasturlar/${program.id}`}>
+                          {t("pr.details")}
+                        </Link>
+                      )}
+                      {authed && !program.external_url && (
                         <button
                           className={isEnrolled ? "btn btn-ghost btn-sm" : "btn btn-primary btn-sm"}
                           onClick={() => enroll(program)}
@@ -217,7 +325,22 @@ export default function ProgramsPage() {
               );
             })}
           </div>
+          ))}
+
+          {!loading && programs.length > 0 && programs.length < total && (
+            <div className="prog-more">
+              <button className="btn btn-outline" onClick={loadMore} disabled={loadingMore}>
+                {t(loadingMore ? "common.loading" : "pr.more")}
+              </button>
+              <span className="faint small">
+                {t("pr.shown")
+                  .replace("{n}", String(programs.length))
+                  .replace("{total}", String(total))}
+              </span>
+            </div>
           )}
+
+          <PartnerCourses />
       </div>
     </main>
   );

@@ -89,7 +89,12 @@ export default function PlanPage() {
      read as the page being broken. */
   const [building, setBuilding] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
 
   /**
    * The roadmap draws itself. Finishing the assessment used to leave her on an
@@ -117,7 +122,7 @@ export default function PlanPage() {
         if (!cancelled) setPlan(active);
       } catch (err) {
         if (!(err instanceof ApiError && err.status === 404)) {
-          if (!cancelled) setError(t("plan.errLoad"));
+          if (!cancelled) setError("plan.errLoad");
         } else {
           try {
             const pending = await findDraft();
@@ -138,7 +143,7 @@ export default function PlanPage() {
             const made = await portal.generatePlan("6m", localeRef.current);
             if (!cancelled) setDraft(made);
           } catch {
-            if (!cancelled) setError(t("plan.errMake"));
+            if (!cancelled) setError("plan.errMake");
           }
         }
       } finally {
@@ -181,19 +186,19 @@ export default function PlanPage() {
     portal
       .generatePlan("6m", apiLocale)
       .then(setDraft)
-      .catch(() => setError(t("plan.errMake")))
+      .catch(() => setError("plan.errMake"))
       .finally(() => {
         rebuilding.current = false;
         setBusy(false);
       });
-  }, [draft, apiLocale, busy, t]);
+  }, [draft, apiLocale, busy]);
 
   async function generate() {
     setBusy(true); setError(null);
     try {
       setDraft(await portal.generatePlan("6m", apiLocale));
     } catch {
-      setError(t("plan.errMake"));
+      setError("plan.errMake");
     } finally { setBusy(false); }
   }
 
@@ -203,7 +208,7 @@ export default function PlanPage() {
     try {
       const accepted = await portal.acceptPlan(draft.id);
       setPlan(accepted); setDraft(null);
-    } catch { setError(t("plan.errAccept")); }
+    } catch { setError("plan.errAccept"); }
     finally { setBusy(false); }
   }
 
@@ -238,7 +243,7 @@ export default function PlanPage() {
         )}
       </div>
 
-      {error && <ErrorNote message={error} />}
+      {error && <ErrorNote message={t(error)} />}
 
       {!shown && (
         <Empty
@@ -316,7 +321,27 @@ export default function PlanPage() {
                   index={position + 1}
                   done={done}
                   arrow={false}
-                  title={tu(item.action)}
+                  title={
+                    // The step names a course: the name itself is the way in.
+                    // A course hosted elsewhere opens on its own site, in a new
+                    // tab, so the roadmap stays where she left it.
+                    item.program_url ? (
+                      <a
+                        href={item.program_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ed-title-link"
+                      >
+                        {tu(item.action)}
+                      </a>
+                    ) : item.program_id ? (
+                      <Link href={`/dasturlar/${item.program_id}`} className="ed-title-link">
+                        {tu(item.action)}
+                      </Link>
+                    ) : (
+                      tu(item.action)
+                    )
+                  }
                   meta={
                     <>
                       {tu(item.description)}
@@ -349,12 +374,23 @@ export default function PlanPage() {
                         // Asking her to then confirm it here is asking her to
                         // restate what the system just recorded, so the only
                         // thing offered is the way in.
-                        <Link
-                          href={`/dasturlar/${item.program_id}`}
-                          className="btn btn-outline btn-sm"
-                        >
-                          {t("plan.toCourse")}
-                        </Link>
+                        item.program_url ? (
+                          <a
+                            href={item.program_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline btn-sm"
+                          >
+                            {t("plan.toCourse")} ↗
+                          </a>
+                        ) : (
+                          <Link
+                            href={`/dasturlar/${item.program_id}`}
+                            className="btn btn-outline btn-sm"
+                          >
+                            {t("plan.toCourse")}
+                          </Link>
+                        )
                       ) : (
                         // A step with no course behind it. It carries no
                         // control either — status on this page is something the

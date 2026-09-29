@@ -322,7 +322,7 @@ function OpportunitiesView() {
                   onClick={() => load(page + 1)}
                   disabled={more}
                 >
-                  {t("news.more")}
+                  {t("common.more")}
                 </button>
               )}
             </>

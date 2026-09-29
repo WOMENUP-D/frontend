@@ -77,7 +77,12 @@ export default function AssistantPage() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const [profile, setProfile] = useState<AssistantProfile | null>(null);
   const [allowance, setAllowance] = useState<GuestAllowance | null>(null);
   const [daily, setDaily] = useState<AssistantReply | null>(null);
@@ -122,7 +127,7 @@ export default function AssistantPage() {
 
   useEffect(() => {
     if (tab !== "daily" || daily || !authed) return;
-    portal.assistantDaily(language).then(setDaily).catch(() => setError(t("asst.err")));
+    portal.assistantDaily(language).then(setDaily).catch(() => setError("asst.err"));
   }, [tab, daily, authed, t, language]);
 
   /* Her situation is deterministic and cheap, so it is fetched as soon as the
@@ -194,7 +199,7 @@ export default function AssistantPage() {
       }
     } catch (err) {
       const status = (err as { status?: number }).status;
-      setError(status === 429 ? t("asst.guestSpent") : t("asst.err"));
+      setError(status === 429 ? "asst.guestSpent" : "asst.err");
     } finally {
       setBusy(false);
     }
@@ -244,7 +249,7 @@ export default function AssistantPage() {
         ))}
       </div>
 
-      {error && <ErrorNote message={error} />}
+      {error && <ErrorNote message={t(error)} />}
 
       {tab === "coach" && authed === false && (
         <div className="notice notice-warn stack" style={{ gap: 8 }}>

@@ -125,25 +125,25 @@
    mood and puts four legible steps between the page and a raised control.
    ------------------------------------------------------------------ */
 [data-theme="dark"] {
-  --navy:          #e9a7b5;
-  --navy-2:        #f2bcc7;
-  --navy-3:        #f7d0d8;
-  --gold:          #e9a7b5;
-  --gold-soft:     #b86b7d;
+  --navy:          #f0aebd;
+  --navy-2:        #f6c6d1;
+  --navy-3:        #fadbe2;
+  --gold:          #f0aebd;
+  --gold-soft:     #d894a4;
   /* The two colours that only exist after dark: the burgundy the night is
      lit from underneath with, and the champagne a highlight is struck in. */
-  --deep:          #542936;
-  --champagne:     #d9c4a5;
+  --deep:          #5b2c3b;
+  --champagne:     #e6cfab;
 
-  --bg:            #211e29;
-  --bg-2:          #2a2634;
-  --band:          #2a2634;
-  --surface:       #383243;
-  --surface-2:     #393343;
-  --control:       #363042;
-  --border:        #453e51;
-  --border-strong: #5b5369;
-  --pane:          rgba(58, 52, 72, .82);
+  --bg:            #17131c;
+  --bg-2:          #251f2d;
+  --band:          #251f2d;
+  --surface:       #34293e;
+  --surface-2:     #413553;
+  --control:       #211b29;
+  --border:        #4f435f;
+  --border-strong: #726382;
+  --pane:          rgba(41,33,49,.88);
   --pane-edge:     rgba(245, 241, 238, .16);
   --pane-inner:    rgba(245, 241, 238, .10);
   --pane-shadow:   0 28px 70px -30px rgba(0, 0, 0, .85);
@@ -153,30 +153,30 @@
      visible through them and the ones on the right did not, so a row of
      identical cards no longer looked identical. Same colour, no alpha: it is
      exactly --surface, so nothing about the palette moves. */
-  --glass:         #383243;
+  --glass:         #34293e;
   --hairline:      inset 0 1px 0 rgba(245, 241, 238, .06);
 
-  --text:          #e2dce4;
-  --ink:           #f8f5f8;
-  --text-dim:      #b9b0be;
-  /* 5:1 on a card, which is the lightest surface it lands on. */
-  --text-faint:    #a29aa9;
+  --text:          #efe8ef;
+  --ink:           #fdfbfd;
+  --text-dim:      #cec2d4;
+  /* 5.4:1 on a card, which is the lightest surface it lands on. */
+  --text-faint:    #b7abbf;
 
-  --danger:        #ef8279;
-  --warning:       #e9a7b5;
-  --success:       #5fd0a2;
-  --on-gold:       #211e29;
-  --primary:       #e9a7b5;
-  --primary-hover: #f2bcc7;
-  --on-primary:    #211e29;
+  --danger:        #f79389;
+  --warning:       #f0c27a;
+  --success:       #6ad8ab;
+  --on-gold:       #17131c;
+  --primary:       #f0aebd;
+  --primary-hover: #f6c6d1;
+  --on-primary:    #17131c;
   /* Inverted with everything else: after dark the one loud button is ivory. */
-  --contrast:      #f8f5f8;
-  --on-contrast:   #211e29;
-  --strip-bg:      #383243;
-  --strip-fg:      #e9a7b5;
+  --contrast:      #fdfbfd;
+  --on-contrast:   #17131c;
+  --strip-bg:      #34293e;
+  --strip-fg:      #f0aebd;
 
-  --grad:          linear-gradient(135deg, #b86b7d 0%, #e9a7b5 130%);
-  --grad-soft:     linear-gradient(135deg, rgba(233,167,181,.13), rgba(84,41,54,.30));
+  --grad:          linear-gradient(135deg,#8a4257 0%,#f0aebd 130%);
+  --grad-soft:     linear-gradient(135deg,rgba(240,174,189,.14),rgba(91,44,59,.34));
   --glow:          0 14px 40px -18px rgba(233,167,181,.30);
   --shadow-sm:     0 1px 2px rgba(0,0,0,.55);
   --card-lift:     0 2px 12px -3px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.45);
@@ -187,8 +187,8 @@
   --radius:        14px;
   --radius-sm:     10px;
   --radius-lg:     20px;
-  --header-bg:     rgba(33, 30, 41, .78);
-  --ring:          rgba(233,167,181,.22);
+  --header-bg:     rgba(23,19,28,.82);
+  --ring:          rgba(240,174,189,.28);
   --petal-peak:    .42;
 }
 
@@ -363,6 +363,13 @@ body {
   opacity: .15;
 }
 [data-theme="dark"] .sakura-ambient { opacity: .16; }
+/* Same reasoning for the ambient copy of the branch. */
+@media (max-width: 700px) {
+  .sakura-ambient { opacity: .07; }
+  [data-theme="dark"] .sakura-ambient { opacity: .08; }
+  .sakura-behind > .sakura { opacity: .09; }
+  [data-theme="dark"] .sakura-behind > .sakura { opacity: .1; }
+}
 .sakura-ambient .sakura-anchor {
   position: absolute;
   top: -40px; right: -12vw;
@@ -1514,6 +1521,12 @@ p { margin: 0; }
   font-size: 1.3rem;
 }
 
+.empty-card { align-items: center; padding: 26px 24px; gap: 9px; }
+.empty-ico { width: 38px; height: 38px; border-radius: 10px; font-size: 1.05rem; margin: 0 auto; }
+@media (max-width: 700px) {
+  .empty-card { padding: 20px 16px; }
+}
+
 /* ---------- Forms ---------- */
 .field { display: flex; flex-direction: column; gap: 7px; }
 .label {
@@ -1913,6 +1926,34 @@ button.ed-row { cursor: pointer; }
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
   margin-top: 4px;
 }
+/* On a phone ten categories wrapped into five rows — 212px, a third of the
+   screen, before a single programme was visible, and every chip was under the
+   44px a thumb needs. One row that scrolls sideways costs 56px and each chip
+   is big enough to hit.
+
+   Opt-in, because the same chips are also how she picks several interests in
+   the feed settings — there, hiding the rest behind a sideways scroll would be
+   the wrong trade. */
+@media (max-width: 700px) {
+  .cat-scroll {
+    flex-wrap: nowrap; justify-content: flex-start;
+    /* The header centres its children, which makes a flex child as wide as its
+       content — 1386px here — so `overflow-x` never had anything to clip and
+       the row simply hung off both sides of the screen. It has to be told to
+       take the width it is given. */
+    align-self: stretch; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-block: 3px;
+  }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-scroll .chip {
+    flex: none; scroll-snap-align: start;
+    min-height: 44px; padding-block: 10px;
+  }
+}
 .cat-results { max-width: 980px; margin: 0 auto; }
 .cat-count { align-self: flex-start; }
 
@@ -2037,32 +2078,192 @@ button.ed-row { cursor: pointer; }
   display: grid; place-items: center; font-size: .8rem;
 }
 
-/* ---------- Directions, as cards ---------- */
+/* ---------- Directions, as cards ----------
+   Six panels of one slab rather than six boxes on a page: the gap is small
+   enough that the row reads as one object cut into parts, there is no border
+   and no shadow, and each panel is simply its own colour — the direction's,
+   mixed into the surface. What fills it is a woman, drawn at the size of an
+   illustration and cut by the panel's own edge, so the eye has something to
+   rest on instead of six identical rectangles of text.
+
+   The order matters too: these are a route through the portal, not a menu, so
+   they are numbered, and the section says how many there are. */
 .face-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(min(258px, 100%), 1fr));
-  gap: 16px;
+  gap: 10px;
+  /* The branch is drawn behind the whole page, and a blossom landing in the
+     10px seam between two rows read as a rendering fault. The slab is opaque;
+     the garden continues above and below it. */
+  background: var(--bg);
 }
 @media (min-width: 1000px) { .face-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-/* The same object as a programme card, one level up: white on the warm page,
-   a coloured top edge naming the direction, and no lift. The page and the
-   card now differ in value, so the edge can stop shouting. */
+
 .face-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-top: 2px solid var(--cat, var(--primary));
-  border-radius: 4px; padding: 22px;
-  display: flex; flex-direction: column; gap: 11px;
+  position: relative; overflow: hidden; isolation: isolate;
+  /* The panel is the direction's own colour, not a white box with a coloured
+     detail. On paper the surface is white, so the tint has to be strong enough
+     that the panel's edge is at least as legible as the figure inside it. */
+  background: color-mix(in srgb, var(--cat, var(--primary)) 22%, var(--surface));
+  border: 0; border-radius: 12px;
+  padding: 24px;
+  min-height: 252px;
+  box-shadow: none;
+  display: flex; flex-direction: column;
   text-decoration: none;
-  transition: border-color .15s ease;
+  transition: background .18s ease;
 }
-.face-card:hover { border-color: var(--border-strong); border-top-color: var(--cat, var(--primary)); }
-.face-ico {
-  width: 34px; height: 34px; border-radius: 8px; flex: none;
-  display: grid; place-items: center;
-  background: color-mix(in srgb, var(--cat, var(--primary)) 10%, transparent);
-  color: var(--cat, var(--primary)); font-size: 1rem;
+.face-card:hover {
+  background: color-mix(in srgb, var(--cat, var(--primary)) 30%, var(--surface));
 }
-.face-card h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
-.face-card p { color: var(--text-dim); font-size: .9rem; line-height: 1.6; flex: 1; }
+[data-theme="dark"] .face-card {
+  /* In sRGB a tenth of a pale colour over deep plum came out plum six times:
+     the six panels differed by 1.02:1 and the section read as one field. Mixed
+     in oklab the hue survives at the same lightness, so 03 reads green and 05
+     reads blue without any panel getting lighter than the others. */
+  background: color-mix(in oklab, var(--cat, var(--primary)) 15%, var(--surface));
+}
+[data-theme="dark"] .face-card:hover {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 23%, var(--surface));
+}
+.face-card:focus-visible { outline: 2px solid var(--cat, var(--primary)); outline-offset: -3px; }
+
+/* 01 … 06. Small, quiet, and the only thing at the top of the panel. */
+.face-num {
+  font-size: .78rem; font-weight: 600; letter-spacing: .16em;
+  color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+
+/* She sits behind the words, in the direction's colour, and runs off the
+   card's corner so she reads as part of something larger. */
+.face-mark {
+  position: absolute; right: -14%; bottom: -6%;
+  width: 58%; aspect-ratio: 1; z-index: -1;
+  color: var(--cat, var(--primary)); fill: currentColor;
+  opacity: .30; pointer-events: none;
+}
+[data-theme="dark"] .face-mark { opacity: .34; }
+
+.face-card h3 {
+  margin-top: auto; padding-top: 18px;
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(1.15rem, 1.5vw, 1.35rem); line-height: 1.2;
+  letter-spacing: -.01em; color: var(--ink);
+  max-width: 52%;
+}
+.face-card p {
+  margin-top: 7px; max-width: min(28ch, 52%);
+  color: var(--text-dim); font-size: .9rem; line-height: 1.55;
+}
+
+/* On a phone the panel turns landscape: the figure keeps the right-hand
+   corner and the words keep the left, so nothing is read through her. */
+@media (max-width: 700px) {
+  .face-grid { gap: 8px; }
+  .face-card { min-height: 160px; padding: 17px; }
+  .face-card h3, .face-card p { max-width: 62%; }
+  .face-mark { width: 40%; right: -6%; bottom: -5%; }
+}
+
+/* Near-square where there is room for it. At 1.57:1 the figure had nowhere to
+   be oversized and the middle void — the thing this composition is built on —
+   was 75px of nothing. Written after the base rule on purpose: inside a media
+   query it carries no extra weight, and the earlier version lost to it. */
+@media (min-width: 1000px) {
+  .face-card { min-height: 264px; }
+}
+
+/* ---------- Courses that are not ours ----------
+   Same panels as the directions, one step quieter, and carrying two facts the
+   portal's own programmes never need: that the card leaves the site, and that
+   the teaching is in a language most of this audience is still learning. */
+.prog-more {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  margin-top: 18px;
+}
+
+.partner-section { margin-top: 46px; }
+/* When the catalogue is empty this section is the page, and the margins of
+   three nested blocks stacked into 94px of nothing above it. */
+.cat-results > .partner-section:first-child { margin-top: 0; padding-top: 6px; }
+@media (max-width: 700px) {
+  .partner-section { margin-top: 26px; padding-block: 18px 26px; }
+  .cat-results > .partner-section:first-child { padding-top: 2px; }
+}
+/* Twenty-five cards is seven screens on a phone. The one cut that matters to
+   this reader is the language she can actually follow, so it is the one
+   offered — and it scrolls in a single row like the catalogue's own. */
+.partner-langs {
+  display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px;
+}
+@media (max-width: 700px) {
+  .partner-langs {
+    flex-wrap: nowrap; width: 100%; max-width: 100%;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none; padding-block: 3px;
+  }
+  .partner-langs::-webkit-scrollbar { display: none; }
+  .partner-langs .chip { flex: none; scroll-snap-align: start; min-height: 44px; padding-block: 10px; }
+}
+.partner-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px; background: var(--bg);
+}
+@media (min-width: 1000px) { .partner-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .partner-grid { gap: 8px; }
+  .partner-card { padding: 16px; min-height: 0; }
+  .partner-title { font-size: 1.05rem; }
+  .partner-foot { padding-top: 12px; }
+}
+.partner-card {
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--cat, var(--primary)) 16%, var(--surface));
+  border: 0; border-radius: 12px; padding: 20px; min-height: 176px;
+  text-decoration: none; transition: background .18s ease;
+}
+[data-theme="dark"] .partner-card {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 12%, var(--surface));
+}
+.partner-card:hover {
+  background: color-mix(in srgb, var(--cat, var(--primary)) 24%, var(--surface));
+}
+[data-theme="dark"] .partner-card:hover {
+  background: color-mix(in oklab, var(--cat, var(--primary)) 20%, var(--surface));
+}
+.partner-card:focus-visible { outline: 2px solid var(--cat, var(--primary)); outline-offset: -3px; }
+.partner-provider {
+  font-size: .78rem; font-weight: 600; letter-spacing: .06em;
+  color: var(--text-dim);
+}
+.partner-title {
+  margin-top: 6px;
+  font-family: var(--font-display); font-weight: 500;
+  font-size: 1.12rem; line-height: 1.25; letter-spacing: -.01em; color: var(--ink);
+}
+.partner-meta {
+  margin-top: 10px; font-size: .85rem; line-height: 1.5; color: var(--text-dim);
+}
+.partner-foot {
+  margin-top: auto; padding-top: 16px;
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  font-size: .8rem; color: var(--text-dim);
+}
+.partner-host { font-weight: 600; white-space: nowrap; }
+
+/* The count, the way a contents page gives one. */
+.sec-head-counted { position: relative; max-width: none; padding-right: 96px; }
+.sec-head-counted h2, .sec-head-counted p { max-width: 68ch; }
+.sec-count {
+  position: absolute; right: 0; top: -.08em;
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15;
+  color: var(--text-faint); font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .sec-head-counted { padding-right: 56px; }
+  .sec-count { font-size: 1.15rem; }
+}
 
 /* ---------- The roadmap ----------
    Six stages drawn along one dotted line rather than listed. The line is what
@@ -2210,6 +2411,15 @@ button.ed-row { cursor: pointer; }
 /* The branch is the light source in this composition, so it is no longer
    dimmed the way it was when the page behind it was pale. */
 [data-theme="dark"] .sakura-hero { opacity: 1; }
+
+/* On a phone the branch is fixed behind a single narrow column, so every
+   heading below the first screen is read off a blossom. Same garden, stepped
+   back — this has to sit after the rule above, which restores it to full
+   strength after dark. */
+@media (max-width: 700px) {
+  .sakura-hero { opacity: .5; }
+  [data-theme="dark"] .sakura-hero { opacity: .5; }
+}
 [data-theme="dark"] .sakura-ambient { opacity: .34; }
 
 /* ---------- Glass ----------
@@ -2219,7 +2429,6 @@ button.ed-row { cursor: pointer; }
 [data-theme="dark"] .card,
 [data-theme="dark"] .tile,
 [data-theme="dark"] .showcase-card,
-[data-theme="dark"] .face-card,
 [data-theme="dark"] .well-item,
 [data-theme="dark"] .well-note,
 [data-theme="dark"] .ai-window,
@@ -2241,7 +2450,6 @@ button.ed-row { cursor: pointer; }
 /* Hover moves the edge toward the blossom rather than lifting the card off
    the page — the whole surface is meant to stay flat and quiet. */
 [data-theme="dark"] .tile:hover,
-[data-theme="dark"] .face-card:hover,
 [data-theme="dark"] .card:hover,
 [data-theme="dark"] .stat-pill-link:hover {
   border-color: var(--gold-soft);
@@ -2601,6 +2809,13 @@ button.ed-row { cursor: pointer; }
      strip stops being its ceiling and it can take the size it wants. */
 }
 
+/* Below 1560px the column runs to the window edge and the disc sits under the
+   headline's first letter — 1.2:1 under the "П". Wider windows move it into the
+   margin, where it can be itself. */
+@media (max-width: 1559px) {
+  [data-theme="dark"] .sky-layer { opacity: .5; }
+}
+
 /* There is a body in the sky after dark and nothing by day.
    The layer is hidden rather than emptied: the haze is a glow with no edge of
    its own, so left behind without a disc inside it, it is a bright smudge in
@@ -2614,6 +2829,13 @@ button.ed-row { cursor: pointer; }
      match, so the strip moves down with them. */
   .sky-layer { width: 68px; height: 68px; top: 132px; left: 16px; }
   .sky-haze { width: 460px; height: 460px; margin: -230px 0 0 -230px; }
+}
+@media (max-width: 700px) {
+  /* No moon on a phone. It is fixed, the page scrolls under it, and every
+     heading below the first screen was being read off its face — white type on
+     moonlight, 1.1:1. One 68px ornament is not worth that, and the branch
+     still carries the garden here. */
+  .sky-layer, [data-theme="dark"] .sky-layer { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3151,43 +3373,7 @@ button.ed-row { cursor: pointer; }
   --tone-ink:   linear-gradient(140deg, #2e2b36 0%, #625d70 100%);
 }
 
-/* The feed carries no page heading, so it starts nearer the header than a
-   titled screen would. */
-/* The feed runs three posts to a row. One measure governs the section heads,
-   the "for you" block and the feed itself — they were three separate 500px
-   caps, and widening one without the others floats the headings in the
-   middle of the page. The measure is the page's own width rather than a
-   round number, so the feed lines up with everything else on the page. */
-.news-page { padding-top: 12px; --news-measure: 1320px; }
-
-/* ---- search, and the sections it opens ---- */
-.news-search {
-  position: relative;
-  max-width: 500px; margin: 0 auto 26px;
-  display: flex; flex-direction: column; align-items: center;
-}
-.news-search .input { width: 100%; }
-.news-search .input::-webkit-search-cancel-button { cursor: pointer; }
-
-.news-sections {
-  /* Out of the flow: opening the sections must not push the first post down
-     the screen and lose her place in what she was reading. */
-  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 5;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  animation: news-sections-in .16s ease-out;
-}
-@keyframes news-sections-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .news-sections { animation: none; }
-}
-
+/* A count inside a chip, and a chip that is a label rather than a control. */
 .chip-count {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 18px; padding: 0 5px; border-radius: 999px;
@@ -3196,265 +3382,6 @@ button.ed-row { cursor: pointer; }
 }
 .chip-on .chip-count { background: rgba(255, 255, 255, .22); color: var(--on-primary); }
 .chip-static { cursor: default; }
-
-/* ---- the personalised section, and the line between the two lists ----
-
-   "For you" ranks; the feed below hides nothing. That distinction is the whole
-   feature, so it is drawn rather than implied: each list gets a heading, and
-   the personalised one sits on a tinted ground so a reader can see at a glance
-   which of the two she is scrolling. Same column width as the feed — they are
-   the same posts, and staggering them would read as two different products. */
-.news-section-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  max-width: var(--news-measure); margin: 0 auto 18px;
-}
-.news-section-head h2 { margin: 0; }
-.news-section-head p { margin: 4px 0 0; font-size: .88rem; }
-
-.news-foryou {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 34px 24px;
-  align-items: start;
-  max-width: var(--news-measure); margin: 0 auto 44px;
-  padding: 22px 20px 26px;
-  background: var(--grad-soft);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-}
-.news-foryou .news-section-head { margin-bottom: 0; }
-.news-foryou-empty { margin: 0; font-size: .92rem; }
-
-/* Why a card is here. Labels, never scores — the reader is told the reason and
-   not the arithmetic behind it. */
-.news-why {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin: 0 0 8px;
-}
-.news-why-chip {
-  padding: 2px 9px; border-radius: 999px;
-  font-size: .74rem; font-weight: 650; letter-spacing: .01em;
-  background: var(--surface-2); color: var(--text-dim);
-  border: 1px solid var(--border);
-}
-
-/* ---- news preferences ---- */
-.news-prefs {
-  display: flex; flex-direction: column; gap: 18px;
-  padding: 18px; border-radius: var(--radius);
-  background: var(--surface); border: 1px solid var(--border);
-}
-.news-prefs-lead { margin: 0; font-size: .86rem; }
-.news-prefs-age { display: flex; flex-direction: column; gap: 8px; }
-.news-prefs-derived { margin: 0; font-weight: 650; }
-.news-prefs-topics { border: 0; padding: 0; margin: 0; }
-.news-prefs-topics legend { padding: 0; margin-bottom: 8px; }
-.news-prefs-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-
-/* ---- the feed ---- */
-.news-feed {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 34px 24px;
-  /* `start`, not the default stretch: posts differ in height and a stretched
-     short one is a card of dead space under its own caption. */
-  align-items: start;
-  max-width: var(--news-measure); margin: 0 auto;
-}
-
-/* Everything in these two that is not a post — the section header, an error,
-   the empty state, the loading rows — spans the row. Left in a single cell
-   they would sit in the left half with a hole beside them. */
-.news-feed > :not(.news-post),
-.news-foryou > :not(.news-post) { grid-column: 1 / -1; }
-
-/* Down in two steps, not one. A third column below this width squeezes the
-   caption narrower than the headline sitting on the cover above it; a second
-   one survives a good deal further before the same thing happens. */
-@media (max-width: 1180px) {
-  .news-feed,
-  .news-foryou { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 820px) {
-  .news-feed,
-  .news-foryou { grid-template-columns: minmax(0, 1fr); }
-}
-
-.news-post { display: flex; flex-direction: column; gap: 12px; }
-
-/* The article page's meta row had no rule at all, so its spans butted
-   together — "9 days ago1 min read". Now that Подробнее opens this page
-   instead of a panel, it is the line most readers meet first. */
-.news-meta {
-  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px;
-  margin-bottom: 14px;
-}
-/* A dot between the two quiet items, so date and reading time read as two
-   facts rather than one run-on. Not before the badge, which stands apart. */
-.news-meta .faint + .faint::before {
-  content: "·"; margin-right: 12px; color: var(--text-faint);
-}
-
-.news-post-head {
-  display: flex; align-items: center; gap: 8px;
-  font-size: .9rem;
-}
-.news-avatar {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 50%;
-  font-size: 1rem; flex: 0 0 auto;
-  background: var(--tone-plum);
-  box-shadow: inset 0 0 14px rgba(0, 0, 0, .14);
-}
-.news-author { font-weight: 650; color: var(--ink); }
-.news-dot, .news-time { color: var(--text-faint); }
-/* Opaque, unlike the badge everywhere else on the site: this one sits over the
-   sakura, and the branch was reading straight through its tint. */
-.news-post-head .badge {
-  margin-left: auto;
-  background: var(--surface); border: 1px solid var(--border-strong);
-}
-
-/* The picture, with the headline set on it — the shape a news account posts.
-   4:5 is the portrait a feed is scrolled in. */
-.news-photo {
-  position: relative; overflow: hidden;
-  display: flex; flex-direction: column; justify-content: flex-end;
-  /* Without a photograph behind it there is nothing above the headline but
-     tint, and 4:5 of tint is a lot of nothing to scroll past. A photograph
-     gets the portrait a feed is scrolled in; the drawn cover gets the shorter
-     frame it can actually fill. */
-  aspect-ratio: 4 / 3;
-  padding: 22px;
-  border-radius: var(--radius-sm);
-  background: var(--tone-plum);
-  border: 1px solid var(--border);
-  isolation: isolate;
-}
-.news-photo-shot { aspect-ratio: 4 / 5; }
-.news-photo-img {
-  position: absolute; inset: 0; z-index: -1;
-  width: 100%; height: 100%; object-fit: cover;
-}
-
-/* The glyph is the mark in the corner, not the subject. It used to be the
-   whole picture, floating in the middle of an empty wash. */
-.news-photo .news-emblem {
-  position: absolute; top: 20px; left: 22px;
-  font-size: 1.9rem; line-height: 1;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, .3));
-}
-
-/* The headline card. Opaque rather than tinted, because behind it there may be
-   a photograph, and a headline you cannot read is not a headline. */
-.news-headline {
-  margin: 0; position: relative;
-  font-family: 'Source Serif 4', Georgia, serif;
-  font-size: 1.22rem; font-weight: 600; line-height: 1.3;
-  color: var(--ink);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  padding: 15px 17px;
-  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .5);
-  /* A long Russian or Uzbek headline must not swallow the picture whole. */
-  max-height: 62%; overflow: hidden;
-}
-.news-cover-plum { background: var(--tone-plum); }
-.news-cover-rose { background: var(--tone-rose); }
-.news-cover-sand { background: var(--tone-sand); }
-.news-cover-sage { background: var(--tone-sage); }
-.news-cover-sky  { background: var(--tone-sky); }
-.news-cover-ink  { background: var(--tone-ink); }
-
-.news-emblem {
-  font-size: 4rem; line-height: 1;
-  /* The glyph is drawn on a tinted ground in both themes, so it carries its
-     own shadow rather than borrowing contrast from the page. */
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .26));
-}
-
-/* The caption is the description; the headline is on the picture above it. */
-.news-cap-text { font-size: .96rem; }
-
-.news-caption { display: flex; flex-direction: column; gap: 10px; }
-.news-cap-text { margin: 0; line-height: 1.55; color: var(--text); }
-.news-cap-text strong { color: var(--ink); font-weight: 650; }
-
-/* "… ещё" — the same size and line as the sentence it ends, because it is the
-   end of that sentence rather than a control under it. */
-.news-inline-more {
-  border: 0; padding: 0; background: none; cursor: pointer;
-  font: inherit; color: var(--text-faint);
-}
-.news-inline-more:hover { color: var(--primary); }
-
-.news-actions {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
-  font-size: .88rem;
-}
-.news-plain {
-  border: 0; padding: 0; background: none; cursor: pointer;
-  font: inherit; font-weight: 600; color: var(--primary); text-decoration: none;
-}
-.news-plain:hover { color: var(--primary-hover); }
-.news-readtime { margin-left: auto; }
-
-/* ---- the article body, in the feed and on its own page ---- */
-.news-text > p { margin: 14px 0 0; line-height: 1.7; }
-.news-text > p:first-child { margin-top: 6px; }
-
-/* The portal never gives a medical verdict, and the note saying so is part of
-   the post rather than fine print under it. */
-.news-care {
-  margin-top: 22px !important; padding: 13px 15px;
-  background: var(--bg-2); border-left: 3px solid var(--primary);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  font-size: .9rem; color: var(--text-dim);
-}
-
-.news-source {
-  margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-strong);
-}
-.news-source p { margin: 6px 0 12px; font-weight: 550; }
-
-.news-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-
-.news-more { align-self: center; }
-
-.news-invite {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  padding: 28px 22px; text-align: center;
-  background: var(--grad-soft);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-}
-.news-invite p { color: var(--text-dim); margin: 0; }
-
-/* ---- one post on its own page ---- */
-.news-back {
-  display: inline-block; margin-bottom: 16px;
-  color: var(--text-dim); text-decoration: none; font-size: .9rem; font-weight: 600;
-}
-.news-back:hover { color: var(--primary); }
-
-.news-article { max-width: 620px; margin: 0 auto; }
-.news-article .news-cover {
-  display: flex; align-items: center; justify-content: center;
-  aspect-ratio: 16 / 9; border-radius: var(--radius); margin-bottom: 20px;
-  width: 100%; object-fit: cover;
-  box-shadow: inset 0 0 140px rgba(0, 0, 0, .14);
-}
-.news-article .news-cover-photo { box-shadow: none; border: 1px solid var(--border); }
-.news-article h1 {
-  font-size: clamp(1.5rem, 3.4vw, 2.1rem); line-height: 1.22; margin: 14px 0 0;
-}
-.news-lead {
-  font-size: 1.05rem; color: var(--text-dim); font-weight: 500;
-  margin: 12px 0 0;
-}
-
-@media (max-width: 560px) {
-  .news-emblem { font-size: 3rem; }
-  .news-photo { padding: 16px; }
-  .news-headline { font-size: 1.08rem; padding: 13px 14px; }
-}
-
 /* ====================================================================
    Profile card (variant 4)
 
@@ -4046,8 +3973,7 @@ button.ed-row { cursor: pointer; }
   line-height: 1.35;
 }
 
-/* ============================================================
-   Portfolio (/kabinet/portfolio, /portfolio/[slug])
+/* =====================================================   Portfolio (/kabinet/portfolio, /portfolio/[slug])
 
    A CV, not a dashboard: one left-aligned reading column, her own
    words at the top, the record below. Everything reflows fluidly —
@@ -6799,3 +6725,69 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
   .ev-card:hover { transform: none; }
   .ev-cal-day .ev-list { animation: none; }
 }
+=======
+/* A roadmap step that names a course: the name is the link. Same ink as the
+   other titles until it is pointed at, so a list of links does not read as a
+   page of underlines. */
+.ed-title-link { color: inherit; text-decoration: none; }
+.ed-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ed-title-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
+
+/* ---------- Career history: the CV sections of the profile ----------
+   One line down the left joins the entries, because a working life is one
+   path and not a stack of cards. The place is set in the display face — it is
+   what a reader looks for first — and the dates sit quiet under it. The dot of
+   whatever is still running is filled; the ended ones are rings. */
+.cv { display: flex; flex-direction: column; gap: 10px; }
+.cv-empty { color: var(--text-faint); font-size: .92rem; }
+.cv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.cv-item {
+  position: relative;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 0 0 18px 22px;
+  border-left: 1.5px solid var(--border);
+  margin-left: 5px;
+}
+.cv-item:last-child { border-left-color: transparent; padding-bottom: 4px; }
+.cv-item::before {
+  content: ""; position: absolute; left: -6.5px; top: 6px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--surface); border: 1.5px solid var(--border-strong);
+}
+.cv-item-current::before { background: var(--primary); border-color: var(--primary); }
+.cv-item-editing::before { border-color: var(--primary); }
+.cv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.cv-primary {
+  font-family: var(--font-display); font-size: 1.08rem; font-weight: 500;
+  line-height: 1.3; color: var(--ink); overflow-wrap: anywhere;
+}
+.cv-secondary { color: var(--text); font-size: .93rem; line-height: 1.45; }
+.cv-when { color: var(--text-faint); font-size: .84rem; line-height: 1.45; }
+.cv-desc {
+  color: var(--text-dim); font-size: .9rem; line-height: 1.58;
+  margin-top: 5px; white-space: pre-line; max-width: 62ch;
+}
+.cv-edit, .cv-add, .cv-delete {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  font: inherit; font-size: .85rem; font-weight: 600;
+}
+.cv-edit { color: var(--text-faint); flex: none; }
+.cv-edit:hover { color: var(--primary); }
+.cv-add { color: var(--primary); align-self: flex-start; display: inline-flex; gap: 7px; }
+.cv-add span { font-size: 1.05rem; line-height: 1; }
+.cv-add:hover { text-decoration: underline; text-underline-offset: 3px; }
+.cv-edit:focus-visible, .cv-add:focus-visible, .cv-delete:focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px;
+}
+
+.cv-form { display: flex; flex-direction: column; gap: 13px; padding-top: 1px; }
+.cv-dates { border: 0; margin: 0; padding: 0; display: grid; gap: 13px; grid-template-columns: 1fr; }
+@container (min-width: 520px) { .cv-dates { grid-template-columns: 1fr 1fr; } }
+.cv-when-pick { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; }
+.cv-when-pick select:disabled { opacity: .5; }
+.cv-form textarea { resize: vertical; min-height: 78px; font: inherit; }
+.cv-error { color: var(--danger); }
+.cv-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* Deleting is set apart at the far end, and asks once before it acts. */
+.cv-delete { color: var(--text-faint); margin-left: auto; }
+.cv-delete:hover, .cv-delete-armed { color: var(--danger); }

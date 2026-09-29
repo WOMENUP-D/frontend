@@ -1,12 +1,17 @@
 "use client";
 
 /**
- * First-run onboarding, shown once after sign-in.
+ * Onboarding: what the assistant personalises on.
  *
- * Three steps, and only the first is required. Identity comes first — name,
- * surname, age, region — because age is what decides which health content she
- * may be shown at all, and region is what makes a vacancy or a grant relevant
- * to her rather than to Tashkent.
+ * Name, date of birth and region are asked on the sign-up form and saved there,
+ * so a woman who arrives here — from the cabinet's "fill in your profile", from
+ * the assistant's settings — goes straight to her interests, then the
+ * assessment. Asking her to introduce herself a second time told her the
+ * portal had not listened.
+ *
+ * The identity step is kept only for the one case that needs it: sign-up
+ * created the account but failed to save the profile. Age decides which health
+ * content she may be shown at all, so it cannot be skipped then.
  *
  * The second step is what the assistant personalises on, and it is skippable:
  * an unfinished profile costs her some tailoring, and blocking her at the door
@@ -87,6 +92,9 @@ export default function WelcomePage() {
      the moment it mounts. The catalogue reads its category filter the same
      way. */
   const [stage, setStage] = useState<1 | 2 | 3>(1);
+  // null while the profile loads: nothing is drawn until we know whether she
+  // has already introduced herself, so the identity form never flashes up.
+  const [known, setKnown] = useState<boolean | null>(null);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("step") === "assessment") {
       setStage(3);
@@ -103,7 +111,12 @@ export default function WelcomePage() {
   const [goal, setGoal] = useState("");
   const [direction, setDirection] = useState(DIRECTIONS[0][0]);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+    /* The key, not the sentence. Translating at the moment the request fails
+     froze whatever language was current then — and the locale is restored from
+     storage in an effect, so a request that failed first put an Uzbek sentence
+     on a Russian page. Kept as a key, it is translated on every render and
+     follows the language switch. */
+  const [error, setError] = useState<MessageKey | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const birthRef = useRef<HTMLSelectElement>(null);
 
@@ -118,20 +131,50 @@ export default function WelcomePage() {
     if (fromGoogle?.name) setName(fromGoogle.name);
     if (fromGoogle?.surname) setSurname(fromGoogle.surname);
 
-    // Focus the first field she still has to fill in. `autoFocus` cannot do
-    // this: it is decided when the input mounts, which is before we know
-    // whether Google already gave us a name.
-    (fromGoogle?.name ? birthRef : nameRef).current?.focus();
     // Staff never see this: the questionnaire exists to personalise a learner's
     // plan, and a coordinator does not have one.
     portal
       .me()
       .then((me) => {
-        const roles = (me as { roles?: string[] }).roles ?? [];
+        const account = me as { roles?: string[]; region?: string | null };
+        const roles = account.roles ?? [];
         if (roles.some((r) => r !== "user" && r !== "mother")) router.replace(staffHome());
+        if (account.region) setRegion(account.region);
       })
       .catch(() => undefined);
+
+    portal
+      .profile()
+      .then((raw) => {
+        const profile = raw as { full_name?: string | null; birth_date?: string | null; interests?: string[] };
+        const [y, m, d] = (profile.birth_date ?? "").split("-").map(Number);
+        const stored: BirthParts = { day: String(d || ""), month: String(m || ""), year: String(y || "") };
+        // A stored date the form would now refuse (it aged past the ceiling)
+        // sends her through the identity step rather than to a dead button.
+        const usable = isoBirthDate(stored) !== null && birthError(stored, new Date()) === null;
+        if (profile.full_name?.trim() && usable) {
+          // Sent back as given, so saving her interests leaves her name as it is.
+          setName(profile.full_name.trim());
+          setSurname("");
+          setBirth(stored);
+          if (profile.interests?.length) setInterests(profile.interests);
+          // `?step=assessment` may already have moved her on; never back.
+          setStage((current) => (current === 1 ? 2 : current));
+          setKnown(true);
+        } else {
+          setKnown(false);
+        }
+      })
+      .catch(() => setKnown(false));
   }, [router]);
+
+  // Focus the first field she still has to fill in, once we know which it is.
+  // `autoFocus` cannot do this: it is decided when the input mounts.
+  useEffect(() => {
+    if (known === false) (name ? birthRef : nameRef).current?.focus();
+    // Only when the form first appears, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [known]);
 
   const today = useMemo(() => new Date(), []);
   const birthIso = isoBirthDate(birth);
@@ -158,7 +201,7 @@ export default function WelcomePage() {
       // sitting behind a tab nobody opened.
       setStage(3);
     } catch {
-      setError(t("asst.err"));
+      setError("asst.err");
     } finally {
       setBusy(false);
     }
@@ -170,13 +213,18 @@ export default function WelcomePage() {
     );
   }
 
+  if (known === null) return <main className="auth-page" />;
+
+  // With her identity already known the identity step is not one of hers.
+  const offset = known ? 1 : 0;
+
   return (
     <main className="auth-page">
       <div className="auth-shell auth-shell-single">
         <section className="auth-card stack">
           <div className="stack" style={{ gap: 6 }}>
             <span className="eyebrow">
-              {t("wel.step")} {stage} / 3
+              {t("wel.step")} {stage - offset} / {3 - offset}
             </span>
             <h1 className="auth-title" style={{ fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)" }}>
               {t(stage === 1 ? "wel.title1" : stage === 2 ? "wel.title2" : "lq.title")}
@@ -187,7 +235,7 @@ export default function WelcomePage() {
             <div className="wel-progress" aria-hidden="true">
               <span
                 className="wel-progress-fill"
-                style={{ width: `${(stage / 3) * 100}%` }}
+                style={{ width: `${((stage - offset) / (3 - offset)) * 100}%` }}
               />
             </div>
           </div>
@@ -196,7 +244,7 @@ export default function WelcomePage() {
             /* The questions themselves. Onboarding ends when they do: the feed
                is the first thing the portal owes her once it has stopped
                asking. */
-            <Questionnaire onDone={() => router.push("/yangiliklar")} />
+            <Questionnaire onDone={() => router.push("/kabinet")} />
           ) : stage === 1 ? (
             <>
               <div className="wel-row">
@@ -312,9 +360,11 @@ export default function WelcomePage() {
                 {t("wel.finish")}
               </button>
               <div className="row" style={{ gap: 10 }}>
-                <button className="btn btn-ghost btn-sm grow" onClick={() => setStage(1)}>
-                  {t("wel.back")}
-                </button>
+                {!known && (
+                  <button className="btn btn-ghost btn-sm grow" onClick={() => setStage(1)}>
+                    {t("wel.back")}
+                  </button>
+                )}
                 <button
                   className="btn btn-ghost btn-sm grow"
                   onClick={() => save(false)}

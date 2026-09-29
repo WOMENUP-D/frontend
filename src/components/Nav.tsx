@@ -31,20 +31,16 @@ const STAFF_LINKS: ReadonlyArray<{
 
 /** Order is the argument this list makes about where a visit starts.
  *
- *  The feed comes first and the cabinet last. Landing straight in her own
- *  cabinet meant the portal opened on a form she had not filled in yet — a
- *  0% profile bar and a list of things she had not done. The feed opens on
- *  something worth reading instead, and the cabinet is where she goes when
- *  she wants her own numbers, which is a deliberate act rather than a
- *  doorstep.
+ *  The plan first and the cabinet last. The diagnostic lives inside the
+ *  cabinet (`/kabinet/diagnostika`), and the news feed was removed, so
+ *  neither has a tab of its own.
  *
- *  The feed, the cabinet, the diagnostic and the plan carry no `guest` flag:
+ *  The cabinet and the plan carry no `guest` flag:
  *  they are hers, and offering them to someone with no account advertises
  *  doors she cannot open. What a visitor gets is the catalogue, the
  *  opportunities and the assistant — what the portal can show her before she
  *  has an account. */
 const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
-  { href: "/yangiliklar", key: "nav.news" },
   { href: "/reja", key: "nav.plan" },
   { href: "/dasturlar", key: "nav.programs", guest: true },
   // Next to the catalogue on purpose: the catalogue is what she can enrol in,

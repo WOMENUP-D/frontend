@@ -346,6 +346,9 @@ export interface Program {
   learning_outcomes: Array<Record<string, string>>;
   has_certificate: boolean;
   provider: string | null;
+  /** Set when the course belongs to somebody else and lives on their site. */
+  external_url?: string | null;
+  source?: string | null;
 }
 
 /* ---- practical tasks --------------------------------------------------
@@ -1436,6 +1439,8 @@ export interface PlanItem {
   status: string;
   due_date: string | null;
   program_id: string | null;
+  /** The course's own site, when it is hosted elsewhere (Stepik, a university). */
+  program_url?: string | null;
 }
 
 export interface Plan {
@@ -1507,6 +1512,12 @@ export interface LqQuestion {
   suggestions_i18n?: Array<Record<string, string>>;
   /** "set" replaces the field; "add" appends to a comma-separated list. */
   suggest_mode?: "set" | "add";
+  /** A short free-text line under the options, saved under its own id. */
+  detail?: {
+    id: string;
+    label_i18n: Record<string, string>;
+    placeholder_i18n: Record<string, string>;
+  };
 }
 export interface Questionnaire {
   version: number;
@@ -1779,8 +1790,42 @@ function guestId(): string {
   return id;
 }
 
+export interface WorkEntry {
+  id: string;
+  organization: string;
+  position: string;
+  location: string | null;
+  /** "YYYY-MM-01" — month-precise. */
+  start_date: string | null;
+  /** Null means "to the present". */
+  end_date: string | null;
+  description: string | null;
+}
+export type WorkEntryIn = Omit<WorkEntry, "id"> & { client_ref?: string };
+
+export interface StudyEntry {
+  id: string;
+  institution: string;
+  degree: string | null;
+  field_of_study: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+}
+export type StudyEntryIn = Omit<StudyEntry, "id"> & { client_ref?: string };
+
 export const portal = {
   me: () => api.get("/users/me"),
+  experience: () => api.get<WorkEntry[]>("/users/me/experience"),
+  addExperience: (body: WorkEntryIn) => api.post<WorkEntry>("/users/me/experience", body),
+  saveExperience: (id: string, body: WorkEntryIn) =>
+    api.put<WorkEntry>(`/users/me/experience/${id}`, body),
+  deleteExperience: (id: string) => api.delete(`/users/me/experience/${id}`),
+  education: () => api.get<StudyEntry[]>("/users/me/education"),
+  addEducation: (body: StudyEntryIn) => api.post<StudyEntry>("/users/me/education", body),
+  saveEducation: (id: string, body: StudyEntryIn) =>
+    api.put<StudyEntry>(`/users/me/education/${id}`, body),
+  deleteEducation: (id: string) => api.delete(`/users/me/education/${id}`),
   /** Defaults to the calendar year: a rolling 365-day window starts mid-month
    *  and gives nothing to compare against. */
   activity: (year: number = new Date().getFullYear()) =>
@@ -1874,32 +1919,6 @@ export const portal = {
   goals: () => api.get<Goal[]>("/users/me/goals"),
   notifications: () => api.get<Notification[]>("/notifications"),
   markNotificationsRead: () => api.post<{ detail: string }>("/notifications/read-all"),
-
-  /** The feed, and the one screen the portal opens on. Public, like the
-   *  catalogue: a visitor reads the same feed she will keep reading once she
-   *  registers, so the first screen after sign-up is already familiar.
-   *
-   *  What she is *not* shown is decided on the server — adult health posts are
-   *  filtered out for a minor and for a reader whose age we do not know, so an
-   *  age-inappropriate card never reaches the browser to be hidden here. */
-  news: (params: { category?: string; search?: string; size?: number; page?: number } = {}) => {
-    const q = new URLSearchParams();
-    if (params.category) q.set("category", params.category);
-    if (params.search) q.set("search", params.search);
-    q.set("size", String(params.size ?? 20));
-    q.set("page", String(params.page ?? 1));
-    return api.get<Page<NewsPost>>(`/news?${q}`);
-  },
-  newsCounts: () => api.get<Record<string, number>>("/news/categories"),
-  newsPost: (slug: string) => api.get<NewsDetail>(`/news/${encodeURIComponent(slug)}`),
-
-  /** The personalised section. Ranking only: every post here is in the feed
-   *  above too, and everything it ranks last is still one tap away in the
-   *  feed, in its category and in search. */
-  newsForYou: (size = 6) => api.get<ForYouFeed>(`/news/for-you?size=${size}`),
-  newsPreferences: () => api.get<NewsPreferences>("/news/preferences"),
-  saveNewsPreferences: (body: { age?: number | null; interests?: string[] }) =>
-    api.put<NewsPreferences>("/news/preferences", body),
 
   opportunities: () => api.get<Page<Opportunity>>("/opportunities"),
   /** The landing page shows real listings to visitors, so this one must not

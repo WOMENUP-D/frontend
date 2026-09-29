@@ -9,7 +9,7 @@ import { AdminAudit } from "./AdminAudit";
 import { AdminOrgs } from "./AdminOrgs";
 import { Results } from "@/components/results/Results";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { useI18n, type MessageKey } from "@/i18n";
 
 type Tab = "results" | "traffic" | "users" | "orgs" | "audit";
 
@@ -25,7 +25,10 @@ export default function AdminPage() {
   // A regional coordinator's region is decided by the server, not picked here.
   const [canPickRegion, setCanPickRegion] = useState(false);
   const [days, setDays] = useState(30);
-  const [error, setError] = useState<string | null>(null);
+  /* The key, not the sentence: translated on every render, so an error that
+     arrived before the stored locale was restored still follows the language
+     switch instead of freezing in whatever language was current then. */
+  const [error, setError] = useState<MessageKey | null>(null);
 
   useEffect(() => {
     const token = getAccessToken();
@@ -54,9 +57,9 @@ export default function AdminPage() {
       .then(setTraffic)
       .catch((err) => {
         if (err instanceof ApiError && err.status === 403) setForbidden(true);
-        else setError(t("ad.errLoad"));
+        else setError("ad.errLoad");
       });
-  }, [tab, days, authed, t]);
+  }, [tab, days, authed]);
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (authed === null) return <main className="wrap page"><Loading rows={4} /></main>;
@@ -137,7 +140,7 @@ export default function AdminPage() {
               <h1 className="aw-h1">{t("ap.tabTraffic")}</h1>
               <PeriodPicker days={days} onChange={setDays} />
             </div>
-            {error && <ErrorNote message={error} />}
+            {error && <ErrorNote message={t(error)} />}
             {traffic ? <TrafficPanel data={traffic} /> : !error && <Loading rows={3} />}
           </>
         ) : (
