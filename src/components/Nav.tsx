@@ -35,7 +35,6 @@ const STAFF_LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolea
  *  opportunities and the assistant — what the portal can show her before she
  *  has an account. */
 const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
-  { href: "/yangiliklar", key: "nav.news" },
   { href: "/diagnostika", key: "nav.assessment" },
   { href: "/reja", key: "nav.plan" },
   { href: "/dasturlar", key: "nav.programs", guest: true },

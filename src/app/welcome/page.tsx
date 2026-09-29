@@ -140,7 +140,7 @@ export default function WelcomePage() {
       // Onboarding ends in the feed. Her plan and her score live one tab
       // away and are worth opening deliberately; the first thing the portal
       // owes her after she has answered its questions is something to read.
-      router.push("/yangiliklar");
+      router.push("/kabinet");
     } catch {
       setError("asst.err");
     } finally {

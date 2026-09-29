@@ -13,7 +13,6 @@ import {
 import { DimensionRow, EdRow, EdRows, Empty, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
-import { FeedPreferences } from "@/components/FeedPreferences";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
@@ -325,12 +324,6 @@ export default function CabinetPage() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (loading || typeof window === "undefined") return;
-    if (window.location.hash !== "#lenta") return;
-    document.getElementById("lenta")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [loading]);
-
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (loading) return <main className="wrap page"><Loading rows={4} /></main>;
 
@@ -470,14 +463,6 @@ export default function CabinetPage() {
                 {t("cab.noPlanHint")}
               </p>
             )}
-          </div>
-
-          {/* What the feed ranks on. It lives here rather than over the feed
-              itself: it is a setting about her, and settings belong where the
-              rest of her account does. The feed keeps a link back to it. */}
-          <div id="lenta">
-            <span className="eyebrow">{t("news.prefs")}</span>
-            <FeedPreferences />
           </div>
 
 
