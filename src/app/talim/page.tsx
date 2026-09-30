@@ -6,45 +6,43 @@
  * One question decides the layout: what is she here to do right now? Almost
  * always, continue the thing she was last doing. So "Continue learning" is the
  * only near-black surface on the screen and everything else — progress,
- * courses, deadlines, the goal, the assistant — is quiet and outlined behind
+ * courses, what she has earned, the assistant — is quiet and outlined behind
  * it. Spend the boldness once.
  *
- * The right-hand column is the calendar of her commitments; the left is the
- * work itself. On a narrow screen the two stack in that order, so the work
- * still comes first.
+ * Everything on this page is her own record: the courses she enrolled in, the
+ * progress the server computed, the certificates she holds and the skills those
+ * courses taught. Nothing is estimated, and a figure the platform does not have
+ * is simply not shown.
  */
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import {
-  assistantActions,
-  continueCourse,
-  courseProgress,
-  enrolledCourses,
-  events,
-  findCourse,
-  goals,
-  learner,
-  learningStats,
-  nextLesson,
-  recommendations,
-} from "@/content/learning";
-import { useMockData } from "@/components/learning/useMockData";
+  portal,
+  type ActivitySummary,
+  type Certificate,
+  type EnrollmentDetail,
+  type LearningPathDetail,
+  type ProgramDetail,
+  type Recommendations,
+  type SkillProfile,
+} from "@/services/portal";
+import { getAccessToken } from "@/services/api";
+import { useApi } from "@/components/learning/useApi";
+import { nextLessonOf, viewsOf } from "@/components/learning/course";
 import {
-  Bar,
   CourseCard,
   EmptyState,
   ErrorState,
-  EventRow,
+  NeedsAccount,
+  PathCard,
   Ring,
   SectionHead,
   Skeleton,
   SkeletonBlock,
   SkeletonCards,
   StatCard,
-  duration,
-  levelKey,
 } from "@/components/learning/ui";
 
 /** Resolved after mount: the hour is a client fact, and reading it during
@@ -63,25 +61,49 @@ function useGreeting(): MessageKey | null {
 export default function LearningDashboard() {
   const { t, tx } = useI18n();
   const greeting = useGreeting();
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
-  const { data, loading, error, retry } = useMockData(() => ({
-    resume: continueCourse(),
-    mine: enrolledCourses().slice(0, 4),
-    upcoming: events.filter((event) => event.status !== "completed").slice(0, 3),
-    recommendation: recommendations[0],
-    goal: goals[0],
-    stats: {
-      completed: learningStats.completed,
-      inProgress: learningStats.inProgress,
-      hours: learningStats.hours,
-      streak: learningStats.streak,
-    },
-  }));
+  const { data, loading, error, retry } = useApi(async () => {
+    const [enrollments, activity, certificates, skills, recommendations, paths] =
+      await Promise.all([
+        portal.myEnrollments(),
+        portal.activity().catch(() => null as ActivitySummary | null),
+        portal.myCertificates().catch(() => [] as Certificate[]),
+        portal.mySkills().catch(() => null as SkillProfile | null),
+        portal.recommendations().catch(() => null as Recommendations | null),
+        portal.myLearningPaths().catch(() => [] as LearningPathDetail[]),
+      ]);
+
+    // The course she was last working on decides the hero. Its lessons are not
+    // in the enrollment list, so the one course she is resuming is fetched in
+    // full — and only that one.
+    const resume =
+      enrollments.find((item) => item.status === "in_progress" && item.program) ?? null;
+    const detail: ProgramDetail | null = resume?.program
+      ? await portal.programBySlug(resume.program.slug).catch(() => null)
+      : null;
+
+    return {
+      enrollments, activity, certificates, skills, recommendations, paths, resume, detail,
+    };
+  });
+
+  const head = <Head greeting={greeting} />;
+
+  if (authed === false) {
+    return (
+      <>
+        {head}
+        <NeedsAccount />
+      </>
+    );
+  }
 
   if (error) {
     return (
       <>
-        <Head greeting={greeting} />
+        {head}
         <ErrorState onRetry={retry} />
       </>
     );
@@ -90,7 +112,7 @@ export default function LearningDashboard() {
   if (loading || !data) {
     return (
       <>
-        <Head greeting={greeting} />
+        {head}
         <Skeleton height={186} radius={28} />
         <div className="lms-sec">
           <SkeletonBlock rows={1} />
@@ -102,20 +124,27 @@ export default function LearningDashboard() {
     );
   }
 
-  const { resume, mine, upcoming, recommendation, goal, stats } = data;
-  const recommended = findCourse(recommendation.courseSlug);
+  const { enrollments, activity, certificates, skills, recommendations, paths, resume, detail } =
+    data;
+  const views = viewsOf(enrollments);
+  const completed = enrollments.filter((item) => item.status === "completed").length;
+  const inProgress = enrollments.filter((item) => item.status === "in_progress").length;
+  const learned = (skills?.skills ?? []).filter((item) => item.status !== "self_reported");
+  const suggestion = recommendations?.programs[0] ?? null;
 
   return (
     <>
-      <Head greeting={greeting} />
+      {head}
 
       {/* ---- the one thing to press --------------------------------- */}
-      {resume ? <Resume slug={resume.slug} /> : (
+      {resume && detail ? (
+        <Resume enrollment={resume} detail={detail} />
+      ) : (
         <EmptyState
           title={t("lms.continue.empty")}
           hint={t("lms.continue.emptyHint")}
           action={
-            <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+            <Link className="lms-btn lms-btn-primary" href="/dasturlar">
               {t("lms.courses.explore")}
             </Link>
           }
@@ -126,11 +155,13 @@ export default function LearningDashboard() {
       <section className="lms-sec">
         <SectionHead title={t("lms.stats.title")} />
         <div className="lms-stats">
-          <StatCard value={stats.completed} label={t("lms.stats.completed")} />
-          <StatCard value={stats.inProgress} label={t("lms.stats.inProgress")} />
-          <StatCard value={`${stats.hours}${t("common.hours").slice(0, 1)}`} label={t("lms.stats.hours")} />
+          <StatCard value={completed} label={t("lms.stats.completed")} />
+          <StatCard value={inProgress} label={t("lms.stats.inProgress")} />
+          <StatCard value={certificates.length} label={t("lms.stats.certificates")} />
+          {/* The streak is counted from what she actually did, in the same
+              place the cabinet counts it. */}
           <StatCard
-            value={<>{stats.streak} <span aria-hidden="true">🔥</span></>}
+            value={<>{activity?.current_streak ?? 0} <span aria-hidden="true">🔥</span></>}
             label={t("lms.stats.streak")}
           />
         </div>
@@ -145,16 +176,18 @@ export default function LearningDashboard() {
               href="/talim/kurslar"
               linkLabel={t("lms.courses.all")}
             />
-            {mine.length ? (
+            {views.length ? (
               <div className="lms-courses">
-                {mine.map((course) => <CourseCard key={course.slug} course={course} />)}
+                {views.slice(0, 4).map((view) => (
+                  <CourseCard key={view.program.id} view={view} />
+                ))}
               </div>
             ) : (
               <EmptyState
                 title={t("lms.courses.empty")}
                 hint={t("lms.courses.emptyHint")}
                 action={
-                  <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+                  <Link className="lms-btn lms-btn-primary" href="/dasturlar">
                     {t("lms.courses.explore")}
                   </Link>
                 }
@@ -162,46 +195,50 @@ export default function LearningDashboard() {
             )}
           </section>
 
+          {/* ---- the route she is on -------------------------------- */}
+          {/* Shown only when she is actually on one. A "My learning paths"
+              heading over an empty box would be the dashboard inventing a
+              commitment she has not made. */}
+          {paths.length > 0 && (
+            <section>
+              <SectionHead
+                title={t("lms.path.mine")}
+                href="/talim/yollar"
+                linkLabel={t("cab.seeAll")}
+              />
+              <div className="lms-paths">
+                {paths.slice(0, 2).map((path) => (
+                  <PathCard key={path.id} path={path} />
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* ---- one recommendation, with its reason ----------------- */}
-          {recommended && (
+          {suggestion && (
             <section>
               <SectionHead title={t("lms.rec.title")} />
               <article className="lms-card lms-card-pad lms-rec">
-                <div className="lms-course-top">
-                  <span
-                    className={`lms-cover lms-cover-${recommended.tone}`}
-                    aria-hidden="true"
-                  >
-                    {recommended.emblem}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <h3 className="lms-course-title">
-                      <Link href={`/talim/kurslar/${recommended.slug}`}>
-                        {tx(recommended.title)}
-                      </Link>
-                    </h3>
-                    <p className="lms-course-by">{tx(recommended.instructor)}</p>
-                  </div>
-                </div>
+                <h3 className="lms-course-title">
+                  <Link href={`/talim/kurslar/${suggestion.slug}`}>
+                    {tx(suggestion.title_i18n)}
+                  </Link>
+                </h3>
 
-                {/* The AI's reason, shown before the numbers: a suggestion
-                    without one is just an advertisement. */}
-                <p className="lms-rec-why">{tx(recommendation.reason)}</p>
-
-                <div className="lms-rec-stats">
-                  <span>{t("lms.course.level")}: {t(levelKey(recommended.level))}</span>
-                  <span>{recommended.weeks} {t("common.weeks")}</span>
-                  <span>★ {recommended.rating.toFixed(1)}</span>
-                  <span>
-                    {new Intl.NumberFormat("uz-UZ").format(recommended.learners)}
-                    {" "}{t("lms.course.learners").toLowerCase()}
-                  </span>
-                </div>
+                {/* The engine's reason, shown before anything else: a
+                    suggestion without one is just an advertisement. */}
+                <p className="lms-rec-why">
+                  {suggestion.new_skills.length > 0
+                    ? `${t("ins.skills")}: ${suggestion.new_skills
+                        .map((skill) => tx(skill.name_i18n) || skill.label)
+                        .join(", ")}`
+                    : t(`cat.${suggestion.category}` as MessageKey)}
+                </p>
 
                 <div>
                   <Link
                     className="lms-btn lms-btn-primary"
-                    href={`/talim/kurslar/${recommended.slug}`}
+                    href={`/talim/kurslar/${suggestion.slug}`}
                   >
                     {t("lms.course.view")}
                   </Link>
@@ -212,73 +249,48 @@ export default function LearningDashboard() {
         </div>
 
         <div className="lms-col">
-          {/* ---- what is due ---------------------------------------- */}
+          {/* ---- what she has earned -------------------------------- */}
           <section className="lms-card lms-card-pad">
             <SectionHead
-              title={t("lms.upcoming.title")}
-              href="/talim/kalendar"
-              linkLabel={t("lms.upcoming.all")}
+              title={t("lms.profile.certificates")}
+              href="/talim/yutuqlar"
+              linkLabel={t("cab.seeAll")}
             />
-            {upcoming.length ? (
-              <div className="lms-events">
-                {upcoming.map((event) => {
-                  const course = findCourse(event.courseSlug);
-                  return (
-                    <EventRow
-                      key={event.id}
-                      event={event}
-                      courseTitle={course ? tx(course.title) : ""}
-                    />
-                  );
-                })}
+            {certificates.length ? (
+              <div className="lms-res">
+                {certificates.slice(0, 3).map((certificate) => (
+                  <div key={certificate.id} className="lms-event">
+                    <div className="lms-event-body">
+                      <div className="lms-event-title">
+                        {tx(certificate.program_title_i18n)}
+                      </div>
+                      <div className="lms-event-meta">{certificate.serial_number}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="lms-lead" style={{ margin: 0 }}>
-                {t("lms.upcoming.emptyHint")}
+                {t("lms.profile.noCertificatesHint")}
               </p>
             )}
           </section>
 
-          {/* ---- the goal ------------------------------------------- */}
-          {goal && (
-            <section className="lms-card lms-card-pad">
-              <SectionHead
-                title={t("lms.goal.title")}
-                href="/talim/maqsadlar"
-                linkLabel={t("lms.goal.view")}
-              />
-              <h3 className="lms-goal-title">{tx(goal.title)}</h3>
-
-              <div
-                style={{
-                  display: "flex", alignItems: "center", gap: 14, margin: "14px 0 4px",
-                }}
-              >
-                <span className="lms-goal-pct">{goal.percent}%</span>
-                <div style={{ flex: 1 }}><Bar percent={goal.percent} /></div>
+          {/* ---- what the courses taught ---------------------------- */}
+          <section className="lms-card lms-card-pad">
+            <SectionHead title={t("skill.section")} href="/kabinet" linkLabel={t("common.open")} />
+            {learned.length ? (
+              <div className="lms-chips">
+                {learned.slice(0, 8).map((item) => (
+                  <span key={item.skill.slug ?? item.skill.label} className="lms-chip lms-chip-static">
+                    {tx(item.skill.name_i18n) || item.skill.label}
+                  </span>
+                ))}
               </div>
-
-              <div style={{ marginTop: 18 }}>
-                <span className="lms-stat-label" style={{ marginTop: 0 }}>
-                  {t("lms.goal.weekly")}
-                </span>
-                <div
-                  style={{
-                    display: "flex", alignItems: "center", gap: 12, marginTop: 7,
-                  }}
-                >
-                  <strong style={{ fontSize: "0.95rem", whiteSpace: "nowrap" }}>
-                    {learner.weeklyDoneHours} / {learner.weeklyTargetHours} {t("common.hours")}
-                  </strong>
-                  <div style={{ flex: 1 }}>
-                    <Bar
-                      percent={(learner.weeklyDoneHours / learner.weeklyTargetHours) * 100}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
+            ) : (
+              <p className="lms-lead" style={{ margin: 0 }}>{t("skill.none")}</p>
+            )}
+          </section>
 
           {/* ---- the assistant --------------------------------------- */}
           <section className="lms-ai">
@@ -289,19 +301,8 @@ export default function LearningDashboard() {
             <p className="lms-lead" style={{ margin: "12px 0 14px", fontSize: "0.92rem" }}>
               {t("lms.ai.lead")}
             </p>
-            <div className="lms-chips">
-              {assistantActions.map((action) => (
-                <Link
-                  key={action.id}
-                  className="lms-chip"
-                  href={`/talim/yordamchi?ask=${action.id}`}
-                >
-                  {tx(action.label)}
-                </Link>
-              ))}
-            </div>
             <div style={{ marginTop: 16 }}>
-              <Link className="lms-btn lms-btn-primary" href="/talim/yordamchi">
+              <Link className="lms-btn lms-btn-primary" href="/yordamchi">
                 {t("lms.ai.ask")}
               </Link>
             </div>
@@ -317,57 +318,60 @@ export default function LearningDashboard() {
 
 function Head({ greeting }: { greeting: MessageKey | null }) {
   const { t } = useI18n();
+  const [name, setName] = useState("");
+
+  // Her own name, from her own profile — not a constant in the source.
+  useEffect(() => {
+    portal
+      .profile()
+      .then((profile) => {
+        const full = (profile as { full_name: string | null }).full_name ?? "";
+        setName(full.split(" ")[0] ?? "");
+      })
+      .catch(() => setName(""));
+  }, []);
+
   return (
     <header className="lms-head">
       <h1 className="lms-h1">
-        {greeting ? `${t(greeting)}, ${learner.name}` : learner.name}{" "}
+        {greeting ? `${t(greeting)}${name ? `, ${name}` : ""}` : name}{" "}
         <span aria-hidden="true">👋</span>
       </h1>
-      <p className="lms-lead">
-        {t("lms.greet.sub")} {t("lms.greet.streak")}
-      </p>
+      <p className="lms-lead">{t("lms.greet.sub")}</p>
     </header>
   );
 }
 
-/** Re-reads the course by slug so the card always reflects the dataset rather
- *  than a copy captured when the page loaded. */
-function Resume({ slug }: { slug: string }) {
+/** The course she was last working on, and the lesson it opens at. */
+function Resume({
+  enrollment, detail,
+}: { enrollment: EnrollmentDetail; detail: ProgramDetail }) {
   const { t, tx } = useI18n();
-  const course = findCourse(slug);
-  if (!course) return null;
-
-  const progress = courseProgress(course);
-  const next = nextLesson(course);
+  const next = nextLessonOf(detail, enrollment);
 
   return (
     <section className="lms-hero">
       <div style={{ minWidth: 0 }}>
         <span className="lms-hero-label">{t("lms.continue.title")}</span>
-        <h2 className="lms-hero-title">{tx(course.title)}</h2>
+        <h2 className="lms-hero-title">{tx(detail.title_i18n)}</h2>
 
         {next && (
-          <>
-            <p className="lms-hero-lesson">
-              {t("lms.continue.current")}: <strong>{tx(next.title)}</strong>
-            </p>
-            <p className="lms-hero-meta">
-              {progress.done} / {progress.total} {t("lms.course.lessons")}
-              {" · "}
-              {duration(progress.minutesLeft, t("lms.lesson.min"), t("common.hours"))}
-            </p>
-          </>
+          <p className="lms-hero-lesson">
+            {t("lms.continue.current")}: <strong>{tx(next.title_i18n)}</strong>
+          </p>
         )}
 
         <div className="lms-hero-bar">
-          <span style={{ width: `${progress.percent}%` }} />
+          <span style={{ width: `${enrollment.progress_percent}%` }} />
         </div>
 
         <Link
           className="lms-hero-cta"
-          href={next
-            ? `/talim/kurslar/${course.slug}/${next.slug}`
-            : `/talim/kurslar/${course.slug}`}
+          href={
+            next
+              ? `/talim/kurslar/${detail.slug}/${next.slug}`
+              : `/talim/kurslar/${detail.slug}`
+          }
         >
           {t("lms.continue.action")}
           <span aria-hidden="true">→</span>
@@ -375,7 +379,7 @@ function Resume({ slug }: { slug: string }) {
       </div>
 
       <div className="lms-hero-side">
-        <Ring percent={progress.percent} size={116} onDark />
+        <Ring percent={enrollment.progress_percent} size={116} onDark />
       </div>
     </section>
   );

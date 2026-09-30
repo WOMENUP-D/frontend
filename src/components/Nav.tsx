@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getAccessToken, isStaff } from "@/services/api";
+import { useEffect, useRef, useState } from "react";
+import { getAccessToken, getRoles, isStaff, ORG_ROLES, PANEL_ROLES } from "@/services/api";
 import { logout } from "@/services/auth";
 import { useI18n, type MessageKey } from "@/i18n";
 import { LangSwitch } from "./LangSwitch";
+import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "./ThemeToggle";
 
 /** `guest: true` marks what a visitor sees before signing in.
@@ -15,33 +16,44 @@ import { ThemeToggle } from "./ThemeToggle";
  *  or staff-only: offering them to someone with no account advertises doors she
  *  cannot open. What is left — the catalogue, the opportunities and the
  *  assistant — is what the portal actually shows a newcomer. */
-/** All a staff account needs: the panel it signed in for. */
-const STAFF_LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
-  { href: "/admin", key: "nav.admin" },
+/** All a staff account needs: the screen it signed in for — the panel for
+ *  administrators, coordinators and moderators, the organisation workspace for
+ *  an organisation's people. An account with both roles sees both. */
+const STAFF_LINKS: ReadonlyArray<{
+  href: string;
+  key: MessageKey;
+  roles: readonly string[];
+  guest?: boolean;
+}> = [
+  { href: "/admin", key: "nav.admin", roles: PANEL_ROLES },
+  { href: "/hamkor", key: "nav.org", roles: ORG_ROLES },
 ];
 
 /** Order is the argument this list makes about where a visit starts.
  *
- *  The feed comes first and the cabinet last. Landing straight in her own
- *  cabinet meant the portal opened on a form she had not filled in yet — a
- *  0% profile bar and a list of things she had not done. The feed opens on
- *  something worth reading instead, and the cabinet is where she goes when
- *  she wants her own numbers, which is a deliberate act rather than a
- *  doorstep.
+ *  The plan first and the cabinet last. The diagnostic lives inside the
+ *  cabinet (`/kabinet/diagnostika`), and the news feed was removed, so
+ *  neither has a tab of its own.
  *
- *  The feed, the cabinet, the diagnostic and the plan carry no `guest` flag:
+ *  The cabinet and the plan carry no `guest` flag:
  *  they are hers, and offering them to someone with no account advertises
  *  doors she cannot open. What a visitor gets is the catalogue, the
  *  opportunities and the assistant — what the portal can show her before she
  *  has an account. */
 const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
-  { href: "/diagnostika", key: "nav.assessment" },
   { href: "/reja", key: "nav.plan" },
   { href: "/dasturlar", key: "nav.programs", guest: true },
   // Next to the catalogue on purpose: the catalogue is what she can enrol in,
   // this is where she actually studies. It is hers, so no `guest` flag.
   { href: "/talim", key: "nav.learning" },
+  // Between learning and the listings, because that is what it joins: what
+  // she learns, and the work it can lead to. Open to a visitor — where the
+  // platform can lead is the first thing a newcomer wants to know.
+  { href: "/kasb", key: "nav.career", guest: true },
   { href: "/imkoniyatlar", key: "nav.opportunities", guest: true },
+  // Beside the listings: an event is something she attends, not something she
+  // applies to, but it is found the same way. Open to a visitor.
+  { href: "/tadbirlar", key: "nav.events", guest: true },
   { href: "/yordamchi", key: "asst.nav", guest: true },
   { href: "/kabinet", key: "nav.cabinet" },
   // No management link here. It used to sit in this list unguarded, so every
@@ -84,6 +96,8 @@ export function Nav() {
   const { t } = useI18n();
   const [authed, setAuthed] = useState(false);
   const [staff, setStaff] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
+  const pills = useRef<HTMLDivElement>(null);
 
   // Token lives in localStorage, so this can only run after mount.
   useEffect(() => {
@@ -93,7 +107,20 @@ export function Nav() {
     // the learner navigation is dead weight in her header — it was showing her
     // six links she has no reason to open.
     setStaff(Boolean(token) && isStaff());
+    setRoles(token ? getRoles() : []);
   }, [pathname]);
+
+  /* On a phone the pills are a sideways strip, and the one for the page she
+     is on could sit out of sight — so she could not see where she was. Bring
+     it into view, inside the strip only: the page itself does not move. */
+  useEffect(() => {
+    const strip = pills.current;
+    const active = strip?.querySelector<HTMLElement>(".nav-link.active");
+    if (!strip || !active) return;
+    const box = active.getBoundingClientRect();
+    const frame = strip.getBoundingClientRect();
+    strip.scrollLeft += box.left - frame.left - (frame.width - box.width) / 2;
+  }, [pathname, authed, staff]);
 
   function signOut() {
     // One sign-out path: it drops the tokens and anything a provider left
@@ -107,17 +134,23 @@ export function Nav() {
   return (
     <nav className="nav">
       <div className="nav-inner">
-        <Link href="/">
+        {/* Named for a screen reader: on a phone the wordmark is hidden and
+            the blossom alone is decoration. */}
+        <Link href="/" aria-label="WomanUP">
           <Brand />
         </Link>
 
-        <div className="nav-links">
+        <div className="nav-links" ref={pills}>
           <div className="nav-pills">
-            {(staff ? STAFF_LINKS : LINKS.filter((link) => authed || link.guest)).map((link) => (
+            {(staff
+              ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
+              : LINKS.filter((link) => authed || link.guest)
+            ).map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`nav-link ${isActive(pathname, link.href) ? "active" : ""}`}
+                aria-current={isActive(pathname, link.href) ? "page" : undefined}
               >
                 {t(link.key)}
               </Link>
@@ -128,6 +161,7 @@ export function Nav() {
         <div className="header-tools">
           <LangSwitch />
           <ThemeToggle />
+          {authed && !staff && <NotificationBell />}
           {authed ? (
             <button className="nav-plain" onClick={signOut}>
               {t("nav.signOut")}

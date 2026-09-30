@@ -3,6 +3,9 @@
 /**
  * The course catalogue — everything she has started, finished, or could start.
  *
+ * These are the portal's real programmes, the same ones `/dasturlar` sells:
+ * there is one course system, and this is the screen she studies them from.
+ *
  * The filter chips carry their counts. That is the decision worth defending:
  * a filter whose result is empty says so *before* it is pressed, so nobody
  * taps "Completed" to be told there is nothing there. It also turns the row
@@ -14,10 +17,12 @@
  * a second hero would just pick a winner among courses she has not chosen yet.
  */
 
+import Link from "next/link";
 import { useState } from "react";
 import { useI18n } from "@/i18n";
-import { courses, courseStatus, type CourseStatus } from "@/content/learning";
-import { useMockData } from "@/components/learning/useMockData";
+import { portal, type EnrollmentDetail, type Page, type Program } from "@/services/portal";
+import { useApi } from "@/components/learning/useApi";
+import { viewOf, type CourseStatus } from "@/components/learning/course";
 import {
   CourseCard,
   EmptyState,
@@ -31,9 +36,9 @@ type Filter = "all" | CourseStatus;
 
 const FILTERS: Filter[] = ["all", "in_progress", "completed", "not_started"];
 
-/* Sort order, not the dataset's own: what is half-finished is what she came
+/* Sort order, not the catalogue's own: what is half-finished is what she came
    back for, and a course already completed is the least urgent thing on the
-   page. Within a group the dataset order stands. */
+   page. Within a group the catalogue order stands. */
 const RANK: Record<CourseStatus, number> = {
   in_progress: 0,
   not_started: 1,
@@ -44,17 +49,25 @@ export default function CoursesPage() {
   const { t } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data, loading, error, retry } = useMockData(() => {
-    const list = [...courses].sort(
-      (a, b) => RANK[courseStatus(a)] - RANK[courseStatus(b)],
-    );
+  const { data, loading, error, retry } = useApi(async () => {
+    // Her enrollments decide what each card says; a visitor simply sees the
+    // catalogue, so a missing session is not an error here.
+    const [catalogue, mine] = await Promise.all([
+      portal.programs("?size=60") as Promise<Page<Program>>,
+      portal.myEnrollments().catch(() => [] as EnrollmentDetail[]),
+    ]);
+    const byProgram = new Map(mine.map((item) => [item.program_id, item]));
+    const list = catalogue.items
+      .map((program) => viewOf(program, byProgram.get(program.id) ?? null))
+      .sort((a, b) => RANK[a.status] - RANK[b.status]);
+
     const counts: Record<Filter, number> = {
       all: list.length,
       in_progress: 0,
       completed: 0,
       not_started: 0,
     };
-    for (const course of list) counts[courseStatus(course)] += 1;
+    for (const view of list) counts[view.status] += 1;
     return { list, counts };
   });
 
@@ -79,9 +92,7 @@ export default function CoursesPage() {
   }
 
   const visible =
-    filter === "all"
-      ? data.list
-      : data.list.filter((course) => courseStatus(course) === filter);
+    filter === "all" ? data.list : data.list.filter((view) => view.status === filter);
 
   return (
     <>
@@ -107,8 +118,8 @@ export default function CoursesPage() {
       <section className="lms-sec" style={{ marginTop: 0 }}>
         {visible.length ? (
           <div className="lms-courses">
-            {visible.map((course) => (
-              <CourseCard key={course.slug} course={course} />
+            {visible.map((view) => (
+              <CourseCard key={view.program.id} view={view} />
             ))}
           </div>
         ) : (
@@ -126,7 +137,11 @@ export default function CoursesPage() {
                 >
                   {t("lms.courses.all")}
                 </button>
-              ) : undefined
+              ) : (
+                <Link className="lms-btn lms-btn-primary" href="/dasturlar">
+                  {t("lms.courses.explore")}
+                </Link>
+              )
             }
           />
         )}

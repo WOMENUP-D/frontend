@@ -1833,3 +1833,402 @@ html[data-theme="dark"] body[data-section="learning"] .sky-layer { opacity: 0.24
   .lms-rung-now,
   .lms-rung-cta { grid-column: 2; justify-self: start; }
 }
+
+/* ==================================================================
+   Goals: the weekly habit on top, the goals themselves two to a row.
+   ================================================================== */
+.lms-weekly {
+  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.lms-weekly-main { flex: 1; min-width: 260px; }
+.lms-weekly-main .lms-section-head { margin-bottom: 10px; }
+.lms-weekly-bar { display: flex; align-items: center; gap: 12px; }
+.lms-weekly-bar strong {
+  font-family: var(--font-mono); font-size: .95rem; font-weight: 500;
+  white-space: nowrap; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.lms-weekly-bar > div { flex: 1; }
+.lms-weekly-streak {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding-left: 26px; border-left: 1px solid var(--border); flex: none;
+}
+.lms-weekly-streak b {
+  font-family: var(--font-mono); font-size: 1.6rem; font-weight: 500;
+  color: var(--primary); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.lms-weekly-streak span { font-size: .76rem; color: var(--text-faint); }
+
+.lms-goal-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px; align-items: start;
+}
+/* The empty state is not a goal and must not sit in one cell with a hole
+   beside it. */
+.lms-goal-grid > .lms-empty { grid-column: 1 / -1; }
+
+/* A step is read, not pressed: no button affordance, no hover, and the
+   reading sits at the end of the row where the eye already is. */
+.lms-steps .lms-step {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 7px 0; text-align: left;
+}
+.lms-step-text { flex: 1; min-width: 0; }
+.lms-step-detail {
+  font-family: var(--font-mono); font-size: .72rem; color: var(--text-faint);
+  font-variant-numeric: tabular-nums; white-space: nowrap; flex: none;
+}
+/* Outside the system's knowledge — dimmed ring, and it says why in words
+   rather than leaving an empty circle to be read as "not done". */
+.lms-step-untracked .lms-tick { opacity: .45; }
+.lms-step-untracked .lms-step-text { color: var(--text-dim); }
+
+@media (max-width: 900px) {
+  .lms-goal-grid { grid-template-columns: minmax(0, 1fr); }
+  .lms-weekly-streak { padding-left: 0; border-left: 0; }
+}
+
+/* ============================================================
+   Learning paths (/talim/yollar)
+
+   A route through courses that already exist. The furniture is
+   the section's own — outlined cards, one accent, the same bar
+   and ring — because a path is a way of reading the catalogue
+   rather than a second product.
+   ============================================================ */
+
+.lms-paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.lms-path {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.18s ease;
+}
+
+.lms-path:hover { border-color: var(--border-strong); }
+
+.lms-path-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lms-path-lead {
+  margin: 0;
+  font-size: 0.87rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.lms-path-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lms-path-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* ---------- catalogue filters ---------------------------------------- */
+
+.lms-path-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.lms-path-search {
+  width: min(360px, 100%);
+  padding: 9px 15px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--control);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.lms-path-search:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+/* ---------- the route ------------------------------------------------- */
+
+.lms-route {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  counter-reset: none;
+}
+
+.lms-route-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Dimmed, never hidden: she is owed the whole route before she commits to it,
+   and the row says in words why it is not open yet. */
+.lms-route-step-locked { background: var(--bg-2); }
+.lms-route-step-locked .lms-course-title a { color: var(--text-dim); }
+
+.lms-route-n {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.lms-route-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lms-route-head { display: flex; align-items: flex-start; gap: 12px; }
+
+.lms-route-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lms-route-why {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  line-height: 1.5;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .lms-paths { grid-template-columns: minmax(0, 1fr); }
+  .lms-path { padding: 16px; }
+
+  /* The numeral moves above the card's content rather than stealing width
+     from a title that is already wrapping at 390px. */
+  .lms-route-step { flex-direction: column; gap: 10px; padding: 16px; }
+  .lms-route-foot > .lms-btn,
+  .lms-route-foot > .lms-route-why { width: 100%; }
+  .lms-route-foot .lms-rec-stats { margin-left: 0 !important; }
+}
+
+/* The same eyebrow as the hero's, on a light surface. `lms-hero-label` reads
+   against the near-black card and all but disappears here. */
+.lms-route-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ============================================================
+   Practical tasks (/talim/amaliyot)
+
+   Fluid rather than stepped: the grid uses auto-fit with a
+   min track, so it reflows at every width between a 375px
+   phone and a 1920px desktop instead of only at the two sizes
+   somebody happened to test. Type and spacing come from the
+   same tokens as the rest of the section.
+   ============================================================ */
+
+.lms-tasks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 14px;
+}
+
+.lms-task {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.18s ease;
+  min-width: 0;
+}
+
+.lms-task:hover { border-color: var(--border-strong); }
+
+.lms-task-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lms-task-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ---------- the brief ------------------------------------------------- */
+
+.lms-task-prose {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.lms-criteria {
+  margin: 0;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 68ch;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* A judged criterion carries its mark, so the list is never read by colour
+   alone — the tick and the dash are what a screen reader announces. */
+.lms-criteria-marked {
+  list-style: none;
+  padding-left: 0;
+}
+
+.lms-criteria-marked li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.lms-met-mark {
+  flex: none;
+  width: 1.15em;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.lms-criteria-marked .lms-met { color: var(--text); }
+.lms-criteria-marked .lms-met .lms-met-mark { color: var(--success); }
+.lms-criteria-marked .lms-unmet .lms-met-mark { color: var(--text-faint); }
+.lms-met-note { color: var(--text-faint); font-style: italic; }
+
+/* ---------- the form -------------------------------------------------- */
+
+.lms-submit {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.lms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lms-field-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.lms-field-hint { font-size: 0.78rem; color: var(--text-faint); }
+
+.lms-textarea,
+.lms-input {
+  width: 100%;
+  /* 16px stops iOS zooming the page when the field takes focus, which is what
+     makes a form feel broken on an iPhone. */
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--control);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 13px;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+  resize: vertical;
+  min-height: 44px;
+}
+
+.lms-textarea { line-height: 1.6; }
+
+.lms-textarea:focus,
+.lms-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.lms-textarea:disabled,
+.lms-input:disabled { opacity: 0.6; }
+
+.lms-form-error {
+  margin: 0;
+  padding: 10px 13px;
+  border-left: 2px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+/* ---------- the verdict ----------------------------------------------- */
+
+.lms-result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* An earlier attempt is history, not the current answer. */
+.lms-result-past { background: var(--bg-2); }
+
+@media (max-width: 560px) {
+  .lms-task { padding: 16px; }
+  .lms-submit { gap: 14px; }
+  /* Full-width so the primary action is never a small target at the edge of
+     a phone screen. */
+  .lms-submit .lms-btn { width: 100%; }
+}

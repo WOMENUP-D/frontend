@@ -1,23 +1,36 @@
 "use client";
 
 /**
- * First-run onboarding, shown once after sign-in.
+ * Onboarding: what the assistant personalises on.
  *
- * Two short steps, and only the first is required. Identity comes first — name,
- * surname, age, region — because age is what decides which health content she
- * may be shown at all, and region is what makes a vacancy or a grant relevant
- * to her rather than to Tashkent.
+ * Name, date of birth and region are asked on the sign-up form and saved there,
+ * so a woman who arrives here — from the cabinet's "fill in your profile", from
+ * the assistant's settings — goes straight to her interests, then the
+ * assessment. Asking her to introduce herself a second time told her the
+ * portal had not listened.
+ *
+ * The identity step is kept only for the one case that needs it: sign-up
+ * created the account but failed to save the profile. Age decides which health
+ * content she may be shown at all, so it cannot be skipped then.
  *
  * The second step is what the assistant personalises on, and it is skippable:
  * an unfinished profile costs her some tailoring, and blocking her at the door
  * would cost her the portal.
+ *
+ * The third is the learning questionnaire, which used to be a page of its own
+ * behind a nav tab called "diagnostics". A woman who has just made an account
+ * should meet the questions, not a tab she has to notice and decide to open —
+ * and the plan cannot be built until they are answered, so asking anywhere
+ * else means asking twice. `?step=assessment` opens straight on it, which is
+ * how the cabinet sends her back to revise without redoing her profile.
  */
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getAccessToken } from "@/services/api";
+import { getAccessToken, staffHome } from "@/services/api";
 import { takeGoogleName } from "@/services/auth";
 import { portal } from "@/services/portal";
+import { Questionnaire } from "@/components/Questionnaire";
 import { useI18n, type MessageKey } from "@/i18n";
 import {
   BirthDateField,
@@ -70,7 +83,23 @@ export default function WelcomePage() {
   const { t } = useI18n();
   const router = useRouter();
 
-  const [stage, setStage] = useState<1 | 2>(1);
+  /* `?step=assessment` lands straight on the questions. That is the path the
+     cabinet uses to send her back to revise — redoing name and birth date to
+     reach them would be asking for what the portal already has.
+
+     Read off the address rather than through `useSearchParams`, which would
+     put this page behind a Suspense boundary for one string that is available
+     the moment it mounts. The catalogue reads its category filter the same
+     way. */
+  const [stage, setStage] = useState<1 | 2 | 3>(1);
+  // null while the profile loads: nothing is drawn until we know whether she
+  // has already introduced herself, so the identity form never flashes up.
+  const [known, setKnown] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("step") === "assessment") {
+      setStage(3);
+    }
+  }, []);
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birth, setBirth] = useState<BirthParts>(EMPTY_BIRTH);
@@ -102,20 +131,50 @@ export default function WelcomePage() {
     if (fromGoogle?.name) setName(fromGoogle.name);
     if (fromGoogle?.surname) setSurname(fromGoogle.surname);
 
-    // Focus the first field she still has to fill in. `autoFocus` cannot do
-    // this: it is decided when the input mounts, which is before we know
-    // whether Google already gave us a name.
-    (fromGoogle?.name ? birthRef : nameRef).current?.focus();
     // Staff never see this: the questionnaire exists to personalise a learner's
     // plan, and a coordinator does not have one.
     portal
       .me()
       .then((me) => {
-        const roles = (me as { roles?: string[] }).roles ?? [];
-        if (roles.some((r) => r !== "user" && r !== "mother")) router.replace("/admin");
+        const account = me as { roles?: string[]; region?: string | null };
+        const roles = account.roles ?? [];
+        if (roles.some((r) => r !== "user" && r !== "mother")) router.replace(staffHome());
+        if (account.region) setRegion(account.region);
       })
       .catch(() => undefined);
+
+    portal
+      .profile()
+      .then((raw) => {
+        const profile = raw as { full_name?: string | null; birth_date?: string | null; interests?: string[] };
+        const [y, m, d] = (profile.birth_date ?? "").split("-").map(Number);
+        const stored: BirthParts = { day: String(d || ""), month: String(m || ""), year: String(y || "") };
+        // A stored date the form would now refuse (it aged past the ceiling)
+        // sends her through the identity step rather than to a dead button.
+        const usable = isoBirthDate(stored) !== null && birthError(stored, new Date()) === null;
+        if (profile.full_name?.trim() && usable) {
+          // Sent back as given, so saving her interests leaves her name as it is.
+          setName(profile.full_name.trim());
+          setSurname("");
+          setBirth(stored);
+          if (profile.interests?.length) setInterests(profile.interests);
+          // `?step=assessment` may already have moved her on; never back.
+          setStage((current) => (current === 1 ? 2 : current));
+          setKnown(true);
+        } else {
+          setKnown(false);
+        }
+      })
+      .catch(() => setKnown(false));
   }, [router]);
+
+  // Focus the first field she still has to fill in, once we know which it is.
+  // `autoFocus` cannot do this: it is decided when the input mounts.
+  useEffect(() => {
+    if (known === false) (name ? birthRef : nameRef).current?.focus();
+    // Only when the form first appears, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [known]);
 
   const today = useMemo(() => new Date(), []);
   const birthIso = isoBirthDate(birth);
@@ -137,10 +196,10 @@ export default function WelcomePage() {
         direction: withDetails ? direction : "",
         consent_ai_personalisation: true,
       });
-      // Onboarding ends in the feed. Her plan and her score live one tab
-      // away and are worth opening deliberately; the first thing the portal
-      // owes her after she has answered its questions is something to read.
-      router.push("/kabinet");
+      // On to the questions. The profile alone cannot build a plan, and
+      // sending her to the feed here is what used to leave the assessment
+      // sitting behind a tab nobody opened.
+      setStage(3);
     } catch {
       setError("asst.err");
     } finally {
@@ -154,24 +213,39 @@ export default function WelcomePage() {
     );
   }
 
+  if (known === null) return <main className="auth-page" />;
+
+  // With her identity already known the identity step is not one of hers.
+  const offset = known ? 1 : 0;
+
   return (
     <main className="auth-page">
       <div className="auth-shell auth-shell-single">
         <section className="auth-card stack">
           <div className="stack" style={{ gap: 6 }}>
             <span className="eyebrow">
-              {t("wel.step")} {stage} / 2
+              {t("wel.step")} {stage - offset} / {3 - offset}
             </span>
             <h1 className="auth-title" style={{ fontSize: "clamp(1.4rem, 2.6vw, 1.9rem)" }}>
-              {t(stage === 1 ? "wel.title1" : "wel.title2")}
+              {t(stage === 1 ? "wel.title1" : stage === 2 ? "wel.title2" : "lq.title")}
             </h1>
-            <p className="muted small">{t(stage === 1 ? "wel.lead1" : "wel.lead2")}</p>
+            <p className="muted small">
+              {t(stage === 1 ? "wel.lead1" : stage === 2 ? "wel.lead2" : "lq.lead")}
+            </p>
             <div className="wel-progress" aria-hidden="true">
-              <span className="wel-progress-fill" style={{ width: stage === 1 ? "50%" : "100%" }} />
+              <span
+                className="wel-progress-fill"
+                style={{ width: `${((stage - offset) / (3 - offset)) * 100}%` }}
+              />
             </div>
           </div>
 
-          {stage === 1 ? (
+          {stage === 3 ? (
+            /* The questions themselves. Onboarding ends when they do: the feed
+               is the first thing the portal owes her once it has stopped
+               asking. */
+            <Questionnaire onDone={() => router.push("/kabinet")} />
+          ) : stage === 1 ? (
             <>
               <div className="wel-row">
                 <div className="field">
@@ -286,9 +360,11 @@ export default function WelcomePage() {
                 {t("wel.finish")}
               </button>
               <div className="row" style={{ gap: 10 }}>
-                <button className="btn btn-ghost btn-sm grow" onClick={() => setStage(1)}>
-                  {t("wel.back")}
-                </button>
+                {!known && (
+                  <button className="btn btn-ghost btn-sm grow" onClick={() => setStage(1)}>
+                    {t("wel.back")}
+                  </button>
+                )}
                 <button
                   className="btn btn-ghost btn-sm grow"
                   onClick={() => save(false)}

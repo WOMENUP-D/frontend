@@ -57,25 +57,66 @@ export function ScoreRing({ value, size = 148 }: { value: number; size?: number 
   );
 }
 
+/** One dimension's score as a labelled bar.
+ *
+ *  Given `onToggle`, the row is the button that opens the dimension's detail.
+ *  Collapsed, it names the band only when the dimension needs attention: eight
+ *  badges down a rail would say nothing, one says where to look. */
 export function DimensionRow({
-  dimension, current, baseline, target,
-}: { dimension: string; current: number; baseline: number; target: number | null }) {
+  dimension, current, baseline, target, band, expanded, controls, onToggle,
+}: {
+  dimension: string;
+  current: number;
+  baseline: number;
+  target: number | null;
+  band?: "strong" | "developing" | "focus";
+  expanded?: boolean;
+  controls?: string;
+  onToggle?: () => void;
+}) {
   const { t } = useI18n();
   const delta = current - baseline;
-  return (
-    <div className="stack" style={{ gap: 6 }}>
-      <div className="spread">
-        <span style={{ fontSize: "0.93rem", fontWeight: 550 }}>
-          {t(dimensionKey(dimension))}
-        </span>
-        <span className="small muted">
-          {Math.round(current)}
-          {target ? ` → ${Math.round(target)}` : ""}
-          {delta > 0 && <span style={{ color: "var(--green)" }}> +{Math.round(delta)}</span>}
-        </span>
+  const figures = (
+    <span className="small muted">
+      {Math.round(current)}
+      {target ? ` → ${Math.round(target)}` : ""}
+      {delta > 0 && <span style={{ color: "var(--success)" }}> +{Math.round(delta)}</span>}
+    </span>
+  );
+
+  if (!onToggle) {
+    return (
+      <div className="stack" style={{ gap: 6 }}>
+        <div className="spread">
+          <span style={{ fontSize: "0.93rem", fontWeight: 550 }}>
+            {t(dimensionKey(dimension))}
+          </span>
+          {figures}
+        </div>
+        <Bar value={current} />
       </div>
-      <Bar value={current} />
-    </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="dim-toggle"
+      aria-expanded={Boolean(expanded)}
+      aria-controls={controls}
+      onClick={onToggle}
+    >
+      <span className="spread">
+        <span className="dim-toggle-name">
+          {t(dimensionKey(dimension))}
+          {band === "focus" && <span className="badge badge-gold">{t("ins.band.focus")}</span>}
+        </span>
+        {figures}
+      </span>
+      <span className="bar" aria-hidden="true">
+        <span style={{ width: `${Math.max(0, Math.min(100, current))}%` }} />
+      </span>
+    </button>
   );
 }
 

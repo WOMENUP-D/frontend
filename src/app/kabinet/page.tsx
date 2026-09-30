@@ -3,16 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, getAccessToken, isStaff } from "@/services/api";
+import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
 import {
   portal,
   type AssistantProfile,
   type DevelopmentScore,
-  type NextStepCard,
+  type Recommendations,
+  type ScoreInsights,
 } from "@/services/portal";
-import { DimensionRow, EdRow, EdRows, Empty, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
+import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
+import { YourWeek } from "@/components/home/YourWeek";
+import { GettingStarted } from "@/components/home/GettingStarted";
+import { DimensionInsights, ForYou, NextSteps } from "@/components/Recommendations";
+import { MyCareer } from "@/components/career/MyCareer";
+import { SkillsSection } from "@/components/Skills";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
+import { CareerHistory } from "@/components/CareerHistory";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
@@ -73,31 +80,6 @@ interface Account {
  * disappears is the identity panel: she has a WomanUP ID from the moment she
  * signs up, and that is enough for the card to be about someone.
  */
-/** Briefcase. Drawn rather than an emoji, so it takes the text colour and does
- *  not change shape between platforms. */
-function IconWork() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="2.5" y="7.5" width="19" height="12.5" rx="2.5" />
-      <path d="M8.5 7.5V5.8A1.8 1.8 0 0 1 10.3 4h3.4a1.8 1.8 0 0 1 1.8 1.8v1.7" />
-      <path d="M2.5 12.5h19" />
-    </svg>
-  );
-}
-
-/** Graduation cap. */
-function IconStudy() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 4 2.5 8.6 12 13.2l9.5-4.6L12 4Z" />
-      <path d="M6.6 10.8v4.6c0 1.6 2.4 2.9 5.4 2.9s5.4-1.3 5.4-2.9v-4.6" />
-      <path d="M21.5 8.6v5.2" />
-    </svg>
-  );
-}
-
 /**
  * The profile card.
  *
@@ -136,11 +118,6 @@ function ProfileDetails({
     ...(profile?.interests ?? []).map(label),
     ...(profile?.languages ?? []),
   ];
-  const experience = [
-    profile?.employment_status,
-    profile?.years_of_experience != null ? `${profile.years_of_experience} ${t("prof.years")}` : null,
-  ].filter(Boolean).join(" · ");
-  const education = [profile?.education_level, profile?.education_field].filter(Boolean).join(", ");
 
   return (
     <section className="pcard">
@@ -168,18 +145,10 @@ function ProfileDetails({
           </>
         )}
 
-        {experience && (
-          <div className="pcard-block">
-            <h3><IconWork /> {t("prof.experienceBlock")}</h3>
-            <p>{experience}</p>
-          </div>
-        )}
-        {education && (
-          <div className="pcard-block">
-            <h3><IconStudy /> {t("prof.education")}</h3>
-            <p>{education}</p>
-          </div>
-        )}
+        {/* Where she has worked and studied, place by place — the CV. It
+            replaces the one-line summary built from the questionnaire's codes
+            ("working · 3 years"), which said where she is but not the path. */}
+        <CareerHistory />
       </div>
     </section>
   );
@@ -259,6 +228,7 @@ function ProfileSummary({
         joined={joined}
         completeness={percent}
         fillHref="/welcome"
+        portfolioHref="/kabinet/portfolio"
       />
       <div className="pstats">
         {tiles.map(([label, value]) => (
@@ -277,11 +247,14 @@ export default function CabinetPage() {
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [score, setScore] = useState<DevelopmentScore | null>(null);
-  const [step, setStep] = useState<NextStepCard | null>(null);
+  /* The score with every dimension explained. It is a superset of the plain
+     score, so the profile summary above reads it unchanged. */
+  const [score, setScore] = useState<ScoreInsights | null>(null);
+  const [recs, setRecs] = useState<Recommendations | null>(null);
+  const [recsFailed, setRecsFailed] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [enrollments, setEnrollments] = useState<{ progress_percent: number; status: string }[]>([]);
-  /* The questionnaire she actually fills in on /diagnostika. It is a different
+  /* The questionnaire she actually fills in on the last onboarding step. It is a different
      record from the Development Score, and telling them apart is the whole
      point — see the aside below. */
   const [assessed, setAssessed] = useState(false);
@@ -291,13 +264,25 @@ export default function CabinetPage() {
   const [persona, setPersona] = useState<AssistantProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /* Not through `soft` below: a failure here is shown and can be retried. An
+     empty "next step" would read as "nothing to do", which is a different and
+     wrong message. */
+  async function loadRecommendations() {
+    try {
+      setRecs(await portal.recommendations());
+      setRecsFailed(false);
+    } catch {
+      setRecsFailed(true);
+    }
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     setAuthed(Boolean(token));
     if (!token) { setLoading(false); return; }
     // Staff have no profile, no score and no plan — this page would draw an
     // empty cabinet under an administrator's name. Their screen is /admin.
-    if (isStaff()) { router.replace("/admin"); return; }
+    if (isStaff()) { router.replace(staffHome()); return; }
 
     // Each block degrades on its own — a missing score must not blank the page.
     async function soft<T>(call: () => Promise<T>): Promise<T | null> {
@@ -308,17 +293,17 @@ export default function CabinetPage() {
     }
 
     (async () => {
-      const [p, s, n, pl, en, lq, acc, per] = await Promise.all([
+      const [p, s, pl, en, lq, acc, per] = await Promise.all([
         soft(() => portal.profile() as Promise<Profile>),
-        soft(() => portal.score()),
-        soft(() => portal.nextStep()),
+        soft(() => portal.scoreInsights()),
         soft(() => portal.activePlan() as Promise<Plan>),
         soft(() => portal.myEnrollments() as Promise<{ progress_percent: number; status: string }[]>),
         soft(() => portal.learningProfile()),
         soft(() => portal.me() as Promise<Account>),
         soft(() => portal.assistantProfile()),
+        loadRecommendations(),
       ]);
-      setProfile(p); setScore(s); setStep(n); setPlan(pl); setEnrollments(en ?? []);
+      setProfile(p); setScore(s); setPlan(pl); setEnrollments(en ?? []);
       setAssessed(Boolean(lq?.completed)); setAccount(acc); setPersona(per);
       setLoading(false);
     })();
@@ -349,6 +334,10 @@ export default function CabinetPage() {
         t={t}
       />
 
+      {/* For somebody new: five steps, each a link. Hidden by one tap, and
+          never shown to a woman who has started a course. */}
+      <GettingStarted isNew={enrollments.length === 0} />
+
       <div className="ed-split">
         {/* Score rides along as the reader scrolls */}
         <aside className="ed-aside stack" style={{ gap: 16 }}>
@@ -363,15 +352,16 @@ export default function CabinetPage() {
               </div>
               <div className="spread">
                 <span className="eyebrow">{t("cab.score")}</span>
-                <Link href="/diagnostika" className="btn btn-outline btn-sm">
+                {/* The score is retaken on its own diagnostic. The learning
+                    questionnaire on /welcome is a different instrument and
+                    does not change this number. */}
+                <Link href="/kabinet/diagnostika" className="btn btn-outline btn-sm">
                   {t("cab.retake")}
                 </Link>
               </div>
-              <div className="stack" style={{ gap: 10 }}>
-                {score.dimensions.map((d) => (
-                  <DimensionRow key={d.dimension} {...d} />
-                ))}
-              </div>
+              {/* Each dimension opens to its reading: the band, her own
+                  answers, the gaps she can close here and what would move it. */}
+              <DimensionInsights insights={score} />
               {score.weakest_dimensions.length > 0 && (
                 <p className="faint">
                   {t("cab.weakest")}{" "}
@@ -393,6 +383,10 @@ export default function CabinetPage() {
         </aside>
 
         <div className="stack" style={{ gap: 26 }}>
+          {/* Her week first: the lesson she left off at, then the next event,
+              task and listing — each a real record or not drawn at all. */}
+          <YourWeek />
+
           {/* The invitation to sit the assessment, on the wide side of the page
               where it has room to be an invitation rather than a footnote. It
               is keyed on the questionnaire she actually sat — not on the
@@ -404,36 +398,35 @@ export default function CabinetPage() {
               title={t("cab.noScore")}
               hint={t("cab.noScoreHint")}
               action={
-                <Link href="/diagnostika" className="btn btn-primary">
+                <Link href="/welcome?step=assessment" className="btn btn-primary">
                   {t("cab.startAssess")}
                 </Link>
               }
             />
           )}
 
-          {/* A year of squares: what she has actually been doing, before the
-              plan tells her what to do next. */}
-          <ActivityCalendar />
-
-          {/* Today's step, set as a pull quote */}
-          {step && (
-            <div className="ed-panel">
-              <span className="eyebrow">{t("cab.todayStep")}</span>
-              <p className="ed-panel-quote">{step.title}</p>
-              <p className="muted small">{step.description}</p>
-              {step.action_url && (
-                <Link
-                  href={
-                    step.action_url.startsWith("/assessments") ? "/diagnostika" : "/reja"
-                  }
-                  className="btn btn-primary btn-sm"
-                  style={{ alignSelf: "flex-start" }}
-                >
-                  {t("cab.begin")}
-                </Link>
-              )}
+          {/* What to do next, before anything about the past: up to three
+              steps, the first set as the page's one pull quote. A failure is
+              said out loud — an empty space here would read as "nothing to do". */}
+          {recsFailed ? (
+            <div className="stack" style={{ gap: 10 }}>
+              <ErrorNote message={t("cab.recsError")} />
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                style={{ alignSelf: "flex-start" }}
+                onClick={() => void loadRecommendations()}
+              >
+                {t("lms.err.retry")}
+              </button>
             </div>
+          ) : (
+            recs && <NextSteps steps={recs.next_steps} />
           )}
+
+          {/* Her career direction: the stage she is on and a way back to it,
+              or — when she has none — one sentence and one way to find one. */}
+          <MyCareer />
 
           <div>
             <div className="spread" style={{ marginBottom: 4 }}>
@@ -464,6 +457,25 @@ export default function CabinetPage() {
               </p>
             )}
           </div>
+
+          {/* What she can do, and how well the platform knows it. It loads on
+              its own, so a slow skills call cannot hold up the page. */}
+          <SkillsSection />
+
+          {/* The courses and listings behind those steps. Only what the
+              catalogue holds right now; an empty column says so. */}
+          {recs && (
+            <ForYou
+              programs={recs.programs}
+              opportunities={recs.opportunities}
+              assessed={recs.assessed}
+            />
+          )}
+
+          {/* A year of squares: what she has actually been doing. It follows
+              the next steps rather than leading the page, so the cabinet opens
+              on what to do rather than on a record of the past. */}
+          <ActivityCalendar />
 
 
           <div className="row">

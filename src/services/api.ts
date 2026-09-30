@@ -15,6 +15,11 @@ export class ApiError extends Error {
     message: string,
     readonly status: number,
     readonly requestId?: string,
+    /** The API's `detail` as it arrived. Usually a sentence, but a validation
+     *  failure sends a structured reason — `{reason, field}` — and a caller
+     *  that wants to say *which field* in her language needs the object, not
+     *  the string it stringifies to. */
+    readonly detail?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -67,6 +72,22 @@ export function getRoles(): string[] {
  */
 export function isStaff(): boolean {
   return getRoles().some((role) => role !== "user" && role !== "mother");
+}
+
+/** Roles that run the management panel. */
+export const PANEL_ROLES = ["admin", "regional_coordinator", "moderator"] as const;
+/** Roles an organisation's people act under (Step 11: employers, investors and
+ *  NGOs are PARTNER, education providers are TRAINER — no new roles). */
+export const ORG_ROLES = ["partner", "trainer"] as const;
+
+/** Where a staff account belongs: the panel for administrators, coordinators
+ *  and moderators; the organisation workspace for an organisation's people.
+ *  Like `isStaff`, it only steers what is shown — the server authorises. */
+export function staffHome(): string {
+  const roles = getRoles();
+  if (roles.some((role) => (PANEL_ROLES as readonly string[]).includes(role))) return "/admin";
+  if (roles.some((role) => (ORG_ROLES as readonly string[]).includes(role))) return "/hamkor";
+  return "/admin";
 }
 
 export function setTokens(access: string, refresh: string): void {
@@ -160,18 +181,43 @@ export async function request<T>(
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
+    const detail = body.detail;
     throw new ApiError(
-      body.detail ?? response.statusText,
+      typeof detail === "string" ? detail : response.statusText,
       response.status,
       response.headers.get("X-Request-ID") ?? undefined,
+      detail,
     );
   }
 
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
+/** A response that is a file, not JSON — a CSV export. Same token, same one
+ *  refresh-and-replay as `request`. */
+export async function requestText(path: string, retrying = false): Promise<string> {
+  const token = getAccessToken();
+  const response = await fetch(`${BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (response.status === 401 && !retrying && token && (await refreshTokens())) {
+    return requestText(path, true);
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(
+      response.statusText,
+      response.status,
+      response.headers.get("X-Request-ID") ?? undefined,
+      body.detail,
+    );
+  }
+  return response.text();
+}
+
 export const api = {
   get: <T>(path: string, options?: RequestInit) => request<T>(path, options),
+  text: (path: string) => requestText(path),
   post: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, { ...options, method: "POST", body: JSON.stringify(body ?? {}) }),
   put: <T>(path: string, body?: unknown) =>

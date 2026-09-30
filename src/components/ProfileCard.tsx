@@ -112,6 +112,7 @@ export function ProfileCard({
   completeness,
   onFill,
   fillHref,
+  portfolioHref,
   headingLevel = 2,
 }: {
   name: string;
@@ -124,6 +125,8 @@ export function ProfileCard({
   completeness: number;
   onFill?: () => void;
   fillHref?: string;
+  /** Where her portfolio lives, when the card should offer it. */
+  portfolioHref?: string;
   /** 1 where the card IS the page's identity block, as in the cabinet — the
    *  name is then the page heading and there must be exactly one of those. */
   headingLevel?: 1 | 2;
@@ -191,6 +194,9 @@ export function ProfileCard({
           <button type="button" className="profcard-cta" onClick={onFill}>
             {fillLabel}
           </button>
+        )}
+        {portfolioHref && (
+          <a className="profcard-link" href={portfolioHref}>{t("port.view")}</a>
         )}
       </div>
     </article>

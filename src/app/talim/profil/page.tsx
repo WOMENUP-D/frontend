@@ -1,40 +1,35 @@
 "use client";
 
 /**
- * The learner's profile.
+ * Her learning profile: who she is, what she is aiming at, and what she has
+ * earned.
  *
- * A profile page is usually a form waiting to be filled in. This one is a
- * record of a person: who she is, what she is aiming at, and what she has
- * already earned. Nothing here is an input, because nothing here is editable
- * until the profile API exists — and a screen full of dead fields teaches her
- * that the section does not work.
- *
- * The one decision worth defending is that certificates sit at the bottom with
- * a real empty state rather than being hidden when there are none. Almost
- * every learner arrives here with zero, and an absent section answers nothing;
- * a section that says "finish a course and it appears here" answers the
- * question she actually came with.
- *
- * No near-black surface on this screen. There is no single action to press —
- * she is reading about herself — so the boldness is spent elsewhere.
+ * The same record the cabinet holds — one profile, read here through the
+ * learning section's furniture. Nothing on this page is invented: the facts
+ * come from her profile, the skills from the skill layer, the certificates
+ * from the courses she finished.
  */
 
 import Link from "next/link";
-import { ProfileCard } from "@/components/ProfileCard";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
+import { getAccessToken } from "@/services/api";
 import {
-  courses,
-  goals,
-  learner,
-  learningStats,
-} from "@/content/learning";
-import { useMockData } from "@/components/learning/useMockData";
+  portal,
+  type ActivitySummary,
+  type Certificate,
+  type Goal,
+  type SkillProfile,
+} from "@/services/portal";
+import { ProfileCard } from "@/components/ProfileCard";
+import { useApi } from "@/components/learning/useApi";
+import { art } from "@/components/learning/course";
 import {
   Badge,
-  Bar,
   Cover,
   EmptyState,
   ErrorState,
+  NeedsAccount,
   SectionHead,
   Skeleton,
   SkeletonBlock,
@@ -43,33 +38,48 @@ import {
   monthKey,
 } from "@/components/learning/ui";
 
+interface Account {
+  id: string;
+  region: string | null;
+  created_at: string | null;
+}
+
+interface Profile {
+  full_name: string | null;
+  birth_date: string | null;
+  district: string | null;
+  education_level: string | null;
+  education_field: string | null;
+  employment_status: string | null;
+  completeness_percent: number;
+  interests: string[];
+}
+
 export default function ProfilePage() {
   const { t, tx } = useI18n();
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
-  const { data, loading, error, retry } = useMockData(() => ({
-    facts: {
-      education: learner.education,
-      level: learner.level,
-      interests: learner.interests,
-      skills: learner.skills,
-    },
-    goals,
-    certificates: courses.filter((course) => course.certificate),
-    stats: {
-      completed: learningStats.completed,
-      inProgress: learningStats.inProgress,
-      hours: learningStats.hours,
-      streak: learningStats.streak,
-    },
-  }));
+  const { data, loading, error, retry } = useApi(async () => {
+    const [account, profile, enrollments, certificates, skills, goals, activity] =
+      await Promise.all([
+        portal.me() as Promise<Account>,
+        portal.profile() as Promise<Profile>,
+        portal.myEnrollments(),
+        portal.myCertificates(),
+        portal.mySkills().catch(() => null as SkillProfile | null),
+        portal.goals().catch(() => [] as Goal[]),
+        portal.activity().catch(() => null as ActivitySummary | null),
+      ]);
+    return { account, profile, enrollments, certificates, skills, goals, activity };
+  });
 
-  // The head is drawn in every state on purpose: her name and avatar are known
-  // before the record loads, and blanking them would make a slow response look
-  // like a lost account.
+  if (authed === false) return <NeedsAccount />;
+
   if (error) {
     return (
       <>
-        <ProfileHead />
+        <Skeleton height={186} radius={18} />
         <ErrorState onRetry={retry} />
       </>
     );
@@ -79,7 +89,7 @@ export default function ProfilePage() {
     return (
       <>
         <div className="lms-profile-row">
-          <ProfileHead />
+          <Skeleton height={186} radius={18} />
           <Skeleton height={186} radius={18} />
         </div>
         <div className="lms-sec lms-split">
@@ -93,27 +103,37 @@ export default function ProfilePage() {
     );
   }
 
-  const { facts, goals: goalList, certificates, stats } = data;
+  const { account, profile, enrollments, certificates, skills, goals, activity } = data;
+  const completed = enrollments.filter((item) => item.status === "completed").length;
+  const inProgress = enrollments.filter((item) => item.status === "in_progress").length;
+  const education = [profile.education_level, profile.education_field].filter(Boolean).join(", ");
+  const held = skills?.skills ?? [];
 
   return (
     <>
-      {/* The card names her; the tiles say what the record adds up to. They
-          are one thought, so they sit on one line — the card alone left half
-          the width empty and pushed everything else below the fold. */}
       <div className="lms-profile-row">
-        <ProfileHead />
+        <div className="lms-profile-card">
+          <ProfileCard
+            headingLevel={1}
+            name={profile.full_name || t("cab.user")}
+            initials={initialsOf(profile.full_name)}
+            womanupId={account.id.split("-")[0].toUpperCase()}
+            age={ageOf(profile.birth_date)}
+            city={profile.district}
+            joined={joinedOf(account.created_at, (month) => t(monthKey(month)))}
+            completeness={profile.completeness_percent}
+            fillHref="/welcome"
+          />
+        </div>
 
         <section>
           <SectionHead title={t("lms.stats.title")} />
           <div className="lms-stats">
-            <StatCard value={stats.completed} label={t("lms.stats.completed")} />
-            <StatCard value={stats.inProgress} label={t("lms.stats.inProgress")} />
+            <StatCard value={completed} label={t("lms.stats.completed")} />
+            <StatCard value={inProgress} label={t("lms.stats.inProgress")} />
+            <StatCard value={certificates.length} label={t("lms.stats.certificates")} />
             <StatCard
-              value={`${stats.hours}${t("common.hours").slice(0, 1)}`}
-              label={t("lms.stats.hours")}
-            />
-            <StatCard
-              value={<>{stats.streak} <span aria-hidden="true">🔥</span></>}
+              value={<>{activity?.current_streak ?? 0} <span aria-hidden="true">🔥</span></>}
               label={t("lms.stats.streak")}
             />
           </div>
@@ -126,35 +146,47 @@ export default function ProfilePage() {
           <section className="lms-card lms-card-pad">
             <SectionHead title={t("lms.profile.title")} />
             <dl className="lms-facts">
-              <div className="lms-fact">
-                <dt>{t("lms.profile.education")}</dt>
-                <dd>{tx(facts.education)}</dd>
-              </div>
-              <div className="lms-fact">
-                <dt>{t("lms.profile.level")}</dt>
-                <dd>{tx(facts.level)}</dd>
-              </div>
-              <div className="lms-fact">
-                <dt>{t("lms.profile.interests")}</dt>
-                <dd>
-                  <div className="lms-chips">
-                    {facts.interests.map((interest) => (
-                      <span key={interest.en} className="lms-chip lms-chip-static">{tx(interest)}</span>
-                    ))}
-                  </div>
-                </dd>
-              </div>
+              {education && (
+                <div className="lms-fact">
+                  <dt>{t("lms.profile.education")}</dt>
+                  <dd>{education}</dd>
+                </div>
+              )}
+              {profile.employment_status && (
+                <div className="lms-fact">
+                  <dt>{t("prof.experienceBlock")}</dt>
+                  <dd>{profile.employment_status}</dd>
+                </div>
+              )}
+              {profile.interests.length > 0 && (
+                <div className="lms-fact">
+                  <dt>{t("lms.profile.interests")}</dt>
+                  <dd>
+                    <div className="lms-chips">
+                      {profile.interests.map((interest) => (
+                        <span key={interest} className="lms-chip lms-chip-static">{interest}</span>
+                      ))}
+                    </div>
+                  </dd>
+                </div>
+              )}
               <div className="lms-fact">
                 <dt>{t("lms.profile.skills")}</dt>
                 <dd>
-                  {/* Skills are plain strings, not translatable fields: "React",
-                      "Figma" and "SQL" are proper nouns and read the same in
-                      every locale. Routing them through tx() would be theatre. */}
-                  <div className="lms-chips">
-                    {facts.skills.map((skill) => (
-                      <span key={skill} className="lms-chip lms-chip-static">{skill}</span>
-                    ))}
-                  </div>
+                  {held.length ? (
+                    <div className="lms-chips">
+                      {held.map((item) => (
+                        <span
+                          key={item.skill.slug ?? item.skill.label}
+                          className="lms-chip lms-chip-static"
+                        >
+                          {tx(item.skill.name_i18n) || item.skill.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="lms-stat-label">{t("skill.none")}</span>
+                  )}
                 </dd>
               </div>
             </dl>
@@ -164,23 +196,15 @@ export default function ProfilePage() {
         <div className="lms-col">
           {/* ---- what she is aiming at ------------------------------- */}
           <section className="lms-card lms-card-pad">
-            <SectionHead
-              title={t("lms.profile.goals")}
-              href="/talim/maqsadlar"
-              linkLabel={t("lms.goal.view")}
-            />
-            {goalList.length ? (
-              <div style={{ display: "grid", gap: 20 }}>
-                {goalList.map((goal) => (
+            <SectionHead title={t("lms.profile.goals")} />
+            {goals.length ? (
+              <div style={{ display: "grid", gap: 16 }}>
+                {goals.map((goal) => (
                   <div key={goal.id}>
-                    <h3 className="lms-goal-title">{tx(goal.title)}</h3>
-                    <div
-                      style={{
-                        display: "flex", alignItems: "center", gap: 14, marginTop: 10,
-                      }}
-                    >
-                      <span className="lms-goal-pct">{goal.percent}%</span>
-                      <div style={{ flex: 1 }}><Bar percent={goal.percent} /></div>
+                    <h3 className="lms-goal-title">{goal.title}</h3>
+                    <div className="lms-course-meta" style={{ marginTop: 6 }}>
+                      <span>{t(`hor.${goal.horizon}` as never)}</span>
+                      {goal.achieved && <Badge tone="done">{t("lms.status.completed")}</Badge>}
                     </div>
                   </div>
                 ))}
@@ -191,7 +215,7 @@ export default function ProfilePage() {
                 title={t("lms.goals.empty")}
                 hint={t("lms.goals.emptyHint")}
                 action={
-                  <Link className="lms-btn lms-btn-primary" href="/talim/maqsadlar">
+                  <Link className="lms-btn lms-btn-primary" href="/kabinet">
                     {t("lms.goals.add")}
                   </Link>
                 }
@@ -206,22 +230,20 @@ export default function ProfilePage() {
         <SectionHead title={t("lms.profile.certificates")} />
         {certificates.length ? (
           <div className="lms-courses">
-            {certificates.map((course) => (
-              <article key={course.slug} className="lms-course">
+            {certificates.map((certificate: Certificate) => (
+              <article key={certificate.id} className="lms-course">
                 <div className="lms-course-top">
-                  <Cover tone={course.tone} emblem={course.emblem} />
+                  <Cover tone={art("").tone} emblem="🏅" />
                   <div style={{ minWidth: 0 }}>
-                    <h3 className="lms-course-title">
-                      <Link href={`/talim/kurslar/${course.slug}`}>{tx(course.title)}</Link>
-                    </h3>
-                    <p className="lms-course-by">{tx(course.instructor)}</p>
+                    <h3 className="lms-course-title">{tx(certificate.program_title_i18n)}</h3>
+                    <p className="lms-course-by">{certificate.serial_number}</p>
                   </div>
                 </div>
                 <div className="lms-course-foot">
                   <Badge tone="done">{t("lms.status.completed")}</Badge>
                   <Link
                     className="lms-btn lms-btn-quiet lms-btn-sm"
-                    href={`/talim/kurslar/${course.slug}`}
+                    href={`/talim/kurslar/${certificate.program_id ?? ""}`}
                     style={{ marginLeft: "auto" }}
                   >
                     {t("lms.course.view")}
@@ -235,7 +257,7 @@ export default function ProfilePage() {
             title={t("lms.profile.noCertificates")}
             hint={t("lms.profile.noCertificatesHint")}
             action={
-              <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+              <Link className="lms-btn lms-btn-primary" href="/dasturlar">
                 {t("lms.courses.explore")}
               </Link>
             }
@@ -248,48 +270,27 @@ export default function ProfilePage() {
 
 /* ---- pieces ---------------------------------------------------------- */
 
-function ProfileHead() {
-  const { t, tx } = useI18n();
-
-  /* The WomanUP ID is derived from the account rather than invented per render:
-     an identifier that changes when the page repaints is not an identifier.
-     Until the profile endpoint is wired in, it is derived from the name. */
-  const born = new Date(`${learner.birthDate}T00:00:00`);
-  const now = new Date();
-  const age =
-    now.getFullYear() - born.getFullYear() -
-    (now.getMonth() > born.getMonth() ||
-      (now.getMonth() === born.getMonth() && now.getDate() >= born.getDate())
-      ? 0
-      : 1);
-
-  // "август 2026 г." reads in whichever language she is in: the month comes
-  // from the catalogue, which is genitive in Russian — correct here, because
-  // it follows "С нами с".
-  const since = new Date(`${learner.joinedAt}T00:00:00`);
-  const joined = `${t(monthKey(since.getMonth() + 1))} ${since.getFullYear()}`;
-
-  const womanupId = Array.from(learner.fullName)
-    .reduce((hash, ch) => (hash * 31 + ch.charCodeAt(0)) >>> 0, 7)
-    .toString(16)
-    .toUpperCase()
-    .padStart(8, "0")
-    .slice(0, 8);
-
+/** Numeric runs are skipped: "dilnoza1998" gives D, not D1. */
+function initialsOf(name: string | null): string {
   return (
-    <div className="lms-profile-card">
-      {/* The card is this page's identity block, so her name is the page
-          heading — there must be exactly one of those on a page. */}
-      <ProfileCard
-        headingLevel={1}
-        name={learner.fullName}
-        initials={learner.initials}
-        womanupId={womanupId}
-        age={age}
-        city={tx(learner.region)}
-        joined={joined}
-        completeness={60}
-      />
-    </div>
+    (name ?? "")
+      .split(/[\s@._-]+/)
+      .filter((part) => part && /\p{L}/u.test(part))
+      .slice(0, 2)
+      .map((part) => part[0].toUpperCase())
+      .join("") || "•"
   );
+}
+
+function ageOf(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  return Math.floor((Date.now() - new Date(birthDate).getTime()) / 31557600000);
+}
+
+/** "August 2026", in whichever language she is reading — the month comes from
+ *  the catalogue, which also covers the Cyrillic Uzbek script. */
+function joinedOf(created: string | null, month: (index: number) => string): string | null {
+  if (!created) return null;
+  const date = new Date(created);
+  return `${month(date.getMonth() + 1)} ${date.getFullYear()}`;
 }

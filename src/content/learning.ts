@@ -112,13 +112,115 @@ export interface Achievement {
   earnedOn?: string;
 }
 
+/**
+ * What finishes a goal step.
+ *
+ * A step used to carry a stored `done` that a tick box flipped, which made the
+ * goals page the one screen where progress was a claim rather than a fact —
+ * she could tick "finish the Spring Boot module" without opening it. Each step
+ * now names the thing that completes it and the state is read from the same
+ * lessons the course page reads.
+ *
+ * `manual` is for the steps the platform genuinely cannot see — updating a CV,
+ * sending an application. They are shown as outside the system's knowledge
+ * rather than as unfinished, because "not done" would be a guess.
+ */
+export type GoalSource =
+  | { kind: "course"; courseSlug: string }
+  | { kind: "module"; courseSlug: string; moduleIndex: number }
+  | { kind: "hours"; target: number }
+  | { kind: "streak"; target: number }
+  | { kind: "weekly"; target: number }
+  | { kind: "manual" };
+
+export interface GoalStep {
+  title: Text;
+  source: GoalSource;
+}
+
 export interface Goal {
   id: string;
   title: Text;
   why: Text;
   targetDate: string;
+  /** Ignored by the screen, which derives the figure from the steps — one
+   *  source of truth, and it is the one the lessons move. */
   percent: number;
-  steps: { title: Text; done: boolean }[];
+  steps: GoalStep[];
+}
+
+export interface GoalStepState {
+  title: Text;
+  done: boolean;
+  /** False where the platform cannot observe the step at all. */
+  tracked: boolean;
+  /** "3 / 8 lessons" and the like, so a step that is not finished still says
+   *  how far along it is instead of just sitting unticked. */
+  detail?: string;
+}
+
+/**
+ * Reads a step's state off the catalogue.
+ *
+ * Nothing is stored and nothing is written: finishing a lesson moves the goal,
+ * and the two can never disagree because there is only one of them.
+ */
+export function goalStepState(step: GoalStep): GoalStepState {
+  const { source } = step;
+
+  if (source.kind === "course") {
+    const course = findCourse(source.courseSlug);
+    if (!course) return { title: step.title, done: false, tracked: false };
+    const progress = courseProgress(course);
+    return {
+      title: step.title,
+      done: progress.total > 0 && progress.done === progress.total,
+      tracked: true,
+      detail: `${progress.done} / ${progress.total}`,
+    };
+  }
+
+  if (source.kind === "module") {
+    const course = findCourse(source.courseSlug);
+    const unit = course?.modules[source.moduleIndex];
+    if (!unit) return { title: step.title, done: false, tracked: false };
+    const done = unit.lessons.filter((lesson) => lesson.completed).length;
+    return {
+      title: step.title,
+      done: unit.lessons.length > 0 && done === unit.lessons.length,
+      tracked: true,
+      detail: `${done} / ${unit.lessons.length}`,
+    };
+  }
+
+  if (source.kind === "hours") {
+    return {
+      title: step.title,
+      done: learner.learningHours >= source.target,
+      tracked: true,
+      detail: `${learner.learningHours} / ${source.target}`,
+    };
+  }
+
+  if (source.kind === "streak") {
+    return {
+      title: step.title,
+      done: learner.streakDays >= source.target,
+      tracked: true,
+      detail: `${learner.streakDays} / ${source.target}`,
+    };
+  }
+
+  if (source.kind === "weekly") {
+    return {
+      title: step.title,
+      done: learner.weeklyDoneHours >= source.target,
+      tracked: true,
+      detail: `${learner.weeklyDoneHours} / ${source.target}`,
+    };
+  }
+
+  return { title: step.title, done: false, tracked: false };
 }
 
 export interface Recommendation {
@@ -1044,19 +1146,19 @@ export const goals: Goal[] = [
     steps: [
       {
         title: { uz: "Java asoslarini tugatish", ru: "Закрыть основы Java", en: "Finish Java fundamentals" },
-        done: true,
+        source: { kind: "module", courseSlug: "java-backend", moduleIndex: 0 },
       },
       {
         title: { uz: "Spring Boot modulini tugatish", ru: "Закрыть модуль Spring Boot", en: "Finish the Spring Boot module" },
-        done: false,
+        source: { kind: "module", courseSlug: "java-backend", moduleIndex: 1 },
       },
       {
         title: { uz: "Yakuniy API loyihasini yozish", ru: "Собрать финальный API-проект", en: "Build the final API project" },
-        done: false,
+        source: { kind: "manual" },
       },
       {
         title: { uz: "Rezyume va portfolioni yangilash", ru: "Обновить резюме и портфолио", en: "Refresh CV and portfolio" },
-        done: false,
+        source: { kind: "manual" },
       },
     ],
   },
@@ -1077,11 +1179,11 @@ export const goals: Goal[] = [
     steps: [
       {
         title: { uz: "Kunlik 12 kunlik seriya", ru: "Серия из 12 дней", en: "A 12-day streak" },
-        done: true,
+        source: { kind: "streak", target: 12 },
       },
       {
         title: { uz: "Haftalik 8 soatga yetish", ru: "Выйти на 8 часов в неделю", en: "Reach eight hours a week" },
-        done: false,
+        source: { kind: "weekly", target: 8 },
       },
     ],
   },

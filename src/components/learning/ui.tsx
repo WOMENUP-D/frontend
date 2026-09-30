@@ -4,33 +4,26 @@
  * The learning section's design system.
  *
  * One home for every repeated piece, so no screen invents its own card, badge
- * or progress bar. Everything here is presentational: it takes data and
- * renders it, and never fetches, never decides. Labels come from the i18n
- * catalogue through `t`, content strings out of the mock dataset through `tx`.
+ * or progress bar. Everything here is presentational: it takes data and renders
+ * it, and never fetches, never decides. Labels come from the i18n catalogue
+ * through `t`, content strings out of the API through `tx`.
  */
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
-import {
-  courseProgress,
-  courseStatus,
-  nextLesson,
-  type CalendarEvent,
-  type Course,
-  type CourseLevel,
-  type CourseStatus,
-  type CoverTone,
-  type EventKind,
-  type EventStatus,
-  type LessonKind,
-} from "@/content/learning";
+import type { CalendarEvent, EventKind, EventStatus, LessonKind } from "@/content/learning";
+import type { LearningPath, PathItemStatus, PathStatus } from "@/services/portal";
+import type { CourseStatus, CourseView, CoverTone } from "@/components/learning/course";
 
 /* ---- label helpers ------------------------------------------------- */
 
-export const levelKey = (v: CourseLevel) => `lms.level.${v}` as MessageKey;
+/** Course and skill level share one vocabulary — see `ProficiencyLevel`. */
+export const levelKey = (v: string) => `lms.level.${v}` as MessageKey;
 export const statusKey = (v: CourseStatus) => `lms.status.${v}` as MessageKey;
-export const lessonKindKey = (v: LessonKind) => `lms.kind.${v}` as MessageKey;
+export const lessonKindKey = (v: LessonKind | string) => `lms.kind.${v}` as MessageKey;
+export const pathStatusKey = (v: PathStatus) => `lms.path.st.${v}` as MessageKey;
+export const pathItemKey = (v: PathItemStatus) => `lms.path.item.${v}` as MessageKey;
 export const eventKindKey = (v: EventKind) => `lms.event.${v}` as MessageKey;
 export const eventStatusKey = (v: EventStatus) => `lms.evst.${v}` as MessageKey;
 export const monthKey = (month: number) => `mon.${month}` as MessageKey;
@@ -159,17 +152,15 @@ export function SectionHead({
 
 /* ---- course card ------------------------------------------------------ */
 
-export function CourseCard({ course }: { course: Course }) {
+/** One course, as she sees it in a list.
+ *
+ *  Progress is the figure the server computed for her enrollment — the card
+ *  never adds lessons up itself, because the catalogue and the learning section
+ *  would then be two opinions about the same course. */
+export function CourseCard({ view }: { view: CourseView }) {
   const { t, tx } = useI18n();
-  const progress = courseProgress(course);
-  const status = courseStatus(course);
-  const next = nextLesson(course);
+  const { program, status, percent, art, href } = view;
 
-  // Where "Continue" goes, and what it is called, both follow the status:
-  // a finished course is reviewed, an untouched one is started.
-  const target = next
-    ? `/talim/kurslar/${course.slug}/${next.slug}`
-    : `/talim/kurslar/${course.slug}`;
   const actionKey: MessageKey =
     status === "completed" ? "lms.course.review"
       : status === "not_started" ? "lms.course.start"
@@ -178,32 +169,112 @@ export function CourseCard({ course }: { course: Course }) {
   return (
     <article className="lms-course">
       <div className="lms-course-top">
-        <Cover tone={course.tone} emblem={course.emblem} />
+        <Cover tone={art.tone} emblem={art.emblem} />
         <div style={{ minWidth: 0 }}>
           <h3 className="lms-course-title">
-            <Link href={`/talim/kurslar/${course.slug}`}>{tx(course.title)}</Link>
+            <Link href={href}>{tx(program.title_i18n)}</Link>
           </h3>
-          <p className="lms-course-by">{tx(course.instructor)}</p>
+          {program.provider && <p className="lms-course-by">{program.provider}</p>}
         </div>
       </div>
 
-      <Bar percent={progress.percent} done={status === "completed"} />
+      <Bar percent={percent} done={status === "completed"} />
 
       <div className="lms-course-meta">
         <span>
-          {progress.done} / {progress.total} {t("lms.course.lessons")}
+          {program.level ? t(levelKey(program.level)) : t(`cat.${program.category}` as MessageKey)}
+          {program.duration_weeks ? ` · ${program.duration_weeks} ${t("common.weeks")}` : ""}
         </span>
-        <strong style={{ color: "var(--ink)" }}>{progress.percent}%</strong>
+        <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
       </div>
 
       <div className="lms-course-foot">
         <StatusBadge status={status} />
         <Link
           className="lms-btn lms-btn-quiet lms-btn-sm"
-          href={target}
+          href={href}
           style={{ marginLeft: "auto" }}
         >
           {t(actionKey)}
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/* ---- learning path ----------------------------------------------------- */
+
+/** The tone a path's own state carries, shared by the badge on the card and
+ *  the one on the detail page so a route never reads two ways. */
+export function PathBadge({ status }: { status: PathStatus }) {
+  const { t } = useI18n();
+  const tone = status === "completed" ? "done" : status === "in_progress" ? "live" : "neutral";
+  return <Badge tone={tone}>{t(pathStatusKey(status))}</Badge>;
+}
+
+/** One route, as she sees it in a list.
+ *
+ *  Everything numeric here is the server's: the percentage, the count of
+ *  finished steps, the hours. A path owns no progress, so neither does its
+ *  card — it would only be a second opinion about her enrollments.
+ *
+ *  The skills line is the reason a path is worth opening at all: a course says
+ *  what it covers, a route says what it leaves you able to do. Her own gaps
+ *  lead it, so the first thing she reads is what she would gain. */
+export function PathCard({ path }: { path: LearningPath }) {
+  const { t, tx } = useI18n();
+  const { progress } = path;
+  const gained = path.new_skills.length ? path.new_skills : path.skills;
+
+  return (
+    <article className="lms-path">
+      <div className="lms-path-top">
+        <h3 className="lms-course-title">
+          <Link href={`/talim/yollar/${path.slug}`}>{tx(path.title_i18n)}</Link>
+        </h3>
+        <PathBadge status={progress.status} />
+      </div>
+
+      <p className="lms-path-lead">{tx(path.description_i18n)}</p>
+
+      {gained.length > 0 && (
+        <div className="lms-chips">
+          {gained.slice(0, 4).map((skill) => (
+            <span key={skill.slug ?? skill.label} className="lms-chip lms-chip-static">
+              {tx(skill.name_i18n) || skill.label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Shown once she is actually on it. A bar at 0% on a route she has never
+          opened reads as a failure rather than as a starting line. */}
+      {progress.status !== "not_started" && (
+        <div>
+          <Bar percent={progress.percent} done={progress.status === "completed"} />
+          <div className="lms-course-meta" style={{ marginTop: 8 }}>
+            <span>
+              {progress.completed_items} / {progress.required_items} {t("lms.path.courses")}
+            </span>
+            <strong style={{ color: "var(--ink)" }}>{progress.percent}%</strong>
+          </div>
+        </div>
+      )}
+
+      <div className="lms-path-foot">
+        <span className="lms-rec-stats">
+          <span>{path.program_count} {t("lms.path.courses")}</span>
+          {path.level && <span>{t(levelKey(path.level))}</span>}
+          {path.total_hours ? <span>{path.total_hours} {t("common.hours")}</span> : null}
+        </span>
+        <Link
+          className="lms-btn lms-btn-quiet lms-btn-sm"
+          href={`/talim/yollar/${path.slug}`}
+          style={{ marginLeft: "auto" }}
+        >
+          {/* "Continue" only where there is something to continue. A finished
+              route is opened to look back at, not carried on with. */}
+          {t(progress.status === "in_progress" ? "lms.path.continue" : "lms.path.open")}
         </Link>
       </div>
     </article>
@@ -275,6 +346,24 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
             {t("lms.err.retry")}
           </button>
         )
+      }
+    />
+  );
+}
+
+/** Shown when a screen needs an account and there is none. The learning section
+ *  is hers: without a session there is no progress to draw. */
+export function NeedsAccount() {
+  const { t } = useI18n();
+  return (
+    <EmptyState
+      mark="◔"
+      title={t("auth.required")}
+      hint={t("auth.requiredHint")}
+      action={
+        <Link className="lms-btn lms-btn-primary" href="/login">
+          {t("nav.signIn")}
+        </Link>
       }
     />
   );

@@ -3,35 +3,42 @@
 /**
  * Achievements — the record of what the learning has already added up to.
  *
- * The numbers come first because they are the honest part: streaks and hours
- * are measured, badges are only a nicer way of saying the same thing. Her
- * longest streak sits beside the current one on purpose — a personal record is
+ * Everything here is earned: a certificate the platform issued, a course she
+ * finished, a skill those courses taught her. The screen used to carry six
+ * designed badges — "first project", "30-day streak" — that nothing in the
+ * system could award, and a trophy case of things that cannot be won is a
+ * decoration, not a record.
+ *
+ * The measured numbers come first because they are the honest part. Her
+ * longest streak sits beside the current one on purpose: a personal record is
  * the one comparison worth showing her, and it belongs to her.
  *
- * The decision worth defending is the second group. Badges she has not earned
- * are listed in full, with their names and their conditions, under a heading
- * that says "not yet" rather than "locked" — because the only useful thing an
- * unearned badge can do is tell her what the next step is. So no padlocks and
- * no silhouettes: the CSS dims the card and that is the whole treatment. A
- * screen about progress should never be the place that makes her feel behind.
- *
  * Nothing here is a call to action, so this screen spends no bold surface at
- * all — the dashboard owns that, and a trophy case does not need a button.
+ * all — the dashboard owns that, and a record does not need a button.
  */
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
+import { getAccessToken } from "@/services/api";
 import {
-  achievements,
-  learner,
-  learningStats,
+  portal,
   type Achievement,
-} from "@/content/learning";
-import { useMockData } from "@/components/learning/useMockData";
-import { Ladder } from "@/components/learning/Ladder";
+  type ActivitySummary,
+  type Certificate,
+  type EnrollmentDetail,
+  type SkillProfile,
+  type UserSkill,
+} from "@/services/portal";
+import { AchievementTimeline } from "@/components/portfolio/Sections";
+import { useApi } from "@/components/learning/useApi";
+import { art } from "@/components/learning/course";
 import {
+  Badge,
+  Cover,
   EmptyState,
   ErrorState,
+  NeedsAccount,
   PageHead,
   SectionHead,
   Skeleton,
@@ -40,23 +47,40 @@ import {
 } from "@/components/learning/ui";
 
 export default function AchievementsPage() {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
-  const { data, loading, error, retry } = useMockData(() => ({
-    // Most recent first: the last thing she earned is the one she came to see.
-    earned: achievements
-      .filter((item) => item.earnedOn)
-      .sort((a, b) => (a.earnedOn! < b.earnedOn! ? 1 : -1)),
-    ahead: achievements.filter((item) => !item.earnedOn),
-    stats: {
-      streak: learner.streakDays,
-      longest: learner.longestStreakDays,
-      hours: learner.learningHours,
-      completed: learningStats.completed,
-    },
-  }));
+  const { data, loading, error, retry } = useApi(async () => {
+    const [certificates, enrollments, activity, skills, record] = await Promise.all([
+      portal.myCertificates(),
+      portal.myEnrollments(),
+      portal.activity().catch(() => null as ActivitySummary | null),
+      portal.mySkills().catch(() => null as SkillProfile | null),
+      // The one definition of an achievement: the server's, read off the
+      // records that back each one. This screen never derives its own.
+      portal.myPortfolio().catch(() => null),
+    ]);
+    return {
+      certificates,
+      completed: enrollments.filter((item) => item.status === "completed"),
+      activity,
+      // What the courses actually proved. Her own claims are not achievements.
+      skills: (skills?.skills ?? []).filter((item) => item.status !== "self_reported"),
+      achievements: (record?.achievements ?? []) as Achievement[],
+    };
+  });
 
   const head = <PageHead title={t("lms.ach.title")} lead={t("lms.ach.lead")} />;
+
+  if (authed === false) {
+    return (
+      <>
+        {head}
+        <NeedsAccount />
+      </>
+    );
+  }
 
   if (error) {
     return (
@@ -78,7 +102,7 @@ export default function AchievementsPage() {
         </div>
         <div className="lms-sec">
           <div className="lms-badges" aria-busy="true">
-            {Array.from({ length: 6 }).map((_, index) => (
+            {Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} height={176} radius={18} />
             ))}
           </div>
@@ -87,36 +111,38 @@ export default function AchievementsPage() {
     );
   }
 
-  const { earned, ahead, stats } = data;
+  const { certificates, completed, activity, skills, achievements } = data;
+  const nothingYet =
+    certificates.length === 0 &&
+    completed.length === 0 &&
+    skills.length === 0 &&
+    achievements.length === 0;
 
   return (
     <>
       {head}
 
-      {/* ---- the measured facts, before the badges ------------------- */}
+      {/* ---- the measured facts, before anything else ---------------- */}
       <div className="lms-stats">
         <StatCard
-          value={`${stats.streak} ${t("lms.days")}`}
+          value={`${activity?.current_streak ?? 0} ${t("lms.days")}`}
           label={t("lms.stats.streak")}
         />
         <StatCard
-          value={`${stats.longest} ${t("lms.days")}`}
+          value={`${activity?.best_streak ?? 0} ${t("lms.days")}`}
           label={t("lms.ach.longest")}
         />
-        <StatCard
-          value={`${stats.hours}${t("common.hours").slice(0, 1)}`}
-          label={t("lms.stats.hours")}
-        />
-        <StatCard value={stats.completed} label={t("lms.stats.completed")} />
+        <StatCard value={completed.length} label={t("lms.stats.completed")} />
+        <StatCard value={certificates.length} label={t("lms.stats.certificates")} />
       </div>
 
-      {earned.length === 0 && ahead.length === 0 ? (
+      {nothingYet ? (
         <div className="lms-sec">
           <EmptyState
             title={t("lms.ach.empty")}
             hint={t("lms.ach.emptyHint")}
             action={
-              <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+              <Link className="lms-btn lms-btn-primary" href="/dasturlar">
                 {t("lms.courses.explore")}
               </Link>
             }
@@ -124,29 +150,86 @@ export default function AchievementsPage() {
         </div>
       ) : (
         <>
-          {/* ---- what she has ---------------------------------------- */}
-          <section className="lms-sec">
-            <Ladder />
+          {/* ---- what happened, in order ------------------------------ */}
+          {achievements.length > 0 && (
+            <section className="lms-sec">
+              <SectionHead
+                title={t("port.achievements")}
+                href="/kabinet/portfolio"
+                linkLabel={t("port.view")}
+              />
+              <AchievementTimeline achievements={achievements.slice(0, 8)} />
+            </section>
+          )}
 
-            <SectionHead title={t("lms.ach.earned")} />
-            {earned.length ? (
+          {/* ---- certificates: the strongest thing she holds ---------- */}
+          <section className="lms-sec">
+            <SectionHead title={t("lms.profile.certificates")} />
+            {certificates.length ? (
               <div className="lms-badges">
-                {earned.map((item) => (
-                  <Trophy key={item.id} achievement={item} />
+                {certificates.map((certificate) => (
+                  <CertificateCard key={certificate.id} certificate={certificate} />
                 ))}
               </div>
             ) : (
-              <EmptyState title={t("lms.ach.empty")} hint={t("lms.ach.emptyHint")} />
+              <EmptyState
+                title={t("lms.profile.noCertificates")}
+                hint={t("lms.profile.noCertificatesHint")}
+              />
             )}
           </section>
 
-          {/* ---- what is next, described the same way ---------------- */}
-          {ahead.length > 0 && (
+          {/* ---- courses finished ------------------------------------ */}
+          {completed.length > 0 && (
             <section className="lms-sec">
-              <SectionHead title={t("lms.ach.locked")} />
-              <div className="lms-badges">
-                {ahead.map((item) => (
-                  <Trophy key={item.id} achievement={item} />
+              <SectionHead title={t("lms.stats.completed")} />
+              <div className="lms-courses">
+                {completed.map((enrollment) => (
+                  <article key={enrollment.id} className="lms-course">
+                    <div className="lms-course-top">
+                      <Cover
+                        tone={art(enrollment.program?.category ?? "").tone}
+                        emblem={art(enrollment.program?.category ?? "").emblem}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <h3 className="lms-course-title">
+                          <Link href={`/talim/kurslar/${enrollment.program?.slug ?? ""}`}>
+                            {tx(enrollment.program?.title_i18n ?? {})}
+                          </Link>
+                        </h3>
+                        {enrollment.program?.provider && (
+                          <p className="lms-course-by">{enrollment.program.provider}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="lms-course-foot">
+                      <Badge tone="done">{t("lms.status.completed")}</Badge>
+                      {enrollment.completed_at && (
+                        <span className="lms-stat-label" style={{ marginLeft: "auto" }}>
+                          <EarnedDate date={enrollment.completed_at.slice(0, 10)} />
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ---- what those courses taught --------------------------- */}
+          {skills.length > 0 && (
+            <section className="lms-sec">
+              <SectionHead title={t("skill.section")} href="/kabinet" linkLabel={t("common.open")} />
+              <div className="lms-chips">
+                {skills.map((item: UserSkill) => (
+                  <span
+                    key={item.skill.slug ?? item.skill.label}
+                    className="lms-chip lms-chip-static"
+                  >
+                    {tx(item.skill.name_i18n) || item.skill.label}
+                    {" · "}
+                    {t(`skill.status.${item.status}` as never)}
+                  </span>
                 ))}
               </div>
             </section>
@@ -159,23 +242,19 @@ export default function AchievementsPage() {
 
 /* ---- pieces ---------------------------------------------------------- */
 
-/** One badge. Earned or not is read off the data, not passed in, so the two
- *  groups can never disagree with the dates they display. */
-function Trophy({ achievement }: { achievement: Achievement }) {
+/** One certificate. It names the course it certifies and carries its serial —
+ *  the two things an employer checking it actually asks for. */
+function CertificateCard({ certificate }: { certificate: Certificate }) {
   const { t, tx } = useI18n();
-  const earnedOn = achievement.earnedOn;
 
   return (
-    <article className={`lms-trophy ${earnedOn ? "" : "lms-trophy-locked"}`}>
-      <span className="lms-trophy-mark" aria-hidden="true">{achievement.emblem}</span>
-      <h3 className="lms-trophy-title">{tx(achievement.title)}</h3>
-      <p className="lms-trophy-desc">{tx(achievement.description)}</p>
-      {earnedOn && (
-        // Pushed to the bottom so the dates line up across a row of cards.
-        <span className="lms-stat-label" style={{ marginTop: "auto" }}>
-          {t("lms.ach.earnedOn")}: <EarnedDate date={earnedOn} />
-        </span>
-      )}
+    <article className="lms-trophy">
+      <span className="lms-trophy-mark" aria-hidden="true">🏅</span>
+      <h3 className="lms-trophy-title">{tx(certificate.program_title_i18n)}</h3>
+      <p className="lms-trophy-desc">{certificate.serial_number}</p>
+      <span className="lms-stat-label" style={{ marginTop: "auto" }}>
+        {t("lms.ach.earnedOn")}: <EarnedDate date={certificate.issued_at.slice(0, 10)} />
+      </span>
     </article>
   );
 }
