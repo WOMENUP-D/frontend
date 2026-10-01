@@ -1730,17 +1730,25 @@ select.input option { background: var(--control); color: var(--ink); }
   .header-tools { margin-left: auto; }
 }
 
-/* Nine destinations, a language switch, the theme, the bell and "Sign out"
-   need about 1500px in one row in Russian. Below that the links take their
-   own centred row on a desk too — every link visible, none behind a scroll
-   the page never shows; above it the bar widens so one row holds them all. */
-@media (min-width: 901px) and (max-width: 1599px) {
-  :root { --header-h: 116px; }
+/* Eight destinations, a language switch, the theme, the bell and "Sign out"
+   hold one row down to 1250px in Russian, the longest locale: from 1440px at
+   full size, below that with the links and switch drawn tighter. Only under
+   1250px do the links take their own centred row — every link still visible,
+   none behind a scroll the page never shows. */
+@media (min-width: 1250px) and (max-width: 1439px) {
+  .nav-inner { width: 96%; gap: 10px; }
+  .nav-link { padding: 8px 9px; font-size: .85rem; }
+  .lang-switch button { padding: 7px 7px; }
+  .header-tools { gap: 6px; }
+  .nav-plain { padding: 8px 8px; }
+}
+@media (min-width: 901px) and (max-width: 1249px) {
+  :root { --header-h: 108px; }
   .nav-inner { flex-wrap: wrap; row-gap: 4px; min-height: 0; padding: 10px 0 8px; }
   .nav-links { order: 3; flex-basis: 100%; }
   .header-tools { margin-left: auto; }
 }
-@media (min-width: 1600px) {
+@media (min-width: 1440px) {
   .nav-inner { width: min(1560px, 94%); }
 }
 
@@ -1749,7 +1757,7 @@ select.input option { background: var(--control); color: var(--ink); }
   .logo-text { display: none; }
   .brand { gap: 0; }
   .lang-switch button { padding: 6px 6px; font-size: .7rem; }
-  .icon-btn { width: 32px; height: 32px; font-size: .92rem; }
+  .icon-btn, .nb-button { width: 32px; height: 32px; font-size: .92rem; }
   .header-tools { gap: 6px; }
   .nav-plain { padding: 8px 6px; }
 }
@@ -6677,20 +6685,24 @@ a.ds-step-link:focus-visible { outline: 2px solid var(--primary); outline-offset
    ================================================================== */
 
 .nb { position: relative; }
+/* The same round control as the theme toggle beside it: two icon buttons of
+   different sizes side by side read as a mistake, not a hierarchy. */
 .nb-button {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   border: 1px solid var(--border);
-  background: var(--control);
-  color: var(--ink);
+  background: var(--surface-2);
+  color: var(--text-dim);
   cursor: pointer;
+  transition: .2s;
 }
+.nb-button:hover { border-color: var(--border-strong); color: var(--ink); }
 .nb-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.nb-dot { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); }
+.nb-dot { position: absolute; top: 5px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); }
 .nb-tray {
   position: absolute;
   right: 0;
