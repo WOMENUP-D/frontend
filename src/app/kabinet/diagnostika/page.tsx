@@ -24,7 +24,7 @@ import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useI18n } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
-const DRAFT_KEY = "womanup.diagnostic.v2";
+const DRAFT_ITEM = "womanup.diagnostic.v2";
 
 interface Draft {
   clientRef: string;
@@ -37,7 +37,7 @@ interface Draft {
 
 function readDraft(): Draft | null {
   try {
-    const raw = window.localStorage.getItem(DRAFT_KEY);
+    const raw = window.localStorage.getItem(DRAFT_ITEM);
     return raw ? (JSON.parse(raw) as Draft) : null;
   } catch {
     return null;
@@ -46,8 +46,8 @@ function readDraft(): Draft | null {
 
 function writeDraft(draft: Draft | null) {
   try {
-    if (draft) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    else window.localStorage.removeItem(DRAFT_KEY);
+    if (draft) window.localStorage.setItem(DRAFT_ITEM, JSON.stringify(draft));
+    else window.localStorage.removeItem(DRAFT_ITEM);
   } catch {
     /* A browser that blocks storage still gets a working check-in. */
   }
