@@ -4,7 +4,9 @@
   "private": true,
   "overrides": {
     "postcss": "^8.5.23",
-    "@grpc/grpc-js": "^1.14.5"
+    "@grpc/grpc-js": "^1.14.5",
+    "sharp": "^0.35.5",
+    "source-map-js": "^1.2.2"
   },
   "scripts": {
     "dev": "next dev",

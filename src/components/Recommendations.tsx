@@ -90,6 +90,10 @@ export function useStepCopy() {
           return "/kabinet/portfolio#projects";
         case "plan_item":
           return course ?? "/reja";
+        case "build_cv":
+          return "/kabinet#career";
+        case "explore_skills":
+          return "/kabinet#skills";
         case "explore_opportunities":
           return step.opportunity_types.length === 1
             ? `/imkoniyatlar?type=${step.opportunity_types[0]}`
