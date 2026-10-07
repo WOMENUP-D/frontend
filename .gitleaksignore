@@ -1,0 +1,7 @@
+# False positives, one fingerprint per line (commit:file:rule:line).
+#
+# The draft of the diagnostic was kept under a constant whose name ended in
+# "key", holding a localStorage item name — not a secret — and gitleaks'
+# generic-api-key rule matched it. The constant was renamed in the same PR
+# (#12), but the commit that introduced it is in main's history.
+6780640f8ea979e231029361c02e28a1987de8d6:src/app/kabinet/diagnostika/page.tsx:generic-api-key:27
