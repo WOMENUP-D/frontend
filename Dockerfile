@@ -15,7 +15,13 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+# The base is pinned by digest, so its Debian packages only move when the pin
+# does. Take the security updates published since, or the image scan stops
+# the release on every new CVE in perl or pcre2 that is already fixed upstream.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     && mkdir -p /app/.next/cache \
     && chown node:node /app/.next/cache
 ARG REVISION
