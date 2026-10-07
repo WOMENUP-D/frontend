@@ -3914,6 +3914,146 @@ button.ed-row { cursor: pointer; }
 }
 .diag-q .chip { white-space: normal; }
 
+/* ---------- Development check-in v2: one question per screen ----------
+   The question is the page: display type, the options as full-width rows a
+   thumb can hit. A native radio or checkbox sits inside each row, so arrows,
+   Tab and Space work as they do everywhere else — the row only draws them. */
+.dg { gap: 16px; }
+.dg-title { margin: 0 0 6px; font-size: clamp(1.4rem, 2.8vw, 1.9rem); }
+.dg-resumed { color: var(--text-dim); }
+.link-btn {
+  background: none; border: 0; padding: 0; font: inherit; color: var(--primary);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.link-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 3px; }
+.dg-where { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.dg-section { font-weight: 650; color: var(--ink); }
+.dg-count { font-variant-numeric: tabular-nums; }
+.dg-q { border: 0; margin: 0; padding: 10px 0 0; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.dg-question {
+  font-family: var(--font-display); font-weight: 600; margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.7rem); line-height: 1.3; color: var(--ink);
+}
+.dg-question:focus { outline: none; }
+.dg-question:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+.dg-hint { margin: -4px 0 0; }
+.dg-options { display: flex; flex-direction: column; gap: 8px; }
+.dg-option {
+  position: relative; display: flex; align-items: flex-start; gap: 12px;
+  min-height: 52px; padding: 14px 16px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--control);
+  color: var(--text); cursor: pointer; line-height: 1.4;
+  transition: border-color .15s, background .15s;
+}
+.dg-option:hover { border-color: var(--border-strong); background: var(--bg-2); }
+.dg-option input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.dg-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dg-mark {
+  flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%;
+  border: 2px solid var(--border-strong); background: var(--surface);
+  display: grid; place-items: center;
+}
+.dg-option input[type="checkbox"] ~ .dg-mark { border-radius: 6px; }
+.dg-option.on { border-color: var(--primary); background: var(--grad-soft); color: var(--ink); }
+.dg-option.on .dg-mark { border-color: var(--primary); background: var(--primary); }
+/* The tick is a shape, not a colour: chosen reads without colour vision. */
+.dg-option.on .dg-mark::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--on-primary);
+}
+.dg-option.on input[type="checkbox"] ~ .dg-mark::after {
+  width: 9px; height: 5px; border-radius: 0; background: none; margin-top: -2px;
+  border-left: 2px solid var(--on-primary); border-bottom: 2px solid var(--on-primary);
+  transform: rotate(-45deg);
+}
+.dg-option.on .dg-label { font-weight: 600; }
+.dg-option.off { opacity: .5; cursor: not-allowed; }
+.dg-option.off input { cursor: not-allowed; }
+.dg-nav { display: flex; justify-content: space-between; gap: 12px; padding-top: 4px; }
+.dg-nav .btn { min-height: 46px; min-width: 120px; }
+.dg-start { align-self: flex-start; }
+@media (max-width: 480px) {
+  .dg-option { padding: 13px 14px; }
+  .dg-nav .btn { flex: 1; min-width: 0; }
+}
+
+/* ---------- Check-in result ----------
+   Her point is a mark on a ruler, not a grade in a ring: the ruler is split
+   into the five stages she reads below, so the number says where she stands
+   on a way, and the way goes on past it. */
+.dr { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+.dr-hero { display: flex; flex-direction: column; gap: 14px; }
+.dr-kicker { color: var(--text-dim); font-weight: 600; }
+.dr-figure { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.dr-number {
+  font-family: var(--font-display); font-weight: 600; line-height: .9;
+  font-size: clamp(4rem, 12vw, 7.5rem); color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.dr-of { font-size: 1.25rem; color: var(--text-dim); }
+.dr-stage { font-family: var(--font-display); font-size: clamp(1.2rem, 2.6vw, 1.55rem); color: var(--primary); }
+.dr-lead { max-width: 60ch; font-size: 1.06rem; line-height: 1.6; color: var(--text); margin: 0; }
+.dr-ruler { position: relative; padding-top: 22px; }
+.dr-ruler-track { display: grid; grid-template-columns: 25fr 25fr 25fr 15fr 10fr; gap: 3px; }
+.dr-ruler-zone { height: 10px; background: var(--surface-2); border-radius: 3px; }
+.dr-ruler-zone.reached { background: var(--grad); }
+.dr-ruler-pin {
+  position: absolute; top: 0; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+}
+.dr-ruler-pin::before {
+  content: ""; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface); border: 3px solid var(--ink);
+}
+.dr-ruler-pin::after { content: ""; width: 2px; height: 14px; background: var(--ink); }
+.dr-ruler-labels {
+  display: grid; grid-template-columns: 25fr 25fr 25fr 15fr 10fr; gap: 3px;
+  margin-top: 8px; font-size: .74rem; color: var(--text-faint); line-height: 1.25;
+}
+.dr-ruler-labels .here { color: var(--ink); font-weight: 650; }
+@media (max-width: 640px) { .dr-ruler-labels span:not(.here) { visibility: hidden; } }
+
+.dr-h2 { font-size: clamp(1.25rem, 2.4vw, 1.6rem); margin: 0 0 14px; }
+.dr-dims { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dr-dim {
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 3ch;
+  align-items: center; gap: 6px 18px; padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.dr-dim-name { font-weight: 600; color: var(--ink); }
+.dr-dim-level { display: block; font-size: .85rem; color: var(--text-dim); font-weight: 450; }
+.dr-dim-score { text-align: right; font-variant-numeric: tabular-nums; font-weight: 650; color: var(--ink); }
+.dr-dim-now { grid-column: 1 / -1; font-size: .8rem; color: var(--success); margin-top: -2px; }
+@media (max-width: 560px) {
+  .dr-dim { grid-template-columns: minmax(0, 1fr) 3ch; }
+  .dr-dim .bar { grid-column: 1 / -1; grid-row: 2; }
+}
+
+.dr-pair { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; }
+@media (max-width: 760px) { .dr-pair { grid-template-columns: 1fr; } }
+.dr-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dr-item { padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); }
+.dr-item-head { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; color: var(--ink); }
+.dr-why { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.dr-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; }
+.dr-step {
+  counter-increment: step; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+  gap: 4px 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--border);
+}
+.dr-step::before {
+  content: counter(step); grid-row: 1 / span 2;
+  font-family: var(--font-display); font-size: 1.7rem; color: var(--primary); line-height: 1;
+}
+.dr-step-title { font-weight: 650; color: var(--ink); }
+.dr-step-area { grid-column: 2; font-size: .88rem; color: var(--text-dim); }
+.dr-step .btn { grid-column: 3; grid-row: 1 / span 2; }
+@media (max-width: 560px) {
+  .dr-step { grid-template-columns: 2rem minmax(0, 1fr); }
+  .dr-step .btn { grid-column: 2; grid-row: auto; justify-self: start; margin-top: 8px; }
+}
+.dr-foot { display: flex; gap: 10px; flex-wrap: wrap; }
+.dr-history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dr-history li { display: flex; justify-content: space-between; gap: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.dr-history a { color: var(--primary); }
+
 /* ---------- AI Coach ---------------------------------------------------
    Her situation, above the conversation. Same card, same tokens as the rest
    of the portal — the Coach is a way of reading her record, not a second

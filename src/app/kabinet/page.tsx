@@ -355,9 +355,14 @@ export default function CabinetPage() {
                 {/* The score is retaken on its own diagnostic. The learning
                     questionnaire on /welcome is a different instrument and
                     does not change this number. */}
-                <Link href="/kabinet/diagnostika" className="btn btn-outline btn-sm">
-                  {t("cab.retake")}
-                </Link>
+                <span className="row" style={{ gap: 8 }}>
+                  <Link href="/kabinet/diagnostika/natija" className="btn btn-ghost btn-sm">
+                    {t("dr.see")}
+                  </Link>
+                  <Link href="/kabinet/diagnostika" className="btn btn-outline btn-sm">
+                    {t("cab.retake")}
+                  </Link>
+                </span>
               </div>
               {/* Each dimension opens to its reading: the band, her own
                   answers, the gaps she can close here and what would move it. */}
@@ -460,7 +465,9 @@ export default function CabinetPage() {
 
           {/* What she can do, and how well the platform knows it. It loads on
               its own, so a slow skills call cannot hold up the page. */}
-          <SkillsSection />
+          <div id="skills">
+            <SkillsSection />
+          </div>
 
           {/* The courses and listings behind those steps. Only what the
               catalogue holds right now; an empty column says so. */}

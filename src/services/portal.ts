@@ -41,7 +41,9 @@ export type NextStepKind =
   | "practise_task"
   | "improve_task"
   | "add_project"
-  | "explore_opportunities";
+  | "explore_opportunities"
+  | "build_cv"
+  | "explore_skills";
 
 export type RecommendationReason =
   | "no_assessment"
@@ -54,7 +56,8 @@ export type RecommendationReason =
   | "skills_match"
   | "needs_improvement"
   | "evidence_to_show"
-  | "career_skill";
+  | "career_skill"
+  | "diagnostic_priority";
 
 export type StepParams = Record<string, number | string>;
 
@@ -270,12 +273,70 @@ export interface ScoreInsights extends DevelopmentScore {
   focus_dimensions: string[];
 }
 
-export interface Question {
+// ---- Diagnostic v2 ---------------------------------------------------------
+//
+// The browser sends which option she chose and nothing else: what an option is
+// worth, the scores and the priorities are all decided on the server.
+
+export interface DiagnosticQuestion {
   id: string;
-  dimension: string;
+  /** Language-independent: "edu.q1", "fam.q19", "goals.q25". */
+  code: string;
+  /** Null for the goals question, which measures no dimension. */
+  dimension: string | null;
+  type: "single_choice" | "routing" | "goals";
   order_index: number;
   text_i18n: Record<string, string>;
-  options: Array<{ value: number; label_i18n: Record<string, string> }>;
+  hint_i18n: Record<string, string> | null;
+  max_choices: number;
+  options: Array<{ id: string; label_i18n: Record<string, string> }>;
+}
+
+export type DiagnosticLevel =
+  | "starting_point"
+  | "building_foundation"
+  | "good_foundation"
+  | "strong_area"
+  | "advanced";
+
+export interface DiagnosticPriority {
+  dimension: string;
+  priority: number;
+  need: number;
+  goal_match: number;
+  skill_gap: number;
+  urgency: number;
+}
+
+export interface DiagnosticResult {
+  attempt_id: string;
+  version: number;
+  completed_at: string | null;
+  is_baseline: boolean;
+  overall: number;
+  level: DiagnosticLevel;
+  dimensions: Array<{
+    dimension: string;
+    score: number;
+    /** Where the dimension stands now, after what she has done since. */
+    current: number | null;
+    level: DiagnosticLevel;
+  }>;
+  strongest: string[];
+  growth: DiagnosticPriority[];
+  next_steps: NextStep[];
+  goals: string[];
+  family_focus: string | null;
+}
+
+export interface DiagnosticHistoryItem {
+  attempt_id: string;
+  version: number;
+  completed_at: string | null;
+  is_baseline: boolean;
+  overall: number | null;
+  dimensions: Record<string, number>;
+  goals: string[];
 }
 
 export type LessonKind = "video" | "reading" | "practice" | "quiz" | "project";
@@ -1841,13 +1902,22 @@ export const portal = {
   recommendations: () => api.get<Recommendations>("/ai/recommendations"),
   /** Her skills, how well each is backed, and the ones worth building next. */
   mySkills: () => api.get<SkillProfile>("/skills/me"),
-  questions: () => api.get<Question[]>("/assessments/questions"),
+  diagnosticQuestions: () =>
+    api.get<{ version: number; questions: DiagnosticQuestion[] }>("/diagnostic/questions"),
+  submitDiagnostic: (body: {
+    client_ref: string;
+    started_at: string | null;
+    answers: Array<{ question_id: string; option_ids: string[] }>;
+  }) => api.post<DiagnosticResult>("/diagnostic/attempt", body),
+  diagnosticResult: (attemptId?: string) =>
+    api.get<DiagnosticResult>(
+      `/diagnostic/result${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
+    ),
+  diagnosticHistory: () => api.get<DiagnosticHistoryItem[]>("/diagnostic/history"),
   questionnaire: () => api.get<Questionnaire>("/assessments/questionnaire"),
   learningProfile: () => api.get<LearningProfileRead>("/assessments/learning-profile"),
   saveLearning: (answers: Record<string, unknown>) =>
     api.put<LearningProfileRead>("/assessments/learning-profile", { answers }),
-  submitAssessment: (answers: Array<{ question_id: string; value: number }>) =>
-    api.post<DevelopmentScore>("/assessments/submit", { answers }),
 
   activePlan: () => api.get<Plan>("/plans/active"),
   myPlans: () => api.get<Plan[]>("/plans"),

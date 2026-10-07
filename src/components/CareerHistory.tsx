@@ -139,7 +139,7 @@ function CvSection({ kind }: { kind: Kind }) {
   const title = t(kind === "work" ? "cv.work" : "cv.study");
 
   return (
-    <section className="pcard-block cv" aria-label={title}>
+    <section id="career" className="pcard-block cv" aria-label={title}>
       <h3>
         {kind === "work" ? <IconWork /> : <IconStudy />} {title}
       </h3>

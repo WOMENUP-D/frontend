@@ -73,10 +73,10 @@ const DIRECTIONS: ReadonlyArray<[string, MessageKey]> = [
   ["employment", "dim.employment"],
   ["entrepreneurship", "dim.entrepreneurship"],
   ["financial_literacy", "dim.financial_literacy"],
+  ["digital_skills", "dim.digital_skills"],
   ["healthy_lifestyle", "dim.healthy_lifestyle"],
   ["family_parenting", "dim.family_parenting"],
-  ["social_activity", "dim.social_activity"],
-  ["international_integration", "dim.international_integration"],
+  ["leadership", "dim.leadership"],
 ];
 
 export default function WelcomePage() {

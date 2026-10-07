@@ -1,47 +1,102 @@
 "use client";
 
 /**
- * The Development Score diagnostic.
+ * The development check-in (diagnostic v2): 25 questions, one per screen.
  *
- * A different instrument from the learning questionnaire on `/welcome`. That
- * one asks what she wants to learn; this one measures eight dimensions of her
- * life on a five-point scale, and it is the only thing that produces the score
- * the cabinet reads, the plan starts from and the national KPIs count.
+ * One question at a time because each one asks her to place herself on a
+ * five-step ladder, and five long options side by side with two more
+ * questions underneath is a form, not a conversation. The section and the
+ * count stay on screen so she always knows where she is and how much is left.
  *
- * One dimension per screen, its questions together: they are short, and three
- * side by side are quicker to answer than three screens. Nothing is sent until
- * the last screen, because a partial run would re-score some dimensions from
- * fewer answers than the rest.
+ * Only her choices leave the browser — the option ids. What an option is
+ * worth, the scores and the priorities are worked out on the server.
+ *
+ * Answers are kept in localStorage as she goes, so a closed tab or a dropped
+ * connection costs her nothing. The draft carries the run's own id, which the
+ * server uses to refuse a second copy of the same attempt.
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getAccessToken, isStaff, staffHome } from "@/services/api";
-import { portal, type Question } from "@/services/portal";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
+import { portal, type DiagnosticQuestion } from "@/services/portal";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useI18n } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
-interface Group {
-  dimension: string;
-  questions: Question[];
+const DRAFT_KEY = "womanup.diagnostic.v2";
+
+interface Draft {
+  clientRef: string;
+  startedAt: string;
+  index: number;
+  answers: Record<string, string[]>;
+  /** The question ids it was answered against — a changed set voids it. */
+  questionIds: string[];
+}
+
+function readDraft(): Draft | null {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(draft: Draft | null) {
+  try {
+    if (draft) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    else window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* A browser that blocks storage still gets a working check-in. */
+  }
+}
+
+function freshDraft(questions: DiagnosticQuestion[]): Draft {
+  return {
+    clientRef: crypto.randomUUID(),
+    startedAt: new Date().toISOString(),
+    index: 0,
+    answers: {},
+    questionIds: questions.map((q) => q.id),
+  };
 }
 
 export default function DiagnosticPage() {
   const { t, tx } = useI18n();
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [questions, setQuestions] = useState<Question[] | null>(null);
+  const [questions, setQuestions] = useState<DiagnosticQuestion[] | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [page, setPage] = useState(0);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [resumed, setResumed] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveFailed, setSaveFailed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const moved = useRef(false);
 
   const load = useCallback(() => {
     setLoadFailed(false);
     setQuestions(null);
-    portal.questions().then(setQuestions).catch(() => setLoadFailed(true));
+    portal
+      .diagnosticQuestions()
+      .then(({ questions: list }) => {
+        setQuestions(list);
+        const saved = readDraft();
+        const ids = list.map((q) => q.id);
+        const usable =
+          saved &&
+          saved.questionIds.length === ids.length &&
+          saved.questionIds.every((id, i) => id === ids[i]);
+        if (usable && Object.keys(saved.answers).length > 0) {
+          setDraft({ ...saved, index: Math.min(saved.index, ids.length - 1) });
+          setResumed(true);
+        } else {
+          setDraft(freshDraft(list));
+        }
+      })
+      .catch(() => setLoadFailed(true));
   }, []);
 
   useEffect(() => {
@@ -56,34 +111,17 @@ export default function DiagnosticPage() {
     load();
   }, [load, router]);
 
-  /* In the order the API returns them, which is the order the instrument sets. */
-  const groups = useMemo<Group[]>(() => {
-    const byDimension = new Map<string, Question[]>();
-    for (const question of questions ?? []) {
-      byDimension.set(question.dimension, [...(byDimension.get(question.dimension) ?? []), question]);
-    }
-    return Array.from(byDimension, ([dimension, items]) => ({ dimension, questions: items }));
-  }, [questions]);
+  useEffect(() => {
+    if (draft) writeDraft(draft);
+  }, [draft]);
 
-  function go(next: number) {
-    setPage(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function submit() {
-    setSaving(true);
-    setSaveFailed(false);
-    try {
-      await portal.submitAssessment(
-        Object.entries(answers).map(([question_id, value]) => ({ question_id, value })),
-      );
-      // The cabinet reads the new score and its recommendations on arrival.
-      router.push("/kabinet");
-    } catch {
-      setSaveFailed(true);
-      setSaving(false);
-    }
-  }
+  /* A new question takes focus, so a screen reader announces it and the
+     keyboard starts from the top of the new screen. Not on first load: the
+     page heading is what should be read first. */
+  useEffect(() => {
+    if (!moved.current) return;
+    heading.current?.focus();
+  }, [draft?.index]);
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
 
@@ -92,12 +130,7 @@ export default function DiagnosticPage() {
       <main className="wrap page">
         <div className="diag">
           <ErrorNote message={t("as.errLoad")} />
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            style={{ alignSelf: "flex-start" }}
-            onClick={load}
-          >
+          <button type="button" className="btn btn-outline btn-sm dg-start" onClick={load}>
             {t("lms.err.retry")}
           </button>
         </div>
@@ -105,9 +138,9 @@ export default function DiagnosticPage() {
     );
   }
 
-  if (!questions) return <main className="wrap page"><Loading rows={3} /></main>;
+  if (!questions || !draft) return <main className="wrap page"><Loading rows={3} /></main>;
 
-  if (groups.length === 0) {
+  if (questions.length === 0) {
     return (
       <main className="wrap page">
         <Empty title={t("as.noQuestions")} hint={t("as.noQuestionsHint")} />
@@ -115,80 +148,168 @@ export default function DiagnosticPage() {
     );
   }
 
-  const current = Math.min(page, groups.length - 1);
-  const group = groups[current];
-  const last = current === groups.length - 1;
-  const complete = group.questions.every((question) => answers[question.id] !== undefined);
+  const total = questions.length;
+  const index = Math.min(draft.index, total - 1);
+  const question = questions[index];
+  const chosen = draft.answers[question.id] ?? [];
+  const isGoals = question.type === "goals";
+  const last = index === total - 1;
+  const section = question.dimension ? t(dimensionKey(question.dimension)) : t("dg.goals");
+
+  function go(next: number) {
+    moved.current = true;
+    setError(null);
+    setDraft((d) => (d ? { ...d, index: next } : d));
+  }
+
+  function choose(optionId: string) {
+    setDraft((d) => {
+      if (!d) return d;
+      const current = d.answers[question.id] ?? [];
+      let next: string[];
+      if (!isGoals) next = [optionId];
+      else if (current.includes(optionId)) next = current.filter((id) => id !== optionId);
+      else if (current.length < question.max_choices) next = [...current, optionId];
+      else next = current;
+      return { ...d, answers: { ...d.answers, [question.id]: next } };
+    });
+  }
+
+  function startOver() {
+    if (!questions) return;
+    moved.current = false;
+    setResumed(false);
+    setError(null);
+    setDraft(freshDraft(questions));
+  }
+
+  async function submit() {
+    if (!draft || !questions) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await portal.submitDiagnostic({
+        client_ref: draft.clientRef,
+        started_at: draft.startedAt,
+        answers: questions
+          .filter((q) => (draft.answers[q.id] ?? []).length > 0)
+          .map((q) => ({ question_id: q.id, option_ids: draft.answers[q.id] })),
+      });
+      writeDraft(null);
+      router.push("/kabinet/diagnostika/natija");
+    } catch (err) {
+      setSaving(false);
+      const detail = err instanceof ApiError ? (err.detail as { code?: string; items?: string[] }) : null;
+      if (detail?.code === "incomplete" && detail.items?.length) {
+        const first = questions.findIndex((q) => q.code === detail.items![0]);
+        if (first >= 0) go(first);
+        setError(t("dg.errIncomplete"));
+      } else if (detail?.code === "invalid_question") {
+        writeDraft(null);
+        setError(t("dg.errChanged"));
+        load();
+      } else {
+        setError(t("dg.errSave"));
+      }
+    }
+  }
+
+  const answered = chosen.length > 0;
+  const name = `q-${question.id}`;
 
   return (
     <main className="wrap page">
-      <div className="diag">
-        <header className="diag-head">
-          <h1>{t("cab.score")}</h1>
-          <p className="muted">{t("as.note")}</p>
+      <div className="diag dg">
+        <header className="dg-head">
+          <h1 className="dg-title">{t("dg.title")}</h1>
+          {index === 0 && !resumed && <p className="muted">{t("dg.intro")}</p>}
+          {resumed && (
+            <p className="dg-resumed small">
+              {t("dg.resumed")}{" "}
+              <button type="button" className="link-btn" onClick={startOver}>
+                {t("dg.startOver")}
+              </button>
+            </p>
+          )}
         </header>
 
-        <div className="spread">
-          <span className="badge badge-grey">{t(dimensionKey(group.dimension))}</span>
-          <span className="faint">
-            {current + 1} / {groups.length}
+        <div className="dg-where">
+          <span className="dg-section">{section}</span>
+          <span className="faint dg-count">
+            {t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total))}
           </span>
         </div>
         <div
           className="lq-progress"
           role="progressbar"
-          aria-valuemin={1}
-          aria-valuemax={groups.length}
-          aria-valuenow={current + 1}
+          aria-label={t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total))}
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={index + 1}
         >
-          <span style={{ width: `${((current + 1) / groups.length) * 100}%` }} />
+          <span style={{ width: `${((index + 1) / total) * 100}%` }} />
         </div>
 
-        {group.questions.map((question) => (
-          <div
-            key={question.id}
-            className="diag-q"
-            role="group"
-            aria-labelledby={`q-${question.id}`}
-          >
-            <h2 id={`q-${question.id}`} className="lq-q">{tx(question.text_i18n)}</h2>
-            <div className="row" style={{ gap: 8 }}>
-              {question.options.map((option) => {
-                const on = answers[question.id] === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={on}
-                    className={on ? "chip chip-on" : "chip"}
-                    onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: option.value }))}
-                  >
-                    {tx(option.label_i18n)}
-                  </button>
-                );
-              })}
-            </div>
+        <fieldset
+          className="dg-q"
+          key={question.id}
+          aria-labelledby={`${name}-text`}
+          aria-describedby={question.hint_i18n ? `${name}-hint` : undefined}
+        >
+          <h2 ref={heading} id={`${name}-text`} tabIndex={-1} className="dg-question">
+            {tx(question.text_i18n)}
+          </h2>
+          {question.hint_i18n && (
+            <p id={`${name}-hint`} className="muted small dg-hint">{tx(question.hint_i18n)}</p>
+          )}
+
+          <div className="dg-options">
+            {question.options.map((option) => {
+              const on = chosen.includes(option.id);
+              const full = isGoals && !on && chosen.length >= question.max_choices;
+              return (
+                <label key={option.id} className={`dg-option${on ? " on" : ""}${full ? " off" : ""}`}>
+                  <input
+                    type={isGoals ? "checkbox" : "radio"}
+                    name={name}
+                    value={option.id}
+                    checked={on}
+                    disabled={full || saving}
+                    onChange={() => choose(option.id)}
+                  />
+                  <span className="dg-mark" aria-hidden="true" />
+                  <span className="dg-label">{tx(option.label_i18n)}</span>
+                </label>
+              );
+            })}
           </div>
-        ))}
+          {isGoals && (
+            <p className="faint small" aria-live="polite">
+              {t("dg.chosen")
+                .replace("{n}", String(chosen.length))
+                .replace("{max}", String(question.max_choices))}
+            </p>
+          )}
+        </fieldset>
 
-        {saveFailed && <ErrorNote message={t("as.errSave")} />}
+        {error && <ErrorNote message={error} />}
 
-        <div className="spread">
+        <div className="dg-nav">
           <button
             type="button"
-            className="btn btn-ghost btn-sm"
-            onClick={() => go(current - 1)}
-            disabled={current === 0 || saving}
+            className="btn btn-ghost"
+            onClick={() => go(index - 1)}
+            disabled={index === 0 || saving}
           >
-            ← {t("lq.back")}
+            {t("dg.back")}
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            onClick={() => (last ? void submit() : go(current + 1))}
-            disabled={!complete || saving}
+            onClick={() => (last ? void submit() : go(index + 1))}
+            disabled={!answered || saving}
           >
-            {last ? (saving ? t("as.calculating") : t("as.finish")) : `${t("lq.next")} →`}
+            {last ? (saving ? t("dg.saving") : t("dg.finish")) : t("dg.next")}
           </button>
         </div>
       </div>
