@@ -69,6 +69,50 @@ function looksWrongLanguage(plan: Plan, reading: string): boolean {
   return reading === "ru" ? !isCyrillic : isCyrillic;
 }
 
+type Horizon = "1m" | "3m";
+const HORIZONS: ReadonlyArray<Horizon> = ["1m", "3m"];
+const DEFAULT_HORIZON: Horizon = "3m";
+const asHorizon = (value: string | null | undefined): Horizon =>
+  value === "1m" ? "1m" : "3m";
+
+/** "A one-month plan" — older plans were written for six months and more. */
+const HORIZON_LABEL: Record<string, MessageKey | undefined> = {
+  "1m": "plan.for.1m",
+  "3m": "plan.for.3m",
+  "6m": "plan.for.6m",
+  "12m": "plan.for.12m",
+  "36m": "plan.for.36m",
+};
+
+/** One month or three, as a pair of pressed buttons rather than a select:
+ *  two choices are read at a glance, and the chosen one says so in words. */
+function HorizonPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: Horizon;
+  onChange: (next: Horizon) => void;
+  disabled?: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="cat-view" role="group" aria-label={t("plan.horizon")}>
+      {HORIZONS.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={value === option}
+          disabled={disabled}
+          onClick={() => onChange(option)}
+        >
+          {t(option === "1m" ? "plan.h.1m" : "plan.h.3m")}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function PlanPage() {
   const { t, tu, apiLocale } = useI18n();
   /* Read through a ref inside the mount effect rather than added to its
@@ -89,6 +133,10 @@ export default function PlanPage() {
      read as the page being broken. */
   const [building, setBuilding] = useState(false);
   const [busy, setBusy] = useState(false);
+  /* How far ahead the plan looks. A month to get moving, a quarter to change
+     something — the two she can actually hold in her head. A draft or plan
+     she already has keeps the horizon it was written for. */
+  const [horizon, setHorizon] = useState<Horizon>(DEFAULT_HORIZON);
     /* The key, not the sentence. Translating at the moment the request fails
      froze whatever language was current then — and the locale is restored from
      storage in an effect, so a request that failed first put an Uzbek sentence
@@ -140,7 +188,7 @@ export default function PlanPage() {
               if (arrived) { clearPlanGenerating(); setDraft(arrived); return; }
             }
             clearPlanGenerating();
-            const made = await portal.generatePlan("6m", localeRef.current);
+            const made = await portal.generatePlan(DEFAULT_HORIZON, localeRef.current);
             if (!cancelled) setDraft(made);
           } catch {
             if (!cancelled) setError("plan.errMake");
@@ -184,7 +232,7 @@ export default function PlanPage() {
     rebuilding.current = true;
     setBusy(true);
     portal
-      .generatePlan("6m", apiLocale)
+      .generatePlan(asHorizon(draft.horizon), apiLocale)
       .then(setDraft)
       .catch(() => setError("plan.errMake"))
       .finally(() => {
@@ -193,10 +241,17 @@ export default function PlanPage() {
       });
   }, [draft, apiLocale, busy]);
 
-  async function generate() {
+  // The toggle follows whatever is on screen: a draft or plan written for one
+  // month opens with "1 month" selected, so "build" rebuilds what she sees.
+  useEffect(() => {
+    const current = draft ?? plan;
+    if (current) setHorizon(asHorizon(current.horizon));
+  }, [draft, plan]);
+
+  async function generate(chosen: Horizon = horizon) {
     setBusy(true); setError(null);
     try {
-      setDraft(await portal.generatePlan("6m", apiLocale));
+      setDraft(await portal.generatePlan(chosen, apiLocale));
     } catch {
       setError("plan.errMake");
     } finally { setBusy(false); }
@@ -237,9 +292,12 @@ export default function PlanPage() {
           <h1>{t("plan.title")}</h1>
         </div>
         {plan && !draft && (
-          <button className="btn btn-outline btn-sm" onClick={generate} disabled={busy}>
-            {t(busy ? "plan.building" : "plan.new")}
-          </button>
+          <div className="plan-make">
+            <HorizonPicker value={horizon} onChange={setHorizon} disabled={busy} />
+            <button className="btn btn-outline btn-sm" onClick={() => generate()} disabled={busy}>
+              {t(busy ? "plan.building" : "plan.new")}
+            </button>
+          </div>
         )}
       </div>
 
@@ -250,9 +308,12 @@ export default function PlanPage() {
           title={t("plan.none")}
           hint={t("plan.noneHint")}
           action={
-            <button className="btn btn-primary" onClick={generate} disabled={busy}>
-              {t(busy ? "plan.building" : "plan.make")}
-            </button>
+            <div className="plan-make plan-make-center">
+              <HorizonPicker value={horizon} onChange={setHorizon} disabled={busy} />
+              <button className="btn btn-primary" onClick={() => generate()} disabled={busy}>
+                {t(busy ? "plan.building" : "plan.make")}
+              </button>
+            </div>
           }
         />
       )}
@@ -262,6 +323,22 @@ export default function PlanPage() {
           {draft && (
             <div className="notice notice-warn">
               <strong>{t("plan.draftNotice1")}</strong> {t("plan.draftNotice2")}
+            </div>
+          )}
+
+          {/* A proposal can be rewritten for the other horizon before she
+              accepts it — the choice belongs before the commitment. */}
+          {draft && (
+            <div className="plan-make">
+              <HorizonPicker
+                value={horizon}
+                onChange={(next) => {
+                  setHorizon(next);
+                  if (next !== asHorizon(draft.horizon)) void generate(next);
+                }}
+                disabled={busy}
+              />
+              {busy && <span className="faint small">{t("plan.building")}</span>}
             </div>
           )}
 
@@ -276,7 +353,7 @@ export default function PlanPage() {
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
-                onClick={generate}
+                onClick={() => generate()}
                 disabled={busy}
               >
                 {busy ? t("common.loading") : t("plan.rebuildHere")}
@@ -288,6 +365,9 @@ export default function PlanPage() {
             <div className="spread">
               <div className="stack" style={{ gap: 4 }}>
                 <h2 style={{ fontSize: "1.25rem" }}>{tu(shown.title)}</h2>
+                {HORIZON_LABEL[shown.horizon] && (
+                  <span className="small muted">{t(HORIZON_LABEL[shown.horizon]!)}</span>
+                )}
                 {shown.summary && <p className="muted small">{tu(shown.summary)}</p>}
               </div>
               <span className={shown.generated_by_ai ? "badge badge-gold" : "badge badge-grey"}>
@@ -412,7 +492,7 @@ export default function PlanPage() {
               <button className="btn btn-outline" onClick={() => setDraft(null)}>
                 {t("common.cancel")}
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={generate} disabled={busy}>
+              <button className="btn btn-ghost btn-sm" onClick={() => generate()} disabled={busy}>
                 {t("plan.another")}
               </button>
             </div>

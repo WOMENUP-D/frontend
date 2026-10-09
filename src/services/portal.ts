@@ -1924,7 +1924,7 @@ export const portal = {
   /** `language` is the locale she is reading in. Without it the server falls
    *  back to a stored column that used to be `uz` for every account, which is
    *  why plans came back in Uzbek on the Russian pages. */
-  generatePlan: (horizon = "6m", language?: string) =>
+  generatePlan: (horizon = "3m", language?: string) =>
     api.post<Plan>("/plans/generate", { horizon, language }),
   acceptPlan: (planId: string) =>
     api.post<Plan>(`/plans/${planId}/accept`, { accepted: true, removed_item_ids: [] }),

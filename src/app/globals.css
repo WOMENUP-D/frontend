@@ -6943,3 +6943,9 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 /* Deleting is set apart at the far end, and asks once before it acts. */
 .cv-delete { color: var(--text-faint); margin-left: auto; }
 .cv-delete:hover, .cv-delete-armed { color: var(--danger); }
+
+/* ---------- Plan length ----------
+   The one-month / three-month choice sits with the button it changes. */
+.plan-make { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.plan-make-center { justify-content: center; }
+.plan-make .cat-view button { min-height: 40px; }
