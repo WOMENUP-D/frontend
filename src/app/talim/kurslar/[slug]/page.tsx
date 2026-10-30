@@ -19,7 +19,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import {
   portal,
@@ -30,6 +30,7 @@ import {
   type ProgramModule,
 } from "@/services/portal";
 import { useApi } from "@/components/learning/useApi";
+import { track } from "@/services/analytics";
 import {
   art,
   isComplete,
@@ -72,6 +73,17 @@ export default function CoursePage() {
   // the ticks become hers, without a reload.
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const current = enrollment ?? data?.enrollment ?? null;
+
+  const courseId = data?.course?.id;
+  const courseSlug = data?.course?.slug;
+  useEffect(() => {
+    if (!courseId) return;
+    track("program_viewed", {
+      entity_type: "program",
+      entity_id: courseId,
+      properties: { slug: courseSlug },
+    });
+  }, [courseId, courseSlug]);
 
   if (error) {
     return (

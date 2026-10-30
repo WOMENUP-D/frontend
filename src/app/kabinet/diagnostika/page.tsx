@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
 import { portal, type DiagnosticQuestion } from "@/services/portal";
+import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useI18n } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
@@ -94,6 +95,12 @@ export default function DiagnosticPage() {
           setResumed(true);
         } else {
           setDraft(freshDraft(list));
+          // The funnel's "began the diagnostic" step. A resumed draft is the
+          // same run continued, so it is not counted again.
+          track("development_test_started", {
+            path: "/kabinet/diagnostika",
+            properties: { resumed: false },
+          });
         }
       })
       .catch(() => setLoadFailed(true));
@@ -181,6 +188,10 @@ export default function DiagnosticPage() {
     setResumed(false);
     setError(null);
     setDraft(freshDraft(questions));
+    track("development_test_started", {
+      path: "/kabinet/diagnostika",
+      properties: { resumed: false },
+    });
   }
 
   async function submit() {

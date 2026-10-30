@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getAccessToken } from "@/services/api";
 import { portal, type Program } from "@/services/portal";
+import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
 import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
@@ -106,6 +107,14 @@ export default function ProgramsPage() {
       .then((result) => {
         setPrograms(result.items);
         setTotal(result.total);
+        // A search is reported as a count of results, never as the text typed:
+        // a search term can be a person's name.
+        if (query) {
+          track("catalogue_search", {
+            path: "/dasturlar",
+            properties: { results: result.total, category: category || undefined },
+          });
+        }
       })
       .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
