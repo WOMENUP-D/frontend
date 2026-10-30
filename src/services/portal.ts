@@ -1742,6 +1742,288 @@ export interface ResultsEvents {
   series: ResultsSeries[];
 }
 
+// ---- Product analytics (admin) -------------------------------------------
+// Did anyone come, who registered, who is still here, where they drop out,
+// which courses they use, is anything broken. Same rules as Results, plus one:
+// a figure whose source only started recording on some date says so in
+// `since`, and is null — never 0 — when that source has never recorded.
+
+export interface AnalyticsFilters {
+  date_from?: string;
+  date_to?: string;
+  /** Count staff accounts' own browsing and actions too. Off by default. */
+  include_staff?: boolean;
+}
+
+export interface AnalyticsScope {
+  period: { date_from: string | null; date_to: string | null; bucket: ResultsBucket };
+  timezone: string;
+  includes_staff: boolean;
+  generated_at: string;
+  cached: boolean;
+  cache_ttl_seconds: number;
+}
+
+export interface Figure {
+  key: string;
+  value: number | null;
+  since: string | null;
+  /** "period" counts the chosen days; "now" is the state today; "live" the last minutes. */
+  kind: "period" | "now" | "live";
+}
+
+export interface Ratio {
+  key: string;
+  value: number | null;
+  numerator: number;
+  denominator: number;
+}
+
+export interface LiveNow {
+  online_now: number;
+  online_signed_in: number;
+  window_minutes: number;
+  as_of: string;
+}
+
+export interface AnalyticsOverview {
+  scope: AnalyticsScope;
+  live: LiveNow;
+  today: Figure[];
+  period: Figure[];
+  active: Figure[];
+  series: ResultsSeries[];
+}
+
+export interface PathStat {
+  path: string;
+  views: number;
+  visitors: number;
+}
+
+export interface AnalyticsTraffic {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  ratios: Ratio[];
+  series: ResultsSeries[];
+  pages: PathStat[];
+  landing: PathStat[];
+  exits: PathStat[];
+  referrers: ResultsGroup[];
+  devices: ResultsGroup[];
+  browsers: ResultsGroup[];
+  systems: ResultsGroup[];
+  locales: ResultsGroup[];
+  collected: Record<string, string | null>;
+}
+
+export interface Stage {
+  key: string;
+  value: number | null;
+  since: string | null;
+  of_previous: number | null;
+  of_first: number | null;
+}
+
+export interface AnalyticsAccounts {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  rates: ResultsRate[];
+  series: ResultsSeries[];
+  by_status: ResultsGroup[];
+  by_provider: ResultsGroup[];
+  by_language: ResultsGroup[];
+  registration: Stage[];
+}
+
+export interface CohortCell {
+  week: number;
+  value: number;
+  share: number | null;
+  complete: boolean;
+}
+
+export interface Cohort {
+  starts: string;
+  size: number;
+  cells: CohortCell[];
+}
+
+export interface AnalyticsEngagement {
+  scope: AnalyticsScope;
+  active: Figure[];
+  series: ResultsSeries[];
+  cohorts: Cohort[];
+  returning: Figure;
+  visits_since: string | null;
+}
+
+export interface AnalyticsFunnel {
+  scope: AnalyticsScope;
+  acquisition: Stage[];
+  journey: Stage[];
+  diagnostic: Stage[];
+}
+
+export interface ProgramStat {
+  id: string;
+  slug: string;
+  title_i18n: Record<string, string>;
+  is_published: boolean;
+  views: number | null;
+  viewers: number | null;
+  enrolled: number;
+  started: number;
+  in_progress_now: number;
+  completed: number;
+  stalled: number;
+  completion: ResultsRate;
+}
+
+export type ProgramStatSort =
+  | "enrolled"
+  | "started"
+  | "completed"
+  | "completion"
+  | "views"
+  | "stalled"
+  | "title";
+
+export interface AnalyticsPrograms {
+  scope: AnalyticsScope;
+  items: ProgramStat[];
+  total: number;
+  page: number;
+  size: number;
+  views_since: string | null;
+}
+
+export interface AnalyticsFeatures {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  ai_by_feature: ResultsGroup[];
+  series: ResultsSeries[];
+}
+
+export interface ActivityItem {
+  id: string;
+  name: string;
+  occurred_at: string;
+  actor: string | null;
+  region: string | null;
+  entity_type: string | null;
+  title_i18n: Record<string, string> | null;
+  properties: Record<string, string | number | boolean>;
+}
+
+export interface AnalyticsActivity {
+  scope: AnalyticsScope;
+  items: ActivityItem[];
+  total: number;
+  page: number;
+  size: number;
+  since: string | null;
+}
+
+export interface AnalyticsErrors {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  series: ResultsSeries[];
+  by_route: ResultsGroup[];
+  by_status: ResultsGroup[];
+  since: string | null;
+}
+
+/** Query string for the analytics endpoints: the period plus the staff switch. */
+function analyticsQuery(f: AnalyticsFilters, extra: Record<string, string | undefined> = {}): string {
+  return queryOf({
+    date_from: f.date_from,
+    date_to: f.date_to,
+    include_staff: f.include_staff ? "true" : undefined,
+    ...extra,
+  });
+}
+
+// ---- Participant roster (admin) -----------------------------------------
+// One row per woman. `name` and `email` (masked) arrive only for an
+// administrator; everyone else reads `tag`, a pseudonym that is the same for
+// the same account here and on the activity timeline.
+
+export interface RosterRow {
+  id: string;
+  tag: string;
+  name: string | null;
+  email: string | null;
+  region: string | null;
+  status: string;
+  language: string;
+  joined_at: string;
+  last_active_at: string | null;
+  onboarded: boolean;
+  views: number;
+  sessions: number;
+  active_days: number;
+  score: number | null;
+  score_measured_at: string | null;
+  diagnostics: number;
+  last_diagnostic_at: string | null;
+  courses_enrolled: number;
+  courses_completed: number;
+  certificates: number;
+  plan_accepted: boolean;
+  ai_requests: number;
+  applications: number;
+  cv_entries: number;
+}
+
+export interface Roster {
+  scope: { region: string | null; identifiers: boolean; views_since: string | null; generated_at: string };
+  items: RosterRow[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export type RosterSort = "last_active" | "joined" | "score" | "views" | "active_days" | "courses" | "name";
+
+export interface RosterQuery {
+  region?: string;
+  status?: string;
+  search?: string;
+  sort?: RosterSort;
+  order?: "asc" | "desc";
+  page?: number;
+  size?: number;
+}
+
+export interface RosterCard {
+  row: RosterRow;
+  dimensions: { dimension: string; baseline: number; current: number; target: number | null }[];
+  courses: {
+    program_id: string;
+    slug: string;
+    title_i18n: Record<string, string>;
+    status: string;
+    progress_percent: number;
+    started_at: string | null;
+    completed_at: string | null;
+    certificate: boolean;
+  }[];
+  events: { name: string; occurred_at: string; title_i18n: Record<string, string> | null }[];
+}
+
+function rosterQuery(q: RosterQuery): string {
+  return queryOf({
+    region: q.region || undefined,
+    status: q.status || undefined,
+    search: q.search || undefined,
+    sort: q.sort,
+    order: q.order,
+    page: q.page ? String(q.page) : undefined,
+    size: q.size ? String(q.size) : undefined,
+  });
+}
+
 export interface AdminFilters {
   date_from?: string;
   date_to?: string;
@@ -2215,6 +2497,9 @@ export const portal = {
     q.set("offset", String(params.offset ?? 0));
     return api.get<AdminUser[]>(`/admin/users?${q}`);
   },
+  roster: (q: RosterQuery = {}) => api.get<Roster>(`/admin/users/roster${rosterQuery(q)}`),
+  rosterCard: (userId: string) => api.get<RosterCard>(`/admin/users/${userId}/card`),
+  rosterExport: (q: RosterQuery = {}) => api.text(`/admin/users/roster/export${rosterQuery(q)}`),
   adminAudit: (limit = 60) => api.get<AuditEntry[]>(`/admin/audit?limit=${limit}`),
   assignRole: (userId: string, role: string) =>
     api.post<{ detail: string }>(`/admin/users/${userId}/roles`, { role }),
@@ -2222,6 +2507,53 @@ export const portal = {
     api.delete<{ detail: string }>(`/admin/users/${userId}/roles/${role}`),
   regionStats: () => api.get<Array<{ region: string; users: number }>>("/admin/stats/regions"),
 
+  analytics: {
+    definitions: () => api.get<Record<string, string>>("/admin/analytics/definitions"),
+    live: (f: AnalyticsFilters) => api.get<LiveNow>(`/admin/analytics/live${analyticsQuery(f)}`),
+    overview: (f: AnalyticsFilters) =>
+      api.get<AnalyticsOverview>(`/admin/analytics/overview${analyticsQuery(f)}`),
+    traffic: (f: AnalyticsFilters) =>
+      api.get<AnalyticsTraffic>(`/admin/analytics/traffic${analyticsQuery(f)}`),
+    accounts: (f: AnalyticsFilters) =>
+      api.get<AnalyticsAccounts>(`/admin/analytics/accounts${analyticsQuery(f)}`),
+    engagement: (f: AnalyticsFilters) =>
+      api.get<AnalyticsEngagement>(`/admin/analytics/engagement${analyticsQuery(f)}`),
+    funnel: (f: AnalyticsFilters) =>
+      api.get<AnalyticsFunnel>(`/admin/analytics/funnel${analyticsQuery(f)}`),
+    programs: (
+      f: AnalyticsFilters,
+      q: {
+        search?: string;
+        sort?: ProgramStatSort;
+        order?: "asc" | "desc";
+        page?: number;
+        size?: number;
+        lang?: "uz" | "ru" | "en";
+      },
+    ) =>
+      api.get<AnalyticsPrograms>(
+        `/admin/analytics/programs${analyticsQuery(f, {
+          search: q.search || undefined,
+          sort: q.sort,
+          order: q.order,
+          page: q.page ? String(q.page) : undefined,
+          size: q.size ? String(q.size) : undefined,
+          lang: q.lang,
+        })}`,
+      ),
+    features: (f: AnalyticsFilters) =>
+      api.get<AnalyticsFeatures>(`/admin/analytics/features${analyticsQuery(f)}`),
+    activity: (f: AnalyticsFilters, q: { page?: number; size?: number; name?: string }) =>
+      api.get<AnalyticsActivity>(
+        `/admin/analytics/activity${analyticsQuery(f, {
+          page: q.page ? String(q.page) : undefined,
+          size: q.size ? String(q.size) : undefined,
+          names: q.name || undefined,
+        })}`,
+      ),
+    errors: (f: AnalyticsFilters) =>
+      api.get<AnalyticsErrors>(`/admin/analytics/errors${analyticsQuery(f)}`),
+  },
   results: {
     overview: (f: ResultsFilters) => api.get<ResultsOverview>(`/admin/results/overview${queryOf(f)}`),
     learning: (f: ResultsFilters) => api.get<ResultsLearning>(`/admin/results/learning${queryOf(f)}`),
