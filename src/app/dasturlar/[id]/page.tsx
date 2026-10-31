@@ -17,6 +17,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getAccessToken } from "@/services/api";
 import { portal, type Program, type ProgramDetail } from "@/services/portal";
+import { track } from "@/services/analytics";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey } from "@/utils/format";
 import { Loading } from "@/components/ui";
@@ -54,6 +55,17 @@ export default function ProgramPage() {
       .programs(`?category=${program.category}&size=4`)
       .then((page) => setRelated(page.items.filter((p) => p.id !== program.id).slice(0, 3)))
       .catch(() => setRelated([]));
+  }, [program]);
+
+  // Which courses are read, as opposed to enrolled in: the catalogue's own
+  // funnel. The id is the course's, never hers.
+  useEffect(() => {
+    if (!program) return;
+    track("program_viewed", {
+      entity_type: "program",
+      entity_id: program.id,
+      properties: { slug: program.slug },
+    });
   }, [program]);
 
   useEffect(() => {

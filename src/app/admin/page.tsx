@@ -2,33 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, getAccessToken, getRoles, staffHome } from "@/services/api";
-import { portal, type TrafficReport } from "@/services/portal";
+import { getAccessToken, getRoles, staffHome } from "@/services/api";
 import { AdminUsers } from "./AdminUsers";
 import { AdminAudit } from "./AdminAudit";
 import { AdminOrgs } from "./AdminOrgs";
 import { Results } from "@/components/results/Results";
-import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
-import { useI18n, type MessageKey } from "@/i18n";
+import { Analytics } from "@/components/analytics/Analytics";
+import { Loading, NeedsAuth } from "@/components/ui";
+import { useI18n } from "@/i18n";
 
-type Tab = "results" | "traffic" | "users" | "orgs" | "audit";
+type Tab = "analytics" | "results" | "users" | "orgs" | "audit";
 
 export default function AdminPage() {
   const { t } = useI18n();
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [forbidden, setForbidden] = useState(false);
-  const [traffic, setTraffic] = useState<TrafficReport | null>(null);
-  const [tab, setTab] = useState<Tab>("results");
   // Organisations are the administrators' alone; the server refuses anyone else.
   const [isAdmin, setIsAdmin] = useState(false);
   // A regional coordinator's region is decided by the server, not picked here.
+  // The national analytics — traffic, funnels, errors — have no region to
+  // scope to, so they are for the same two roles that may pick one.
   const [canPickRegion, setCanPickRegion] = useState(false);
-  const [days, setDays] = useState(30);
-  /* The key, not the sentence: translated on every render, so an error that
-     arrived before the stored locale was restored still follows the language
-     switch instead of freezing in whatever language was current then. */
-  const [error, setError] = useState<MessageKey | null>(null);
+  const [tab, setTab] = useState<Tab>("results");
 
   useEffect(() => {
     const token = getAccessToken();
@@ -39,8 +34,12 @@ export default function AdminPage() {
     // cabinet rather than shown a dashboard of zeros and a load error. The
     // server refuses her either way; this only spares her the broken page.
     const roles = getRoles();
+    const national = roles.includes("admin") || roles.includes("moderator");
     setIsAdmin(roles.includes("admin"));
-    setCanPickRegion(roles.includes("admin") || roles.includes("moderator"));
+    setCanPickRegion(national);
+    // The administrator's first screen is the one that answers "is anyone
+    // here": the analytics. A coordinator opens on her region's results.
+    if (national) setTab("analytics");
     if (!roles.some((role) => role !== "user" && role !== "mother")) {
       router.replace("/kabinet");
       return;
@@ -49,31 +48,16 @@ export default function AdminPage() {
     if (staffHome() === "/hamkor") router.replace("/hamkor");
   }, [router]);
 
-  useEffect(() => {
-    if (tab !== "traffic" || !authed) return;
-    setError(null);
-    portal
-      .traffic(days)
-      .then(setTraffic)
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 403) setForbidden(true);
-        else setError("ad.errLoad");
-      });
-  }, [tab, days, authed]);
-
-  if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
-  if (authed === null) return <main className="wrap page"><Loading rows={4} /></main>;
-
-  if (forbidden) {
+  // The staff door, not the learner's: a coordinator sent to /login could
+  // never get in from there.
+  if (authed === false) {
     return (
       <main className="wrap page">
-        <Empty
-          title={t("ad.forbidden")}
-          hint={t("ad.forbiddenHint")}
-        />
+        <NeedsAuth href="/admin/login" hint={t("ad.signInHint")} />
       </main>
     );
   }
+  if (authed === null) return <main className="wrap page"><Loading rows={4} /></main>;
 
   const link = (value: Tab, label: string) => (
     <button
@@ -96,8 +80,8 @@ export default function AdminPage() {
 
         <div className="aw-group">
           <span>{t("aw.sectionOverview")}</span>
+          {canPickRegion && link("analytics", t("an.tab"))}
           {link("results", t("res.tab"))}
-          {link("traffic", t("ap.tabTraffic"))}
         </div>
 
         <div className="aw-group">
@@ -118,7 +102,7 @@ export default function AdminPage() {
             <div className="aw-head">
               <h1 className="aw-h1">{t("ap.tabUsers")}</h1>
             </div>
-            <AdminUsers />
+            <AdminUsers canPickRegion={canPickRegion} />
           </>
         ) : tab === "orgs" ? (
           <>
@@ -134,110 +118,12 @@ export default function AdminPage() {
             </div>
             <AdminAudit />
           </>
-        ) : tab === "traffic" ? (
-          <>
-            <div className="aw-head">
-              <h1 className="aw-h1">{t("ap.tabTraffic")}</h1>
-              <PeriodPicker days={days} onChange={setDays} />
-            </div>
-            {error && <ErrorNote message={t(error)} />}
-            {traffic ? <TrafficPanel data={traffic} /> : !error && <Loading rows={3} />}
-          </>
+        ) : tab === "analytics" && canPickRegion ? (
+          <Analytics />
         ) : (
           <Results canPickRegion={canPickRegion} />
         )}
       </div>
     </main>
-  );
-}
-
-function PeriodPicker({ days, onChange }: { days: number; onChange: (n: number) => void }) {
-  const { t } = useI18n();
-  return (
-    <div className="row" style={{ gap: 8 }}>
-      <span className="faint">{t("ap.period")}</span>
-      {([[7, "ap.days7"], [30, "ap.days30"], [90, "ap.days90"]] as const).map(([n, label]) => (
-        <button
-          key={n}
-          type="button"
-          className={days === n ? "chip chip-on" : "chip"}
-          onClick={() => onChange(n)}
-        >
-          {t(label)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-
-/**
- * Site traffic.
- *
- * Every other number on this dashboard counts people who already registered.
- * This one counts everybody who arrived — which is the only way to see how many
- * never got as far as an account.
- */
-function TrafficPanel({ data }: { data: TrafficReport }) {
-  const { t } = useI18n();
-  const peak = Math.max(1, ...data.by_day.map((d) => d.visitors));
-  const maxPath = Math.max(1, ...data.top_paths.map((p) => p.views));
-
-  return (
-    <div className="stack" style={{ gap: 16 }}>
-      <div className="spread" style={{ marginBottom: 2 }}>
-        <span className="eyebrow">{t("tr.title")}</span>
-        <span className="faint">{t("tr.note")}</span>
-      </div>
-
-      <div className="traffic-tiles">
-        {[
-          [t("tr.today"), data.visitors_today, `${data.views_today} ${t("tr.viewsOf")}`],
-          [t("tr.week"), data.visitors_7d, t("tr.visitorsOf")],
-          [t("tr.month"), data.visitors_30d, `${data.views_30d} ${t("tr.viewsOf")}`],
-          [t("tr.signedIn"), `${data.signed_in_share}%`, t("tr.month").toLowerCase()],
-          [t("tr.returning"), `${data.returning_share}%`, t("tr.month").toLowerCase()],
-        ].map(([label, value, note]) => (
-          <div key={String(label)} className="traffic-tile">
-            <span className="faint">{label}</span>
-            <strong className="figure">{value}</strong>
-            <span className="faint">{note}</span>
-          </div>
-        ))}
-      </div>
-
-      {data.by_day.length > 0 ? (
-        <div className="stack" style={{ gap: 8 }}>
-          <span className="faint">{t("tr.byDay")}</span>
-          <div className="traffic-chart" role="img" aria-label={t("tr.byDay")}>
-            {data.by_day.map((point) => (
-              <span
-                key={point.day}
-                className="traffic-bar"
-                style={{ height: `${Math.max(4, (point.visitors / peak) * 100)}%` }}
-                title={`${point.day} · ${point.visitors} / ${point.views}`}
-              />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <p className="muted small">{t("tr.empty")}</p>
-      )}
-
-      {data.top_paths.length > 0 && (
-        <div className="stack" style={{ gap: 6 }}>
-          <span className="faint">{t("tr.topPages")}</span>
-          {data.top_paths.map((row) => (
-            <div key={row.path} className="traffic-path">
-              <code className="small">{row.path}</code>
-              <span className="traffic-path-bar">
-                <span style={{ width: `${(row.views / maxPath) * 100}%` }} />
-              </span>
-              <span className="small figure">{row.views}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }

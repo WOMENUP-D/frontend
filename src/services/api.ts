@@ -5,6 +5,8 @@
  * are defined once.
  */
 
+import { currentSession } from "./session";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
 const ACCESS_TOKEN_KEY = "womanup.access_token";
@@ -158,11 +160,18 @@ export async function request<T>(
 ): Promise<T> {
   const token = getAccessToken();
 
+  const session = currentSession();
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
+    // The first-party visitor cookie travels with every call, so an event the
+    // server records beside a record — a registration, an enrollment — can be
+    // tied to the visit that led to it. Same-origin in production; needed for
+    // the cross-origin development setup.
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(session ? { "X-WU-Session": session } : {}),
       ...options.headers,
     },
   });
@@ -198,6 +207,7 @@ export async function request<T>(
 export async function requestText(path: string, retrying = false): Promise<string> {
   const token = getAccessToken();
   const response = await fetch(`${BASE_URL}${path}`, {
+    credentials: "include",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (response.status === 401 && !retrying && token && (await refreshTokens())) {

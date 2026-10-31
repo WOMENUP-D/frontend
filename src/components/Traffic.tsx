@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Records one page view per navigation.
+ * Records one page view per navigation, keeps presence alive while the tab is
+ * visible, and reports scripts that fail.
  *
  * Nothing counted visits before this: the dashboard could report registered
  * and active accounts, but a woman who read the catalogue and left — or any of
@@ -13,9 +14,12 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { getAccessToken } from "@/services/api";
+import { heartbeat, installErrorTracking, optedOut, recordView } from "@/services/analytics";
+import { touchSession } from "@/services/session";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+// How often a visible tab says "still here". The server counts a visitor as
+// online for five minutes after the last signal, so once a minute is enough.
+const HEARTBEAT_MS = 60_000;
 
 export function Traffic() {
   const pathname = usePathname();
@@ -26,29 +30,37 @@ export function Traffic() {
   useEffect(() => {
     if (!pathname || lastSent.current === pathname) return;
     lastSent.current = pathname;
+    if (optedOut()) return;
 
-    const locale =
-      typeof window !== "undefined" ? window.localStorage.getItem("womanup.locale") : null;
+    const locale = window.localStorage.getItem("womanup.locale");
+    const session = touchSession();
 
-    // Without the token every view records as anonymous and the dashboard's
-    // "signed in" share sits at zero however many members are browsing.
-    const token = getAccessToken();
-
-    void fetch(`${BASE_URL}/analytics/view`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      // Carries the first-party visitor cookie so the same person is not
-      // counted afresh on every page.
-      credentials: "include",
-      body: JSON.stringify({ path: pathname, locale }),
-      keepalive: true,
-    }).catch(() => {
-      /* analytics is never worth an error in front of a user */
+    recordView({
+      path: pathname,
+      locale,
+      session: session?.id ?? null,
+      // The first screen of a session is the landing page, and the referrer
+      // is read there and nowhere else: a click between two portal pages is
+      // navigation, not a source.
+      entry: session?.started ?? false,
+      referrer: session?.started ? document.referrer || undefined : undefined,
     });
   }, [pathname]);
+
+  useEffect(() => {
+    if (optedOut()) return;
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      touchSession();
+      heartbeat(window.location.pathname);
+    };
+    const timer = window.setInterval(tick, HEARTBEAT_MS);
+    const uninstall = installErrorTracking();
+    return () => {
+      window.clearInterval(timer);
+      uninstall();
+    };
+  }, []);
 
   return null;
 }
