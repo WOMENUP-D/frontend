@@ -243,7 +243,7 @@ function ProfileSummary({
 }
 
 export default function CabinetPage() {
-  const { t } = useI18n();
+  const { t, tu } = useI18n();
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -444,7 +444,7 @@ export default function CabinetPage() {
               <EdRows>
                 <EdRow
                   index="01"
-                  title={plan.title}
+                  title={tu(plan.title)}
                   meta={`${plan.items.length} ${t("cab.steps")} · ${plan.progress_percent}%`}
                   arrow={false}
                   side={

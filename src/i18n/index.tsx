@@ -11,12 +11,13 @@ import {
 } from "react";
 import { messages, type MessageKey } from "./messages";
 import { toCyrillic } from "./translit";
+import { toNewAlphabet, toNewAlphabetIfUzbek } from "./uzbek";
 
 /** uz-Cyrl is the same language as uz in a different script — see translit.ts. */
 export type Locale = "uz" | "uz-Cyrl" | "ru" | "en";
 
 export const LOCALES: ReadonlyArray<{ code: Locale; short: string; title: string }> = [
-  { code: "uz", short: "UZ", title: "O'zbekcha (lotin)" },
+  { code: "uz", short: "UZ", title: "Özbekça (lotin)" },
   { code: "uz-Cyrl", short: "ЎЗ", title: "Ўзбекча (кирилл)" },
   { code: "ru", short: "RU", title: "Русский" },
   { code: "en", short: "EN", title: "English" },
@@ -100,14 +101,22 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       // Prefer the requested language, then Uzbek, then whatever exists.
       const text =
         field[written] ?? field.uz ?? Object.values(field)[0] ?? "";
-      // Only an Uzbek source can be transliterated; ru/en stay as they are.
-      const isUzbekSource = field[written] === undefined || written === "uz";
-      return typeset(cyrillic && isUzbekSource ? toCyrillic(text) : text);
+      // Only an Uzbek source is converted or transliterated; ru/en stay as
+      // they are — including a Russian or English fallback shown for want of
+      // an Uzbek field.
+      const isUzbekSource = field[written] !== undefined ? written === "uz" : field.uz !== undefined;
+      // Uzbek stored in the old digraphs is brought to the reformed alphabet
+      // before anything else reads it — see uzbek.ts.
+      const reformed = isUzbekSource ? toNewAlphabet(text) : text;
+      return typeset(cyrillic && isUzbekSource ? toCyrillic(reformed) : reformed);
     };
 
     const tu = (text: string | null | undefined): string => {
       if (!text) return "";
-      return typeset(cyrillic ? toCyrillic(text) : text);
+      // Free text may be in her own language: a plan written in English must
+      // not have its "ch" and "sh" rewritten, so only evident Uzbek converts.
+      const reformed = toNewAlphabetIfUzbek(text);
+      return typeset(cyrillic ? toCyrillic(reformed) : reformed);
     };
 
     return { locale, setLocale, t, tx, tu, apiLocale: written as "uz" | "ru" | "en" };
