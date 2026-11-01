@@ -38,19 +38,23 @@ const HOME = "/kabinet";
 /**
  * The ready-made account for a demonstration build.
  *
- * Written against `process.env.NEXT_PUBLIC_DEMO` directly rather than through
- * `showDemo()`: the compiler replaces the variable at build time and drops the
- * whole branch, so a production bundle carries no password at all. Behind a
- * function call it could not know that, and the credentials shipped to every
- * visitor of the sign-in page — where the administrator's password was the
- * same string with one character added.
+ * Written against `process.env.NEXT_PUBLIC_DEMO*` directly rather than
+ * through `showDemo()`: the compiler replaces the variables at build time and
+ * drops the whole branch, so a production bundle carries no credentials at
+ * all. The values themselves are supplied by the demo deployment's
+ * environment; nothing of the kind is written in this file.
  */
 const DEMO_ACCOUNTS =
-  process.env.NEXT_PUBLIC_DEMO === "true"
+  process.env.NEXT_PUBLIC_DEMO === "true" &&
+  process.env.NEXT_PUBLIC_DEMO_EMAIL &&
+  process.env.NEXT_PUBLIC_DEMO_PASSWORD
     ? ([
         {
-          email: "demo@womanup.uz",
-          password: "WomanUP2026",
+          // The demo credentials come from the demo deployment's own
+          // environment, never from the source: a password in a repository is
+          // a password in every clone and every history.
+          email: process.env.NEXT_PUBLIC_DEMO_EMAIL,
+          password: process.env.NEXT_PUBLIC_DEMO_PASSWORD,
           label: "login.roleUser",
           hint: "login.hintUser",
         },
