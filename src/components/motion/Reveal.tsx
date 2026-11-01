@@ -70,6 +70,8 @@ type RevealProps<T extends RevealTag> = Omit<ComponentPropsWithoutRef<T>, "child
   as?: T;
   /** Children arrive one after another instead of the block arriving whole. */
   stagger?: boolean;
+  /** Called once, when the block first scrolls into view. */
+  onEnter?: () => void;
   children?: ReactNode;
 };
 
@@ -77,17 +79,23 @@ export function Reveal<T extends RevealTag = "div">({
   as,
   stagger = false,
   className,
+  onEnter,
   children,
   ...rest
 }: RevealProps<T>) {
   const ref = useRef<HTMLElement>(null);
   const [entered, setEntered] = useState(false);
+  const enter = useRef(onEnter);
+  enter.current = onEnter;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     markMotion();
-    return whenVisible(el, () => setEntered(true));
+    return whenVisible(el, () => {
+      setEntered(true);
+      enter.current?.();
+    });
   }, []);
 
   return createElement(

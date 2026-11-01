@@ -16,7 +16,9 @@
  * Mirrors `app/services/uzbek.py` on the server; keep the two in step.
  */
 
-const OKINA_LIKE = "ʻ‘";
+// After an o or a g, the left quote, the right quote and the plain apostrophe
+// all mean the letter mark ʻ; anywhere else they are the glottal stop (taʼlim).
+const OKINA_LIKE = "ʻ‘’'";
 const FOREIGN = /[wW]|[cC](?![hH])|[pP][hH]|[tT][hH]|[cC][kK]|[a-z][A-Z]/;
 const PROTECTED = new Set(["charpentier", "shopify", "chrome", "chanel", "porsche", "bosch"]);
 const WORD = /[A-Za-zÖöĞğŞşÇç][A-Za-z0-9ÖöĞğŞşÇçʻʼ‘’'-]*/g;
