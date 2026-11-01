@@ -140,31 +140,35 @@ const ROAD_PATH =
   "M80 240 C 160 240, 210 120, 290 120 S 420 240, 500 240 S 630 120, 710 120 " +
   "S 840 240, 920 240 S 1040 120, 1120 120";
 
-/** How long the drop of light takes to walk the route. The stops bloom on the
- *  same clock in globals.css (.road.is-in), one every fifth of it. */
-const WALK = "3.2s";
+/** The drop of light walks the route without end: 1.5 s between stops, a
+ *  0.6 s rest at each of the four middle stops, a fade out at the last one
+ *  and a fade in at the first. One lap is 10.5 s. The stops' rings in
+ *  globals.css (.road.is-in) open on the same clock, so each one blooms as
+ *  the light reaches it, every lap. */
+const LAP = "10.5s";
+// The light reaches the stops at 0, 1.5, 3.6, 5.7, 7.8 and 9.9 s of the lap;
+// the ring delays in globals.css are those figures.
+const KEY_TIMES = [0, 1.5, 2.1, 3.6, 4.2, 5.7, 6.3, 7.8, 8.4, 9.9, 10.5]
+  .map((second) => (second / 10.5).toFixed(4))
+  .join(";");
+const KEY_POINTS = "0;0.2;0.2;0.4;0.4;0.6;0.6;0.8;0.8;1;1";
 
 export function Roadmap() {
   const { t } = useI18n();
   const walker = useRef<SVGAnimateMotionElement>(null);
-  // idle: hidden at the start of the route; walking: on its way; done: faded
-  // out on the last stop. Under reduced motion the light never appears.
-  const [phase, setPhase] = useState<"idle" | "walking" | "done">("idle");
+  // Hidden at the start of the route until the section arrives; then on its
+  // way for good. Under reduced motion the light never appears.
+  const [walking, setWalking] = useState(false);
   const [still, setStill] = useState(false);
 
   useEffect(() => {
     setStill(reducedMotion());
-    const el = walker.current;
-    if (!el) return;
-    const finish = () => setPhase("done");
-    el.addEventListener("endEvent", finish);
-    return () => el.removeEventListener("endEvent", finish);
   }, []);
 
   const walk = () => {
     const el = walker.current;
     if (!el || reducedMotion()) return;
-    setPhase("walking");
+    setWalking(true);
     el.beginElement();
   };
 
@@ -180,10 +184,24 @@ export function Roadmap() {
           <svg className="road-line" viewBox="0 0 1200 340" aria-hidden="true">
             <path d={ROAD_PATH} />
             {!still && (
-              <g className={`road-walker${phase === "walking" ? " is-walking" : ""}`}>
-                <circle r="12" className="road-walker-halo" />
-                <circle r="4.5" className="road-walker-dot" />
-                <animateMotion ref={walker} dur={WALK} begin="indefinite" fill="freeze" path={ROAD_PATH} />
+              <g className={`road-walker${walking ? " is-walking" : ""}`}>
+                {/* The inner group fades out on the last stop and in on the
+                    first (road-fade in globals.css, on the same 10.5 s clock),
+                    so the lap never shows the light jumping back. */}
+                <g className="road-walker-body">
+                  <circle r="12" className="road-walker-halo" />
+                  <circle r="4.5" className="road-walker-dot" />
+                </g>
+                <animateMotion
+                  ref={walker}
+                  dur={LAP}
+                  begin="indefinite"
+                  repeatCount="indefinite"
+                  calcMode="linear"
+                  keyTimes={KEY_TIMES}
+                  keyPoints={KEY_POINTS}
+                  path={ROAD_PATH}
+                />
               </g>
             )}
           </svg>
@@ -197,7 +215,7 @@ export function Roadmap() {
             >
               <span className="road-dot" aria-hidden="true" />
               <span className="road-label">
-                <span className="road-n">{String(index + 1).padStart(2, "0")}</span>
+                <span className="road-n">{index + 1}</span>
                 <span className="road-t">{t(stop.t)}</span>
                 <span className="road-d">{t(stop.d)}</span>
               </span>
