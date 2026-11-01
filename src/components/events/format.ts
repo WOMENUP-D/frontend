@@ -27,8 +27,8 @@ const UZ = {
   "uz": {
     months: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"],
     short: ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"],
-    days: ["dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba", "yakshanba"],
-    dayShort: ["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"],
+    days: ["duşanba", "seşanba", "çorşanba", "payşanba", "juma", "şanba", "yakşanba"],
+    dayShort: ["Du", "Se", "Ço", "Pa", "Ju", "Şa", "Ya"],
     date: (day: number, month: string) => `${day}-${month}`,
   },
   "uz-Cyrl": {

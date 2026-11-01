@@ -52,7 +52,9 @@ export interface StudyYear {
   columns: (StudyDay | null)[][];
   /** The month label that belongs over each column, blank where the month
    *  did not change there. */
-  monthAt: string[];
+  /** 1-based month number over the column its month begins in, null elsewhere;
+   *  the component names it in the reader's language. */
+  monthAt: (number | null)[];
   today: StudyDay;
   totals: {
     lessons: number;
@@ -66,7 +68,6 @@ export interface StudyYear {
 const DAY_MS = 86_400_000;
 export const COLUMNS = 53;
 
-const MONTHS_UZ = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
 
 /**
  * The five bands, from an empty day to the busiest.
@@ -84,35 +85,35 @@ const SOURCES: { course: Text; tone: string; titles: Text[] }[] = [
     tone: "#8e4a5c",
     titles: [
       { uz: "Debet va kredit", ru: "Дебет и кредит", en: "Debit and credit" },
-      { uz: "Birlamchi hujjatlar", ru: "Первичные документы", en: "Source documents" },
-      { uz: "1C: birinchi kirish", ru: "1С: первый вход", en: "1C: first look" },
+      { uz: "Birlamçi hujjatlar", ru: "Первичные документы", en: "Source documents" },
+      { uz: "1C: birinçi kiriş", ru: "1С: первый вход", en: "1C: first look" },
     ],
   },
   {
-    course: { uz: "Oilaviy byudjetni rejalashtirish", ru: "Планирование семейного бюджета", en: "Family budgeting" },
+    course: { uz: "Oilaviy byudjetni rejalaştiriş", ru: "Планирование семейного бюджета", en: "Family budgeting" },
     tone: "#4f6f63",
     titles: [
       { uz: "Xarajat jadvali", ru: "Таблица расходов", en: "The expense table" },
-      { uz: "Zaxira jamgʻarma", ru: "Резервный фонд", en: "The emergency fund" },
-      { uz: "Qarzni yopish tartibi", ru: "Порядок закрытия долгов", en: "Paying debt down" },
+      { uz: "Zaxira jamğarma", ru: "Резервный фонд", en: "The emergency fund" },
+      { uz: "Qarzni yopiş tartibi", ru: "Порядок закрытия долгов", en: "Paying debt down" },
     ],
   },
   {
-    course: { uz: "Ish uchun ingliz tili", ru: "Английский для работы", en: "English for work" },
+    course: { uz: "Iş uçun ingliz tili", ru: "Английский для работы", en: "English for work" },
     tone: "#8e4a5c",
     titles: [
-      { uz: "Xat yozish qoliplari", ru: "Шаблоны деловых писем", en: "Email patterns" },
-      { uz: "Qisqa uchrashuv", ru: "Короткая встреча", en: "The short meeting" },
-      { uz: "Kasbiy lugʻat", ru: "Профессиональная лексика", en: "Professional vocabulary" },
+      { uz: "Xat yoziş qoliplari", ru: "Шаблоны деловых писем", en: "Email patterns" },
+      { uz: "Qisqa uçraşuv", ru: "Короткая встреча", en: "The short meeting" },
+      { uz: "Kasbiy luğat", ru: "Профессиональная лексика", en: "Professional vocabulary" },
     ],
   },
   {
-    course: { uz: "Ayol rahbar: jamoa boshqaruvi", ru: "Женщина-руководитель", en: "Woman as a manager" },
+    course: { uz: "Ayol rahbar: jamoa boşqaruvi", ru: "Женщина-руководитель", en: "Woman as a manager" },
     tone: "#6d5480",
     titles: [
-      { uz: "Vazifa taqsimlash", ru: "Распределение задач", en: "Delegating work" },
+      { uz: "Vazifa taqsimlaş", ru: "Распределение задач", en: "Delegating work" },
       { uz: "Qiyin suhbat", ru: "Трудный разговор", en: "The hard conversation" },
-      { uz: "Muddat qoʻyish", ru: "Постановка сроков", en: "Setting deadlines" },
+      { uz: "Muddat qöyiş", ru: "Постановка сроков", en: "Setting deadlines" },
     ],
   },
 ];
@@ -222,7 +223,7 @@ export function studyYear(anchor: Date): StudyYear {
   const startMs = today.getTime() - (total - 1) * DAY_MS;
 
   const columns: (StudyDay | null)[][] = [];
-  const monthAt: string[] = [];
+  const monthAt: (number | null)[] = [];
   let previousMonth = -1;
   let todayDay: StudyDay | null = null;
 
@@ -265,10 +266,10 @@ export function studyYear(anchor: Date): StudyYear {
     const columnStart = new Date(startMs + column * 7 * DAY_MS);
     const month = columnStart.getMonth();
     if (month !== previousMonth && column < COLUMNS - 1) {
-      monthAt.push(MONTHS_UZ[month]);
+      monthAt.push(month + 1);
       previousMonth = month;
     } else {
-      monthAt.push("");
+      monthAt.push(null);
     }
   }
 

@@ -25,6 +25,7 @@ import {
 import { ErrorNote } from "@/components/ui";
 import { CoachPanel, CoachReferences, suggestionText } from "@/components/Coach";
 import { useI18n, type MessageKey } from "@/i18n";
+import { toNewAlphabetIfUzbek } from "@/i18n/uzbek";
 
 type Route = "auto" | "portal" | "education" | "health";
 type Tab = Route | "daily" | "coach";
@@ -274,7 +275,7 @@ export default function AssistantPage() {
         <div className="card stack">
           {daily ? (
             <p style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: "1.2rem" }}>
-              {daily.answer}
+              {toNewAlphabetIfUzbek(daily.answer)}
             </p>
           ) : (
             <p className="muted small">{t("asst.thinking")}</p>
@@ -408,7 +409,7 @@ function AssistantTurn({ turn }: { turn: Turn }) {
           {!turn.coach.generated && !turn.coach.escalated && (
             <span className="faint small">{t("coach.offline")}</span>
           )}
-          <p style={{ whiteSpace: "pre-wrap" }}>{turn.text}</p>
+          <p style={{ whiteSpace: "pre-wrap" }}>{toNewAlphabetIfUzbek(turn.text)}</p>
           {turn.coach.unsupported && (
             <p className="faint small">{t("coach.unsupported")}</p>
           )}
@@ -424,7 +425,7 @@ function AssistantTurn({ turn }: { turn: Turn }) {
         {turn.reply && !turn.reply.personalised && (
           <span className="badge badge-grey">{t("asst.generic")}</span>
         )}
-        <p style={{ whiteSpace: "pre-wrap" }}>{turn.text}</p>
+        <p style={{ whiteSpace: "pre-wrap" }}>{toNewAlphabetIfUzbek(turn.text)}</p>
 
         {!!turn.reply?.sources.length && (
           <div className="stack" style={{ gap: 6 }}>

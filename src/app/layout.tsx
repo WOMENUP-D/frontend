@@ -9,9 +9,9 @@ import { Mascot } from "@/components/mascot/Mascot";
 import { LivingUI } from "@/components/motion/Living";
 
 export const metadata: Metadata = {
-  title: "WomanUP — Ayol-qizlarni rivojlantirish milliy dasturi",
+  title: "WomanUP — Ayol-qizlarni rivojlantiriş milliy dasturi",
   description:
-    "Har bir ayol uchun individual rivojlanish yo'li: diagnostika, shaxsiy reja, kurslar va real imkoniyatlar.",
+    "Har bir ayol uçun individual rivojlaniş yöli: diagnostika, şaxsiy reja, kurslar va real imkoniyatlar.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

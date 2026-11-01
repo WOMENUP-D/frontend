@@ -250,20 +250,20 @@ export const learner = {
   birthDate: "2003-04-12",
   joinedAt: "2026-08-19",
   role: { uz: "Talaba", ru: "Студентка", en: "Student" } as Text,
-  region: { uz: "Toshkent shahri", ru: "Город Ташкент", en: "Tashkent city" } as Text,
+  region: { uz: "Toşkent şahri", ru: "Город Ташкент", en: "Tashkent city" } as Text,
   education: {
     uz: "TATU, Axborot texnologiyalari — 3-kurs",
     ru: "ТУИТ, Информационные технологии — 3 курс",
     en: "TUIT, Information Technology — 3rd year",
   } as Text,
-  level: { uz: "Oʻrta daraja", ru: "Средний уровень", en: "Intermediate" } as Text,
+  level: { uz: "Örta daraja", ru: "Средний уровень", en: "Intermediate" } as Text,
   streakDays: 12,
   longestStreakDays: 21,
   learningHours: 48,
   weeklyTargetHours: 8,
   weeklyDoneHours: 6,
   interests: [
-    { uz: "Veb-dasturlash", ru: "Веб-разработка", en: "Web development" },
+    { uz: "Veb-dasturlaş", ru: "Веб-разработка", en: "Web development" },
     { uz: "Sunʼiy intellekt", ru: "Искусственный интеллект", en: "Artificial intelligence" },
     { uz: "Mahsulot dizayni", ru: "Продуктовый дизайн", en: "Product design" },
   ] as Text[],
@@ -284,7 +284,7 @@ const flexboxLesson: Lesson = {
     {
       type: "paragraph",
       text: {
-        uz: "Flexbox — elementlarni bitta oʻq boʻylab joylashtirish uchun moʻljallangan tartib modeli. Konteynerga `display: flex` bersangiz, uning bevosita bolalari moslashuvchan elementlarga aylanadi va qolgan boʻsh joyni oʻzaro taqsimlaydi.",
+        uz: "Flexbox — elementlarni bitta öq böylab joylaştiriş uçun möljallangan tartib modeli. Konteynerga `display: flex` bersangiz, uning bevosita bolalari moslaşuvçan elementlarga aylanadi va qolgan böş joyni özaro taqsimlaydi.",
         ru: "Flexbox — модель раскладки для распределения элементов вдоль одной оси. Как только контейнер получает `display: flex`, его прямые потомки становятся гибкими элементами и делят между собой свободное место.",
         en: "Flexbox is a layout model for arranging elements along a single axis. The moment a container gets `display: flex`, its direct children become flex items and share the free space between them.",
       },
@@ -292,7 +292,7 @@ const flexboxLesson: Lesson = {
     {
       type: "heading",
       text: {
-        uz: "Ikkita oʻq",
+        uz: "Ikkita öq",
         ru: "Две оси",
         en: "The two axes",
       },
@@ -300,7 +300,7 @@ const flexboxLesson: Lesson = {
     {
       type: "paragraph",
       text: {
-        uz: "Har bir flex konteynerda asosiy oʻq va unga koʻndalang oʻq bor. `justify-content` asosiy oʻq boʻylab, `align-items` esa koʻndalang oʻq boʻylab ishlaydi. Koʻpchilik xatolik shu ikkisini almashtirib yuborishdan kelib chiqadi.",
+        uz: "Har bir flex konteynerda asosiy öq va unga köndalang öq bor. `justify-content` asosiy öq böylab, `align-items` esa köndalang öq böylab işlaydi. Köpçilik xatolik şu ikkisini almaştirib yuborişdan kelib çiqadi.",
         ru: "У каждого flex-контейнера есть главная ось и поперечная. `justify-content` работает вдоль главной оси, `align-items` — вдоль поперечной. Большинство ошибок возникает именно из-за того, что их путают.",
         en: "Every flex container has a main axis and a cross axis. `justify-content` works along the main axis, `align-items` along the cross axis. Most mistakes come from swapping the two.",
       },
@@ -318,7 +318,7 @@ const flexboxLesson: Lesson = {
     {
       type: "callout",
       text: {
-        uz: "`gap` — flex uchun ham ishlaydi. Elementlarga margin berishdan koʻra shuni ishlating: oxirgi elementdan keyin ortiqcha boʻshliq qolmaydi.",
+        uz: "`gap` — flex uçun ham işlaydi. Elementlarga margin berişdan köra şuni işlating: oxirgi elementdan keyin ortiqça böşliq qolmaydi.",
         ru: "`gap` работает и во flex. Используйте его вместо отступов у элементов: тогда после последнего не остаётся лишнего пространства.",
         en: "`gap` works in flex too. Prefer it to margins on the items: nothing is left dangling after the last one.",
       },
@@ -326,7 +326,7 @@ const flexboxLesson: Lesson = {
     {
       type: "figure",
       caption: {
-        uz: "Bitta qatorda: rasm chapda, matn oʻrtada, tugma oʻngda.",
+        uz: "Bitta qatorda: rasm çapda, matn örtada, tugma öngda.",
         ru: "Одна строка: изображение слева, текст по центру, кнопка справа.",
         en: "One row: image left, text centred, button right.",
       },
@@ -335,13 +335,13 @@ const flexboxLesson: Lesson = {
     },
     {
       type: "heading",
-      text: { uz: "Qachon grid kerak", ru: "Когда нужен grid", en: "When to reach for grid" },
+      text: { uz: "Qaçon grid kerak", ru: "Когда нужен grid", en: "When to reach for grid" },
     },
     {
       type: "list",
       items: [
         {
-          uz: "Bitta oʻq boʻylab joylashtirish — Flexbox.",
+          uz: "Bitta öq böylab joylaştiriş — Flexbox.",
           ru: "Раскладка вдоль одной оси — Flexbox.",
           en: "Layout along one axis — Flexbox.",
         },
@@ -351,7 +351,7 @@ const flexboxLesson: Lesson = {
           en: "Rows and columns together — CSS Grid.",
         },
         {
-          uz: "Ikkalasini birga ishlatish mumkin va koʻpincha shunday qilinadi.",
+          uz: "Ikkalasini birga işlatiş mumkin va köpinça şunday qilinadi.",
           ru: "Их можно и нужно сочетать — так делают чаще всего.",
           en: "They combine, and in practice they usually do.",
         },
@@ -384,12 +384,12 @@ export const courses: Course[] = [
   {
     slug: "frontend-development",
     title: {
-      uz: "Frontend dasturlash",
+      uz: "Frontend dasturlaş",
       ru: "Frontend-разработка",
       en: "Frontend Development",
     },
     summary: {
-      uz: "HTML, CSS va JavaScript’dan React’gacha — brauzerda ishlaydigan interfeys yasashni oʻrganasiz.",
+      uz: "HTML, CSS va JavaScriptʼdan Reactʼgacha — brauzerda işlaydigan interfeys yasaşni örganasiz.",
       ru: "От HTML, CSS и JavaScript до React — научитесь собирать интерфейсы, которые работают в браузере.",
       en: "From HTML, CSS and JavaScript to React — build interfaces that actually run in a browser.",
     },
@@ -408,12 +408,12 @@ export const courses: Course[] = [
     lastOpenedAt: "2026-09-02",
     modules: [
       {
-        title: { uz: "Kirish", ru: "Введение", en: "Introduction" },
+        title: { uz: "Kiriş", ru: "Введение", en: "Introduction" },
         lessons: [
           {
             slug: "how-the-web-works",
             title: {
-              uz: "Veb qanday ishlaydi",
+              uz: "Veb qanday işlaydi",
               ru: "Как работает веб",
               en: "How the web works",
             },
@@ -487,7 +487,7 @@ export const courses: Course[] = [
           },
           {
             slug: "responsive",
-            title: { uz: "Moslashuvchan dizayn", ru: "Адаптивная вёрстка", en: "Responsive design" },
+            title: { uz: "Moslaşuvçan dizayn", ru: "Адаптивная вёрстка", en: "Responsive design" },
             kind: "practice",
             minutes: 28,
             completed: false,
@@ -499,7 +499,7 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "variables",
-            title: { uz: "Oʻzgaruvchilar va tiplar", ru: "Переменные и типы", en: "Variables and types" },
+            title: { uz: "Özgaruvçilar va tiplar", ru: "Переменные и типы", en: "Variables and types" },
             kind: "reading",
             minutes: 16,
             completed: true,
@@ -513,14 +513,14 @@ export const courses: Course[] = [
           },
           {
             slug: "dom",
-            title: { uz: "DOM bilan ishlash", ru: "Работа с DOM", en: "Working with the DOM" },
+            title: { uz: "DOM bilan işlaş", ru: "Работа с DOM", en: "Working with the DOM" },
             kind: "practice",
             minutes: 26,
             completed: true,
           },
           {
             slug: "fetch",
-            title: { uz: "Serverdan maʼlumot olish", ru: "Запросы к серверу", en: "Fetching data" },
+            title: { uz: "Serverdan maʼlumot oliş", ru: "Запросы к серверу", en: "Fetching data" },
             kind: "practice",
             minutes: 22,
             completed: true,
@@ -551,12 +551,12 @@ export const courses: Course[] = [
   {
     slug: "java-backend",
     title: {
-      uz: "Java’da backend",
+      uz: "Javaʼda backend",
       ru: "Backend на Java",
       en: "Backend with Java",
     },
     summary: {
-      uz: "Spring Boot’da REST API yozish, maʼlumotlar bazasi bilan ishlash va xizmatni ishga tushirish.",
+      uz: "Spring Bootʼda REST API yoziş, maʼlumotlar bazasi bilan işlaş va xizmatni işga tuşiriş.",
       ru: "Пишем REST API на Spring Boot, работаем с базой данных и выкатываем сервис.",
       en: "Write a REST API with Spring Boot, work with a database, and ship the service.",
     },
@@ -586,7 +586,7 @@ export const courses: Course[] = [
           },
           {
             slug: "oop",
-            title: { uz: "Obyektga yoʻnaltirilgan yondashuv", ru: "Объектный подход", en: "Object-oriented design" },
+            title: { uz: "Obyektga yönaltirilgan yondaşuv", ru: "Объектный подход", en: "Object-oriented design" },
             kind: "reading",
             minutes: 26,
             completed: true,
@@ -605,7 +605,7 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "first-service",
-            title: { uz: "Birinchi xizmat", ru: "Первый сервис", en: "Your first service" },
+            title: { uz: "Birinçi xizmat", ru: "Первый сервис", en: "Your first service" },
             kind: "video",
             minutes: 18,
             completed: true,
@@ -619,14 +619,14 @@ export const courses: Course[] = [
           },
           {
             slug: "validation",
-            title: { uz: "Kiruvchi maʼlumotni tekshirish", ru: "Валидация входных данных", en: "Validating input" },
+            title: { uz: "Kiruvçi maʼlumotni tekşiriş", ru: "Валидация входных данных", en: "Validating input" },
             kind: "practice",
             minutes: 24,
             completed: false,
           },
           {
             slug: "error-handling",
-            title: { uz: "Xatolarni qayta ishlash", ru: "Обработка ошибок", en: "Error handling" },
+            title: { uz: "Xatolarni qayta işlaş", ru: "Обработка ошибок", en: "Error handling" },
             kind: "reading",
             minutes: 20,
             completed: false,
@@ -664,14 +664,14 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "final-api",
-            title: { uz: "Toʻliq API yozish", ru: "Собрать полноценный API", en: "Build a complete API" },
+            title: { uz: "Töliq API yoziş", ru: "Собрать полноценный API", en: "Build a complete API" },
             kind: "project",
             minutes: 180,
             completed: false,
           },
           {
             slug: "deploy",
-            title: { uz: "Serverga chiqarish", ru: "Выкатка на сервер", en: "Deploying" },
+            title: { uz: "Serverga çiqariş", ru: "Выкатка на сервер", en: "Deploying" },
             kind: "practice",
             minutes: 40,
             completed: false,
@@ -690,12 +690,12 @@ export const courses: Course[] = [
   {
     slug: "python-for-beginners",
     title: {
-      uz: "Boshlanuvchilar uchun Python",
+      uz: "Boşlanuvçilar uçun Python",
       ru: "Python для начинающих",
       en: "Python for Beginners",
     },
     summary: {
-      uz: "Birinchi dasturingizdan avtomatlashtirilgan kundalik vazifalargacha.",
+      uz: "Birinçi dasturingizdan avtomatlaştirilgan kundalik vazifalargaça.",
       ru: "От первой программы до автоматизации ежедневных задач.",
       en: "From your first program to automating everyday work.",
     },
@@ -715,25 +715,25 @@ export const courses: Course[] = [
     certificate: true,
     modules: [
       {
-        title: { uz: "Birinchi qadamlar", ru: "Первые шаги", en: "First steps" },
+        title: { uz: "Birinçi qadamlar", ru: "Первые шаги", en: "First steps" },
         lessons: [
           {
             slug: "hello",
-            title: { uz: "Birinchi dastur", ru: "Первая программа", en: "Your first program" },
+            title: { uz: "Birinçi dastur", ru: "Первая программа", en: "Your first program" },
             kind: "video",
             minutes: 10,
             completed: true,
           },
           {
             slug: "types",
-            title: { uz: "Tiplar va oʻzgaruvchilar", ru: "Типы и переменные", en: "Types and variables" },
+            title: { uz: "Tiplar va özgaruvçilar", ru: "Типы и переменные", en: "Types and variables" },
             kind: "reading",
             minutes: 15,
             completed: true,
           },
           {
             slug: "conditions",
-            title: { uz: "Shartlar", ru: "Условия", en: "Conditions" },
+            title: { uz: "Şartlar", ru: "Условия", en: "Conditions" },
             kind: "practice",
             minutes: 18,
             completed: true,
@@ -745,21 +745,21 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "lists",
-            title: { uz: "Roʻyxatlar", ru: "Списки", en: "Lists" },
+            title: { uz: "Röyxatlar", ru: "Списки", en: "Lists" },
             kind: "practice",
             minutes: 20,
             completed: true,
           },
           {
             slug: "dicts",
-            title: { uz: "Lugʻatlar", ru: "Словари", en: "Dictionaries" },
+            title: { uz: "Luğatlar", ru: "Словари", en: "Dictionaries" },
             kind: "practice",
             minutes: 22,
             completed: true,
           },
           {
             slug: "files",
-            title: { uz: "Fayllar bilan ishlash", ru: "Работа с файлами", en: "Working with files" },
+            title: { uz: "Fayllar bilan işlaş", ru: "Работа с файлами", en: "Working with files" },
             kind: "practice",
             minutes: 24,
             completed: true,
@@ -771,7 +771,7 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "automation",
-            title: { uz: "Kundalik vazifani avtomatlashtirish", ru: "Автоматизация рутины", en: "Automating a routine task" },
+            title: { uz: "Kundalik vazifani avtomatlaştiriş", ru: "Автоматизация рутины", en: "Automating a routine task" },
             kind: "project",
             minutes: 90,
             completed: true,
@@ -791,7 +791,7 @@ export const courses: Course[] = [
     slug: "ui-ux-design",
     title: { uz: "UI/UX dizayn", ru: "UI/UX-дизайн", en: "UI/UX Design" },
     summary: {
-      uz: "Foydalanuvchini tushunishdan tayyor interfeys maketigacha.",
+      uz: "Foydalanuvçini tuşunişdan tayyor interfeys maketigaça.",
       ru: "От понимания пользователя до готового макета интерфейса.",
       en: "From understanding the user to a finished interface.",
     },
@@ -813,7 +813,7 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "interviews",
-            title: { uz: "Foydalanuvchi bilan suhbat", ru: "Интервью с пользователем", en: "User interviews" },
+            title: { uz: "Foydalanuvçi bilan suhbat", ru: "Интервью с пользователем", en: "User interviews" },
             kind: "video",
             minutes: 18,
             completed: false,
@@ -858,7 +858,7 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "case-study",
-            title: { uz: "Keys yozish", ru: "Оформить кейс", en: "Write a case study" },
+            title: { uz: "Keys yoziş", ru: "Оформить кейс", en: "Write a case study" },
             kind: "project",
             minutes: 120,
             completed: false,
@@ -871,13 +871,13 @@ export const courses: Course[] = [
     slug: "data-analytics",
     title: { uz: "Maʼlumotlar tahlili", ru: "Аналитика данных", en: "Data Analytics" },
     summary: {
-      uz: "SQL, jadvallar va vizualizatsiya — raqamlardan qaror chiqarish.",
+      uz: "SQL, jadvallar va vizualizatsiya — raqamlardan qaror çiqariş.",
       ru: "SQL, таблицы и визуализация — как превратить цифры в решение.",
       en: "SQL, spreadsheets and charts — turning numbers into a decision.",
     },
     instructor: { uz: "Zilola Ismoilova", ru: "Зилола Исмоилова", en: "Zilola Ismoilova" },
     instructorRole: {
-      uz: "Tahlilchi, Korzinka",
+      uz: "Tahlilçi, Korzinka",
       ru: "Аналитик, Korzinka",
       en: "Analyst, Korzinka",
     },
@@ -893,14 +893,14 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "select",
-            title: { uz: "Soʻrovlar asoslari", ru: "Основы запросов", en: "Query basics" },
+            title: { uz: "Sörovlar asoslari", ru: "Основы запросов", en: "Query basics" },
             kind: "practice",
             minutes: 24,
             completed: false,
           },
           {
             slug: "joins",
-            title: { uz: "Jadvallarni birlashtirish", ru: "Соединение таблиц", en: "Joining tables" },
+            title: { uz: "Jadvallarni birlaştiriş", ru: "Соединение таблиц", en: "Joining tables" },
             kind: "practice",
             minutes: 30,
             completed: false,
@@ -912,14 +912,14 @@ export const courses: Course[] = [
         lessons: [
           {
             slug: "charts",
-            title: { uz: "Toʻgʻri diagrammani tanlash", ru: "Выбор правильного графика", en: "Choosing the right chart" },
+            title: { uz: "Töğri diagrammani tanlaş", ru: "Выбор правильного графика", en: "Choosing the right chart" },
             kind: "reading",
             minutes: 20,
             completed: false,
           },
           {
             slug: "dashboards",
-            title: { uz: "Boshqaruv paneli", ru: "Дашборд", en: "Dashboards" },
+            title: { uz: "Boşqaruv paneli", ru: "Дашборд", en: "Dashboards" },
             kind: "project",
             minutes: 75,
             completed: false,
@@ -932,11 +932,11 @@ export const courses: Course[] = [
     slug: "product-management",
     title: { uz: "Mahsulot menejmenti", ru: "Продуктовый менеджмент", en: "Product Management" },
     summary: {
-      uz: "Gipotezadan ishga tushirishgacha: nimani va nima uchun qilish kerakligini aniqlash.",
+      uz: "Gipotezadan işga tuşirişgaça: nimani va nima uçun qiliş kerakligini aniqlaş.",
       ru: "От гипотезы до запуска: как понять, что делать и зачем.",
       en: "From hypothesis to launch: deciding what to build and why.",
     },
-    instructor: { uz: "Shahnoza Karimova", ru: "Шахноза Каримова", en: "Shahnoza Karimova" },
+    instructor: { uz: "Şahnoza Karimova", ru: "Шахноза Каримова", en: "Shahnoza Karimova" },
     instructorRole: {
       uz: "Mahsulot menejeri, Uzum Market",
       ru: "Продакт-менеджер, Uzum Market",
@@ -950,7 +950,7 @@ export const courses: Course[] = [
     emblem: "◆",
     modules: [
       {
-        title: { uz: "Muammoni topish", ru: "Поиск проблемы", en: "Finding the problem" },
+        title: { uz: "Muammoni topiş", ru: "Поиск проблемы", en: "Finding the problem" },
         lessons: [
           {
             slug: "discovery",
@@ -969,11 +969,11 @@ export const courses: Course[] = [
         ],
       },
       {
-        title: { uz: "Ishga tushirish", ru: "Запуск", en: "Launch" },
+        title: { uz: "Işga tuşiriş", ru: "Запуск", en: "Launch" },
         lessons: [
           {
             slug: "roadmap",
-            title: { uz: "Yoʻl xaritasi", ru: "Дорожная карта", en: "Roadmap" },
+            title: { uz: "Yöl xaritasi", ru: "Дорожная карта", en: "Roadmap" },
             kind: "practice",
             minutes: 28,
             completed: false,
@@ -1066,7 +1066,7 @@ export const learningStats = {
 export const events: CalendarEvent[] = [
   {
     id: "e1",
-    title: { uz: "Java bo‘yicha topshiriq", ru: "Задание по Java", en: "Java assignment" },
+    title: { uz: "Java böyiça topşiriq", ru: "Задание по Java", en: "Java assignment" },
     courseSlug: "java-backend",
     kind: "assignment",
     status: "due_soon",
@@ -1075,7 +1075,7 @@ export const events: CalendarEvent[] = [
   },
   {
     id: "e2",
-    title: { uz: "Frontend bo‘yicha test", ru: "Тест по frontend", en: "Frontend quiz" },
+    title: { uz: "Frontend böyiça test", ru: "Тест по frontend", en: "Frontend quiz" },
     courseSlug: "frontend-development",
     kind: "exam",
     status: "upcoming",
@@ -1092,7 +1092,7 @@ export const events: CalendarEvent[] = [
   },
   {
     id: "e4",
-    title: { uz: "React bo‘yicha jonli dars", ru: "Живое занятие по React", en: "Live class on React" },
+    title: { uz: "React böyiça jonli dars", ru: "Живое занятие по React", en: "Live class on React" },
     courseSlug: "frontend-development",
     kind: "class",
     status: "upcoming",
@@ -1101,7 +1101,7 @@ export const events: CalendarEvent[] = [
   },
   {
     id: "e5",
-    title: { uz: "Dizayn keysini topshirish", ru: "Сдача дизайн-кейса", en: "Design case hand-in" },
+    title: { uz: "Dizayn keysini topşiriş", ru: "Сдача дизайн-кейса", en: "Design case hand-in" },
     courseSlug: "ui-ux-design",
     kind: "assignment",
     status: "upcoming",
@@ -1110,7 +1110,7 @@ export const events: CalendarEvent[] = [
   },
   {
     id: "e6",
-    title: { uz: "CSS bo‘yicha topshiriq", ru: "Задание по CSS", en: "CSS assignment" },
+    title: { uz: "CSS böyiça topşiriq", ru: "Задание по CSS", en: "CSS assignment" },
     courseSlug: "frontend-development",
     kind: "assignment",
     status: "completed",
@@ -1132,12 +1132,12 @@ export const goals: Goal[] = [
   {
     id: "g1",
     title: {
-      uz: "Backend dasturchi bo‘lish",
+      uz: "Backend dasturçi böliş",
       ru: "Стать backend-разработчиком",
       en: "Become a backend developer",
     },
     why: {
-      uz: "Java kursini tugatib, yakuniy loyihani portfolioga qo‘shish va birinchi ishga ariza berish.",
+      uz: "Java kursini tugatib, yakuniy loyihani portfolioga qöşiş va birinçi işga ariza beriş.",
       ru: "Закончить курс по Java, добавить финальный проект в портфолио и подать первый отклик на вакансию.",
       en: "Finish the Java course, add the final project to a portfolio, and apply for a first role.",
     },
@@ -1145,19 +1145,19 @@ export const goals: Goal[] = [
     percent: 68,
     steps: [
       {
-        title: { uz: "Java asoslarini tugatish", ru: "Закрыть основы Java", en: "Finish Java fundamentals" },
+        title: { uz: "Java asoslarini tugatiş", ru: "Закрыть основы Java", en: "Finish Java fundamentals" },
         source: { kind: "module", courseSlug: "java-backend", moduleIndex: 0 },
       },
       {
-        title: { uz: "Spring Boot modulini tugatish", ru: "Закрыть модуль Spring Boot", en: "Finish the Spring Boot module" },
+        title: { uz: "Spring Boot modulini tugatiş", ru: "Закрыть модуль Spring Boot", en: "Finish the Spring Boot module" },
         source: { kind: "module", courseSlug: "java-backend", moduleIndex: 1 },
       },
       {
-        title: { uz: "Yakuniy API loyihasini yozish", ru: "Собрать финальный API-проект", en: "Build the final API project" },
+        title: { uz: "Yakuniy API loyihasini yoziş", ru: "Собрать финальный API-проект", en: "Build the final API project" },
         source: { kind: "manual" },
       },
       {
-        title: { uz: "Rezyume va portfolioni yangilash", ru: "Обновить резюме и портфолио", en: "Refresh CV and portfolio" },
+        title: { uz: "Rezyume va portfolioni yangilaş", ru: "Обновить резюме и портфолио", en: "Refresh CV and portfolio" },
         source: { kind: "manual" },
       },
     ],
@@ -1165,12 +1165,12 @@ export const goals: Goal[] = [
   {
     id: "g2",
     title: {
-      uz: "Har hafta 8 soat o‘qish",
+      uz: "Har hafta 8 soat öqiş",
       ru: "Учиться 8 часов в неделю",
       en: "Study eight hours a week",
     },
     why: {
-      uz: "Muntazamlik tezlikdan muhimroq: haftasiga sakkiz soat kursni muddatida tugatishga yetadi.",
+      uz: "Muntazamlik tezlikdan muhimroq: haftasiga sakkiz soat kursni muddatida tugatişga yetadi.",
       ru: "Регулярность важнее скорости: восьми часов в неделю хватает, чтобы закончить курс в срок.",
       en: "Regularity beats speed: eight hours a week is enough to finish the course on time.",
     },
@@ -1178,11 +1178,11 @@ export const goals: Goal[] = [
     percent: 75,
     steps: [
       {
-        title: { uz: "Kunlik 12 kunlik seriya", ru: "Серия из 12 дней", en: "A 12-day streak" },
+        title: { uz: "12 kunlik seriya", ru: "Серия из 12 дней", en: "A 12-day streak" },
         source: { kind: "streak", target: 12 },
       },
       {
-        title: { uz: "Haftalik 8 soatga yetish", ru: "Выйти на 8 часов в неделю", en: "Reach eight hours a week" },
+        title: { uz: "Haftalik 8 soatga yetiş", ru: "Выйти на 8 часов в неделю", en: "Reach eight hours a week" },
         source: { kind: "weekly", target: 8 },
       },
     ],
@@ -1192,9 +1192,9 @@ export const goals: Goal[] = [
 export const achievements: Achievement[] = [
   {
     id: "a1",
-    title: { uz: "Birinchi kurs tugadi", ru: "Первый курс пройден", en: "First course completed" },
+    title: { uz: "Birinçi kurs tugadi", ru: "Первый курс пройден", en: "First course completed" },
     description: {
-      uz: "«Boshlanuvchilar uchun Python» to‘liq tugatildi.",
+      uz: "«Boşlanuvçilar uçun Python» töliq tugatildi.",
       ru: "Курс «Python для начинающих» пройден полностью.",
       en: "Python for Beginners, finished end to end.",
     },
@@ -1205,7 +1205,7 @@ export const achievements: Achievement[] = [
     id: "a2",
     title: { uz: "7 kunlik seriya", ru: "Серия 7 дней", en: "7-day streak" },
     description: {
-      uz: "Bir hafta davomida har kuni dars o‘qildi.",
+      uz: "Bir hafta davomida har kuni dars öqildi.",
       ru: "Неделя занятий без единого пропуска.",
       en: "A full week of study without a gap.",
     },
@@ -1216,7 +1216,7 @@ export const achievements: Achievement[] = [
     id: "a3",
     title: { uz: "10 ta dars", ru: "10 уроков", en: "10 lessons completed" },
     description: {
-      uz: "O‘nta dars tugatildi — boshlanish sanaladi.",
+      uz: "Önta dars tugatildi — boşlaniş sanaladi.",
       ru: "Десять уроков позади — начало положено.",
       en: "Ten lessons done — the start is behind you.",
     },
@@ -1225,9 +1225,9 @@ export const achievements: Achievement[] = [
   },
   {
     id: "a4",
-    title: { uz: "Birinchi loyiha", ru: "Первый проект", en: "First project" },
+    title: { uz: "Birinçi loyiha", ru: "Первый проект", en: "First project" },
     description: {
-      uz: "Kundalik vazifani avtomatlashtiruvchi skript yozildi.",
+      uz: "Kundalik vazifani avtomatlaştiruvçi skript yozildi.",
       ru: "Написан скрипт, автоматизирующий рутинную задачу.",
       en: "A script that automates a routine task, written and shipped.",
     },
@@ -1236,9 +1236,9 @@ export const achievements: Achievement[] = [
   },
   {
     id: "a5",
-    title: { uz: "Maqsadga erishildi", ru: "Цель достигнута", en: "Goal achieved" },
+    title: { uz: "Maqsadga erişildi", ru: "Цель достигнута", en: "Goal achieved" },
     description: {
-      uz: "Birinchi o‘quv maqsadi belgilangan muddatda yopildi.",
+      uz: "Birinçi öquv maqsadi belgilangan muddatda yopildi.",
       ru: "Первая учебная цель закрыта в срок.",
       en: "A first learning goal, closed on time.",
     },
@@ -1248,7 +1248,7 @@ export const achievements: Achievement[] = [
     id: "a6",
     title: { uz: "30 kunlik seriya", ru: "Серия 30 дней", en: "30-day streak" },
     description: {
-      uz: "Bir oy davomida har kuni o‘qish.",
+      uz: "Bir oy davomida har kuni öqiş.",
       ru: "Месяц ежедневных занятий.",
       en: "A month of studying every day.",
     },
@@ -1260,7 +1260,7 @@ export const recommendations: Recommendation[] = [
   {
     courseSlug: "java-backend",
     reason: {
-      uz: "Siz backend yo‘nalishiga qiziqqaningiz va Java modulining yarmini tugatganingiz uchun tavsiya qilinadi.",
+      uz: "Siz backend yönalişiga qiziqqaningiz va Java modulining yarmini tugatganingiz uçun tavsiya qilinadi.",
       ru: "Рекомендуем, потому что вы интересуетесь backend-разработкой и уже прошли половину модуля по Java.",
       en: "Recommended because you are drawn to backend work and are already halfway through the Java module.",
     },
@@ -1268,7 +1268,7 @@ export const recommendations: Recommendation[] = [
   {
     courseSlug: "data-analytics",
     reason: {
-      uz: "SQL Java’dagi ma’lumotlar bazasi moduliga yaqin — ikkalasi bir-birini mustahkamlaydi.",
+      uz: "SQL Javaʼdagi maʼlumotlar bazasi moduliga yaqin — ikkalasi bir-birini mustahkamlaydi.",
       ru: "SQL примыкает к модулю баз данных в Java — эти два курса усиливают друг друга.",
       en: "SQL sits right next to the database module in Java — the two reinforce each other.",
     },
@@ -1276,7 +1276,7 @@ export const recommendations: Recommendation[] = [
   {
     courseSlug: "ui-ux-design",
     reason: {
-      uz: "Frontend kursida interfeys tuzayapsiz; dizayn asoslari qaror qabul qilishni osonlashtiradi.",
+      uz: "Frontend kursida interfeys tuzayapsiz; dizayn asoslari qaror qabul qilişni osonlaştiradi.",
       ru: "Вы собираете интерфейсы на курсе frontend; основы дизайна упростят принятие решений.",
       en: "You are building interfaces on the frontend course; design fundamentals make those calls easier.",
     },
@@ -1286,9 +1286,9 @@ export const recommendations: Recommendation[] = [
 export const notifications: Notification[] = [
   {
     id: "n1",
-    title: { uz: "Topshiriq muddati yaqin", ru: "Скоро дедлайн задания", en: "An assignment is due soon" },
+    title: { uz: "Topşiriq muddati yaqin", ru: "Скоро дедлайн задания", en: "An assignment is due soon" },
     body: {
-      uz: "«Java bo‘yicha topshiriq» — 5-sentyabr, 18:00.",
+      uz: "«Java böyiça topşiriq» — 5-sentyabr, 18:00.",
       ru: "«Задание по Java» — 5 сентября, 18:00.",
       en: "Java assignment — 5 September, 18:00.",
     },
@@ -1297,20 +1297,20 @@ export const notifications: Notification[] = [
   },
   {
     id: "n2",
-    title: { uz: "Yangi dars ochildi", ru: "Открыт новый урок", en: "A new lesson is open" },
+    title: { uz: "Yangi dars oçildi", ru: "Открыт новый урок", en: "A new lesson is open" },
     body: {
-      uz: "«React komponentlari» — Frontend dasturlash kursida.",
+      uz: "«React komponentlari» — Frontend dasturlaş kursida.",
       ru: "«Компоненты React» — в курсе Frontend-разработка.",
       en: "React components — in Frontend Development.",
     },
-    at: { uz: "Kecha", ru: "Вчера", en: "Yesterday" },
+    at: { uz: "Keça", ru: "Вчера", en: "Yesterday" },
     unread: true,
   },
   {
     id: "n3",
     title: { uz: "Seriya 12 kunga yetdi", ru: "Серия достигла 12 дней", en: "Your streak reached 12 days" },
     body: {
-      uz: "Yana ikki kun — va shaxsiy rekordga yaqinlashasiz.",
+      uz: "Yana ikki kun — va şaxsiy rekordga yaqinlaşasiz.",
       ru: "Ещё два дня — и вы приблизитесь к личному рекорду.",
       en: "Two more days and you are closing on your own record.",
     },
@@ -1323,27 +1323,27 @@ export const notifications: Notification[] = [
 export const assistantActions: { id: string; label: Text; prompt: Text }[] = [
   {
     id: "explain",
-    label: { uz: "Mavzuni tushuntir", ru: "Объясни тему", en: "Explain this topic" },
+    label: { uz: "Mavzuni tuşuntir", ru: "Объясни тему", en: "Explain this topic" },
     prompt: {
-      uz: "CSS Flexbox’da asosiy va ko‘ndalang o‘q farqini oddiy misolda tushuntiring.",
+      uz: "CSS Flexboxʼda asosiy va köndalang öq farqini oddiy misolda tuşuntiring.",
       ru: "Объясните разницу между главной и поперечной осью в CSS Flexbox на простом примере.",
       en: "Explain the difference between the main and cross axis in CSS Flexbox with a simple example.",
     },
   },
   {
     id: "plan",
-    label: { uz: "O‘quv reja tuz", ru: "Составь план обучения", en: "Create a study plan" },
+    label: { uz: "Öquv reja tuz", ru: "Составь план обучения", en: "Create a study plan" },
     prompt: {
-      uz: "Haftasiga 8 soat vaqtim bor. Java kursini dekabrgacha tugatish uchun reja tuzing.",
+      uz: "Haftasiga 8 soat vaqtim bor. Java kursini dekabrgaça tugatiş uçun reja tuzing.",
       ru: "У меня 8 часов в неделю. Составьте план, чтобы закончить курс по Java до декабря.",
       en: "I have eight hours a week. Build me a plan to finish the Java course by December.",
     },
   },
   {
     id: "check",
-    label: { uz: "Topshiriqni tekshir", ru: "Проверь задание", en: "Check my assignment" },
+    label: { uz: "Topşiriqni tekşir", ru: "Проверь задание", en: "Check my assignment" },
     prompt: {
-      uz: "REST kontroller uchun yozgan kodimni tekshiring va xatolarni ko‘rsating.",
+      uz: "REST kontroller uçun yozgan kodimni tekşiring va xatolarni körsating.",
       ru: "Проверьте мой код REST-контроллера и укажите на ошибки.",
       en: "Review my REST controller code and point out the mistakes.",
     },
@@ -1352,7 +1352,7 @@ export const assistantActions: { id: string; label: Text; prompt: Text }[] = [
     id: "recommend",
     label: { uz: "Kurs tavsiya qil", ru: "Порекомендуй курс", en: "Recommend a course" },
     prompt: {
-      uz: "Java kursidan keyin nimani o‘rganganim ma’qul?",
+      uz: "Java kursidan keyin nimani örganganim maʼqul?",
       ru: "Что стоит изучать после курса по Java?",
       en: "What should I study after the Java course?",
     },
