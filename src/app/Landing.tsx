@@ -11,11 +11,12 @@
  * say that.
  */
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Blossom } from "@/components/Blossom";
 import { useI18n, type MessageKey } from "@/i18n";
 import { DirectionMark, type MarkKind } from "@/components/DirectionMark";
-import { Reveal } from "@/components/motion/Reveal";
+import { Reveal, reducedMotion } from "@/components/motion/Reveal";
 
 /* ------------------------------------------------ the AI companion, drawn */
 
@@ -139,8 +140,34 @@ const ROAD_PATH =
   "M80 240 C 160 240, 210 120, 290 120 S 420 240, 500 240 S 630 120, 710 120 " +
   "S 840 240, 920 240 S 1040 120, 1120 120";
 
+/** How long the drop of light takes to walk the route. The stops bloom on the
+ *  same clock in globals.css (.road.is-in), one every fifth of it. */
+const WALK = "3.2s";
+
 export function Roadmap() {
   const { t } = useI18n();
+  const walker = useRef<SVGAnimateMotionElement>(null);
+  // idle: hidden at the start of the route; walking: on its way; done: faded
+  // out on the last stop. Under reduced motion the light never appears.
+  const [phase, setPhase] = useState<"idle" | "walking" | "done">("idle");
+  const [still, setStill] = useState(false);
+
+  useEffect(() => {
+    setStill(reducedMotion());
+    const el = walker.current;
+    if (!el) return;
+    const finish = () => setPhase("done");
+    el.addEventListener("endEvent", finish);
+    return () => el.removeEventListener("endEvent", finish);
+  }, []);
+
+  const walk = () => {
+    const el = walker.current;
+    if (!el || reducedMotion()) return;
+    setPhase("walking");
+    el.beginElement();
+  };
+
   return (
     <section className="section">
       <div className="wrap">
@@ -149,9 +176,16 @@ export function Roadmap() {
           <p>{t("landing.roadLead")}</p>
         </div>
 
-        <Reveal className="road">
+        <Reveal className="road" onEnter={walk}>
           <svg className="road-line" viewBox="0 0 1200 340" aria-hidden="true">
             <path d={ROAD_PATH} />
+            {!still && (
+              <g className={`road-walker${phase === "walking" ? " is-walking" : ""}`}>
+                <circle r="12" className="road-walker-halo" />
+                <circle r="4.5" className="road-walker-dot" />
+                <animateMotion ref={walker} dur={WALK} begin="indefinite" fill="freeze" path={ROAD_PATH} />
+              </g>
+            )}
           </svg>
 
           {ROAD.map((stop, index) => (
