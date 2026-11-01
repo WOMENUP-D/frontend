@@ -33,6 +33,7 @@ import { regionKey, typeKey } from "@/utils/format";
 import { JobCard } from "@/components/jobs/JobCard";
 import { FilterControls, FilterSheet, type FilterValue } from "@/components/jobs/Filters";
 import { activeFilters, fill } from "@/components/jobs/format";
+import { Reveal } from "@/components/motion/Reveal";
 
 const PAGE = 20;
 
@@ -310,11 +311,11 @@ function OpportunitiesView() {
             />
           ) : (
             <>
-              <ul className="jb-list">
+              <Reveal as="ul" className="jb-list" stagger>
                 {items.map((item) => (
                   <JobCard key={item.id} item={item} signedIn={signedIn} />
                 ))}
-              </ul>
+              </Reveal>
               {data && items.length < data.total && (
                 <button
                   type="button"

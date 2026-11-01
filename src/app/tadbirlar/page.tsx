@@ -35,6 +35,7 @@ import { EventCard } from "@/components/events/EventCard";
 import { Timeline } from "@/components/events/Timeline";
 import { Calendar } from "@/components/events/Calendar";
 import { dayKey } from "@/components/events/format";
+import { Reveal } from "@/components/motion/Reveal";
 
 type View = "list" | "calendar";
 
@@ -188,13 +189,13 @@ function EventsView() {
 
       {authed && recommended.length > 0 && !filtered && (
         <Section title={t("ev.recommended")} lead={t("ev.recommendedLead")} className="ev-rec">
-          <ul className="ev-rec-list">
+          <Reveal as="ul" className="ev-rec-list" stagger>
             {recommended.map((item) => (
               <li key={item.id}>
                 <EventCard item={item} showReasons />
               </li>
             ))}
-          </ul>
+          </Reveal>
         </Section>
       )}
 

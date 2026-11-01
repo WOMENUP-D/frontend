@@ -23,6 +23,7 @@ import { useApi } from "@/components/learning/useApi";
 import { ErrorNote, Loading } from "@/components/ui";
 import { CareerCard } from "@/components/career/CareerCard";
 import { MyCareer } from "@/components/career/MyCareer";
+import { Reveal } from "@/components/motion/Reveal";
 
 type Filter = CareerCategory | "all";
 const FILTERS: Filter[] = ["all", "employment", "own_business"];
@@ -105,11 +106,11 @@ export default function CareersPage() {
           )}
 
           {shown.length ? (
-            <ul className="cp-grid">
+            <Reveal as="ul" className="cp-grid" stagger>
               {shown.map((card) => (
                 <CareerCard key={card.id} card={card} />
               ))}
-            </ul>
+            </Reveal>
           ) : (
             <p className="cp-muted">{t("car.emptyFilter")}</p>
           )}
