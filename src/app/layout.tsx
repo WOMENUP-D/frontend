@@ -5,6 +5,8 @@ import { Chrome } from "@/components/Chrome";
 import { Petals } from "@/components/Petals";
 import { Traffic } from "@/components/Traffic";
 import { AmbientSakura } from "@/components/AmbientSakura";
+import { Mascot } from "@/components/mascot/Mascot";
+import { LivingUI } from "@/components/motion/Living";
 
 export const metadata: Metadata = {
   title: "WomanUP — Ayol-qizlarni rivojlantirish milliy dasturi",
@@ -22,6 +24,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Traffic />
           <Chrome />
           {children}
+          <Mascot />
+          <LivingUI />
         </I18nProvider>
       </body>
     </html>

@@ -2783,6 +2783,25 @@ export const messages = {
   "ros.enrol.in_progress": { uz: "oʻqimoqda", ru: "учится", en: "in progress" },
   "ros.enrol.completed":  { uz: "tugatgan", ru: "завершила", en: "completed" },
   "ros.enrol.dropped":    { uz: "tashlab ketgan", ru: "бросила", en: "dropped" },
+
+  // ---- the companion (mascot) ----------------------------------------
+  "wu.open":          { uz: "Yordamçini oçiş", ru: "Открыть помощника", en: "Open the assistant" },
+  "wu.close":         { uz: "Yopiş", ru: "Закрыть", en: "Close" },
+  "wu.title":         { uz: "WomanUP yordamçisi", ru: "Помощник WomanUP", en: "WomanUP assistant" },
+  "wu.subtitle":      { uz: "Portal, dasturlar va imkoniyatlar haqida", ru: "О портале, программах и возможностях", en: "About the portal, programmes and opportunities" },
+  "wu.greeting":      { uz: "Salom! Men WomanUP yordamçisiman 🌸 Portal bilan tanişişga, taʼlim dasturlarini topişga va WomanUP imkoniyatlari haqida bilib olişga yordam beraman. Sizni nima qiziqtiradi?", ru: "Привет! Я твой помощник WomanUP 🌸 Я помогу тебе разобраться с платформой, найти образовательные программы и узнать больше о возможностях WomanUP. Что тебя интересует?", en: "Hi! I am your WomanUP assistant 🌸 I can help you find your way around the platform, find learning programmes and learn what WomanUP offers. What would you like to know?" },
+  "wu.q.what":        { uz: "WomanUP nima?", ru: "Что такое WomanUP?", en: "What is WomanUP?" },
+  "wu.q.programs":    { uz: "Qanday dasturlar bor?", ru: "Какие программы доступны?", en: "Which programmes are available?" },
+  "wu.q.register":    { uz: "Qanday röyxatdan ötaman?", ru: "Как зарегистрироваться?", en: "How do I register?" },
+  "wu.q.score":       { uz: "Development Score nima?", ru: "Что такое Development Score?", en: "What is the Development Score?" },
+  "wu.q.assistant":   { uz: "AI yordamçi qanday işlaydi?", ru: "Как работает AI-помощник?", en: "How does the AI assistant work?" },
+  "wu.hint.hello":    { uz: "Salom! Yordam beraymi?", ru: "Привет! Чем я могу помочь?", en: "Hi! Can I help?" },
+  "wu.hint.help":     { uz: "Savolingiz bormi? Men şu yerdaman.", ru: "Есть вопрос? Я здесь.", en: "Have a question? I am right here." },
+  "wu.hint.programs": { uz: "Mos dastur qidiryapsizmi?", ru: "Ищешь подходящую программу?", en: "Looking for the right programme?" },
+  "wu.hint.about":    { uz: "WomanUP haqida köproq bilmoqçimisiz?", ru: "Хочешь узнать больше о WomanUP?", en: "Want to know more about WomanUP?" },
+  "wu.hint.score":    { uz: "Development Score nima ekanini aytib beraymi?", ru: "Рассказать, что такое Development Score?", en: "Shall I explain the Development Score?" },
+  "wu.err.limit":     { uz: "Juda köp savol ketma-ket. Bir daqiqadan söng qayta urinib köring.", ru: "Слишком много вопросов подряд. Попробуйте через минуту.", en: "Too many questions in a row. Try again in a minute." },
+  "wu.dismiss":       { uz: "Tuşunarli", ru: "Понятно", en: "Got it" },
 } as const satisfies Record<string, Written>;
 
 export type MessageKey = keyof typeof messages;

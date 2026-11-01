@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  // The development badge used to sit on the companion in the bottom-left corner.
+  devIndicators: { position: "bottom-right" },
   poweredByHeader: false,
   reactStrictMode: true,
 

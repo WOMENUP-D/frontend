@@ -10,6 +10,7 @@ import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
 import { Shelf } from "@/components/Shelf";
 import { PartnerCourses } from "@/components/PartnerCourses";
+import { Reveal } from "@/components/motion/Reveal";
 
 const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
@@ -237,7 +238,7 @@ export default function ProgramsPage() {
           {/* An empty grid is still a grid: it held a row of blank space between
               the filters and what is actually on the page. */}
           {programs.length > 0 && (shelf ? <Shelf programs={programs} /> : (
-          <div className="prog-grid">
+          <Reveal className="prog-grid" stagger>
             {programs.map((program) => {
               const isEnrolled = enrolled.has(program.id);
               const outcomes = program.learning_outcomes?.length ?? 0;
@@ -333,7 +334,7 @@ export default function ProgramsPage() {
                 </article>
               );
             })}
-          </div>
+          </Reveal>
           ))}
 
           {!loading && programs.length > 0 && programs.length < total && (

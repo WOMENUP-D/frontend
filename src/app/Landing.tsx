@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Blossom } from "@/components/Blossom";
 import { useI18n, type MessageKey } from "@/i18n";
 import { DirectionMark, type MarkKind } from "@/components/DirectionMark";
+import { Reveal } from "@/components/motion/Reveal";
 
 /* ------------------------------------------------ the AI companion, drawn */
 
@@ -24,7 +25,7 @@ export function AiTeaser() {
 
   return (
     <section className="section">
-      <div className="wrap ai-teaser">
+      <Reveal className="wrap ai-teaser">
         <div className="ai-copy">
           <h2>{t("ai.teaseTitle")}</h2>
           <p>{t("ai.teaseLead")}</p>
@@ -59,7 +60,7 @@ export function AiTeaser() {
             <span className="ai-send">➤</span>
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -94,7 +95,7 @@ export function PathCards() {
           </span>
         </div>
 
-        <div className="face-grid">
+        <Reveal className="face-grid" stagger>
           {/* No "view programmes →" line under each one: the card is already
               the link, and six copies of the same sentence told a reader
               nothing the cursor did not. */}
@@ -114,7 +115,7 @@ export function PathCards() {
               <p>{t(item.d)}</p>
             </Link>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -148,7 +149,7 @@ export function Roadmap() {
           <p>{t("landing.roadLead")}</p>
         </div>
 
-        <div className="road">
+        <Reveal className="road">
           <svg className="road-line" viewBox="0 0 1200 340" aria-hidden="true">
             <path d={ROAD_PATH} />
           </svg>
@@ -168,7 +169,7 @@ export function Roadmap() {
               </span>
             </div>
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -193,7 +194,7 @@ export function Wellbeing() {
           <p>{t("landing.wellLead")}</p>
         </div>
 
-        <div className="well-grid">
+        <Reveal className="well-grid" stagger>
           <div className="stack" style={{ gap: 16 }}>
             <div className="reminder">
               <span className="dash-label">{t("well.today")}</span>
@@ -217,7 +218,7 @@ export function Wellbeing() {
               </div>
             ))}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -300,7 +301,7 @@ export function ClosingCall() {
   return (
     <section className="section">
       <div className="wrap">
-        <div className="cta-panel">
+        <Reveal className="cta-panel">
           {/* Blossom in the corners, not a second branch. The branch is the
               hero's and there is one to a page; here the garden is only
               implied — five flowers at the edge of the frame. */}
@@ -317,7 +318,7 @@ export function ClosingCall() {
           <Link href="/login" className="btn btn-primary btn-lg">
             {t("landing.ctaBtn")}
           </Link>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
