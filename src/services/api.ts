@@ -6,11 +6,17 @@
  */
 
 import { currentSession } from "./session";
+import * as tokens from "./tokenStore";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
-const ACCESS_TOKEN_KEY = "womanup.access_token";
-const REFRESH_TOKEN_KEY = "womanup.refresh_token";
+function storage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 export class ApiError extends Error {
   constructor(
@@ -28,9 +34,11 @@ export class ApiError extends Error {
   }
 }
 
+/** The access token for this tab, from memory. Null when she is not signed
+ *  in — or before `bootstrapSession` has resumed a session after a reload. */
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return tokens.getAccessToken();
 }
 
 /** Roles carried by the access token.
@@ -41,22 +49,7 @@ export function getAccessToken(): string | null {
  *  tampered payload buys a forged menu and nothing else.
  */
 export function getRoles(): string[] {
-  const token = getAccessToken();
-  if (!token) return [];
-  try {
-    const [, payload] = token.split(".");
-    const json = JSON.parse(
-      decodeURIComponent(
-        atob(payload.replace(/-/g, "+").replace(/_/g, "/"))
-          .split("")
-          .map((c) => "%" + c.charCodeAt(0).toString(16).padStart(2, "0"))
-          .join(""),
-      ),
-    );
-    return Array.isArray(json.roles) ? json.roles : [];
-  } catch {
-    return [];
-  }
+  return tokens.decodeRoles(getAccessToken());
 }
 
 /**
@@ -92,56 +85,47 @@ export function staffHome(): string {
   return "/admin";
 }
 
-export function setTokens(access: string, refresh: string): void {
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, access);
-  window.localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+/** A session was opened: keep the access token for this tab. The refresh
+ *  token arrived as an HttpOnly cookie and is never handled here. */
+export function setAccessToken(access: string): void {
+  tokens.setAccessToken(access, storage());
 }
 
-export function clearTokens(): void {
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
-  window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-}
-
-function getRefreshToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+/** Forget the session in this tab. The server-side half is `auth.logout`. */
+export function clearSession(): void {
+  tokens.setAccessToken(null, storage());
 }
 
 /**
- * Trades the refresh token for a new pair.
+ * Asks the API for a new access token, presenting the refresh cookie.
  *
- * The access token lasts thirty minutes and the refresh token thirty days, but
- * until now nothing ever spent the second one: every call simply failed once
- * the first expired. Half an hour into a session the portal started answering
- * "could not get a response" to everything — a plan, a profile save, an
- * assistant reply — and the only cure anyone could find was signing out and
- * back in, with nothing on screen explaining why.
- *
- * Shared promise, so ten calls failing together refresh once rather than ten
- * times and race each other into invalidating the result.
+ * The access token lasts thirty minutes; the cookie thirty days and is rotated
+ * on every exchange. Shared promise, so ten calls failing together refresh
+ * once rather than ten times and race each other into invalidating the result.
+ * `legacyRefresh` is a refresh token an earlier release left in storage — sent
+ * in the body exactly once, which turns it into a cookie.
  */
 let refreshing: Promise<boolean> | null = null;
 
-async function refreshTokens(): Promise<boolean> {
-  const refresh = getRefreshToken();
-  if (!refresh) return false;
+async function refreshTokens(legacyRefresh: string | null = null): Promise<boolean> {
   if (refreshing) return refreshing;
 
   refreshing = (async () => {
     try {
       const response = await fetch(`${BASE_URL}/auth/refresh`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refresh }),
+        body: JSON.stringify(legacyRefresh ? { refresh_token: legacyRefresh } : {}),
       });
       if (!response.ok) {
         // The refresh token is spent or revoked: there is nothing left to try,
-        // and keeping a dead pair around only makes the next call fail slower.
-        clearTokens();
+        // and keeping a dead session marker only makes the next load slower.
+        clearSession();
         return false;
       }
-      const pair = (await response.json()) as { access_token: string; refresh_token: string };
-      setTokens(pair.access_token, pair.refresh_token);
+      const pair = (await response.json()) as { access_token: string };
+      setAccessToken(pair.access_token);
       return true;
     } catch {
       return false;
@@ -151,6 +135,33 @@ async function refreshTokens(): Promise<boolean> {
   })();
 
   return refreshing;
+}
+
+/**
+ * Resume the session after a page load, before anything renders that depends
+ * on it. A guest resolves at once (no marker, nothing to ask); a woman with a
+ * session gets her access token back from the cookie in one request. Tokens
+ * an earlier release kept in storage are taken out of it here and used once.
+ */
+let bootstrapping: Promise<boolean> | null = null;
+
+export function bootstrapSession(): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+  if (bootstrapping) return bootstrapping;
+  bootstrapping = (async () => {
+    if (getAccessToken()) return true;
+    const store = storage();
+    const legacy = tokens.takeLegacyTokens(store);
+    if (legacy.access && !tokens.isExpired(legacy.access)) {
+      setAccessToken(legacy.access);
+      if (legacy.refresh) void refreshTokens(legacy.refresh);
+      return true;
+    }
+    if (legacy.refresh) return refreshTokens(legacy.refresh);
+    if (tokens.hasSessionMarker(store)) return refreshTokens();
+    return false;
+  })();
+  return bootstrapping;
 }
 
 export async function request<T>(
@@ -181,8 +192,8 @@ export async function request<T>(
   if (
     response.status === 401 &&
     !retrying &&
-    token &&
-    !path.startsWith("/auth/refresh") &&
+    (token || tokens.hasSessionMarker(storage())) &&
+    !path.startsWith("/auth/") &&
     (await refreshTokens())
   ) {
     return request<T>(path, options, true);

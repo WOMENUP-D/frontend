@@ -215,6 +215,7 @@ function OpportunitiesView() {
               </Link>
             </>
           )}
+          <Link href="/vakansiyalar">{t("vac.toMarket")}</Link>
           <Link href="/imkoniyatlar/biznes">{t("biz.entry")}</Link>
           <Link href="/tadbirlar">{t("nav.events")}</Link>
         </nav>

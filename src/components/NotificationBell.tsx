@@ -16,6 +16,12 @@ import { useI18n } from "@/i18n";
 import { portal, type Notification } from "@/services/portal";
 import { Icon } from "@/components/ds";
 
+/** A path on this site: starts with one slash, not two — `//host` is a
+ *  protocol-relative address to somewhere else. */
+function isLocalPath(url: string): boolean {
+  return url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\");
+}
+
 export function NotificationBell() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -90,7 +96,7 @@ export function NotificationBell() {
                 );
                 return (
                   <li key={item.id} className={item.read_at === null ? "is-unread" : ""}>
-                    {item.action_url && item.action_url.startsWith("/") ? (
+                    {item.action_url && isLocalPath(item.action_url) ? (
                       <Link href={item.action_url} className="nb-item" onClick={() => setOpen(false)}>
                         {inner}
                       </Link>
