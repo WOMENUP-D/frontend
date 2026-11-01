@@ -5700,6 +5700,17 @@ button.ed-row { cursor: pointer; }
 }
 .jb-status.is-accepted { border-color: var(--success); color: var(--success); }
 .jb-status.is-rejected, .jb-status.is-withdrawn { border-color: var(--border-strong); color: var(--text-dim); }
+/* Where a listing came from, when it is not ours: a quiet, dashed tag. */
+.jb-src {
+  display: inline-flex;
+  align-items: center;
+  font-size: .82rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-dim);
+}
 .jb-save {
   position: relative;
   z-index: 2;
@@ -5849,6 +5860,33 @@ button.ed-row { cursor: pointer; }
 .jb-fit-source { margin: 2px 0 0; color: var(--text-dim); }
 .jb-fit-extra { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .jb-fit-extra li { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+
+/* Courses for the requirements: rows like the fit list, each with its
+   course, the reason it is here, and the requirement words it covers. */
+.jb-courses-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.jb-mode {
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.jb-mode.is-ai { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+.jb-course-list { list-style: none; margin: 0; padding: 0; }
+.jb-course-list li { display: flex; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+.jb-course-list li:first-child { border-top: 0; }
+.jb-course-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.jb-course-title { font-weight: 600; color: var(--ink); text-decoration: none; }
+.jb-course-title:hover { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+.jb-course-meta { margin: 0; color: var(--text-dim); font-size: .9rem; }
+.jb-course-reason { margin: 2px 0 0; color: var(--text); }
+.jb-course-list .btn { flex: none; }
+@media (max-width: 560px) {
+  .jb-course-list li { flex-wrap: wrap; }
+  .jb-course-list .btn { width: 100%; justify-content: center; }
+}
 .jb-note {
   margin: 4px 0 0;
   padding: 10px 14px;
@@ -7352,4 +7390,101 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
   .btn-primary:not(:disabled):hover::after { animation: none; }
   :is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next)::after { transition: none; }
   :is(.jb-card, .ev-card, .cp-card, .wk-tile, .tile):is(:hover, :focus-within), :is(.tile, .face-card, .ev-card, .jb-card, .cp-card, .wk-tile):active { transform: none; }
+}
+
+/* ---- Vacancy marketplace ------------------------------------------------
+   Listings from the job board. Built on the jobs page's bones (jb-*) so the
+   two read as siblings; what is its own is the card: the employer's mark,
+   and the salary set in the display face as the figure she reads first. */
+.vc-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.vc-pick { min-height: 42px; padding: 0 16px; font-size: .95rem; }
+.vc-source { margin: 14px 0 0; color: var(--text-dim); font-size: .95rem; }
+.vc-source a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; }
+.vc-source-foot { margin-top: 22px; text-align: center; }
+.vc-results-head { align-items: center; gap: 12px; }
+.vc-tools { display: flex; align-items: center; gap: 10px; }
+.vc-sort .jb-select { min-height: 44px; width: auto; padding-right: 36px; }
+.vc-salary-input { font: inherit; color: var(--ink); background: var(--control); border: 1px solid var(--border-strong); }
+
+.vc-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 1280px) { .vc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.vc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color .15s, transform .15s;
+}
+.vc-card.is-closed { background: var(--bg-2); }
+.vc-card:focus-within { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (hover: hover) { .vc-card:hover { border-color: var(--border-strong); transform: translateY(-2px); } }
+.vc-card-head { display: flex; align-items: flex-start; gap: 14px; }
+.vc-heading { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.vc-title { margin: 0; font-family: var(--font-display); font-size: 1.3rem; line-height: 1.25; }
+.vc-link { color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.vc-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.vc-link:focus-visible { outline: none; }
+.vc-employer { margin: 0; color: var(--text-dim); font-weight: 500; }
+.vc-employer-lg { font-size: 1.05rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.vc-employer-lg a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.vc-trusted { font-size: .82rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 45%, transparent); }
+.vc-logo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.vc-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.vc-logo-initial { font-family: var(--font-display); font-size: 1.3rem; color: var(--primary); }
+.vc-tag {
+  flex: none;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--primary);
+}
+/* The figure she reads first, in the display face — and only ever the
+   employer's own figure, or the words "not specified". */
+.vc-salary { margin: 0; font-family: var(--font-display); font-size: 1.3rem; line-height: 1.2; color: var(--primary); font-variant-numeric: tabular-nums; }
+.vc-salary.is-none { font-family: inherit; font-size: 1rem; color: var(--text-dim); font-weight: 500; }
+.vc-gross { display: block; margin-top: 2px; font-family: var(--font-ui); font-size: .9rem; color: var(--text-dim); font-weight: 500; }
+.vc-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 0; color: var(--text-dim); }
+.vc-facts li + li::before { content: "·"; margin: 0 8px; color: var(--text-faint); }
+.vc-snippet { margin: 0; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.vc-card-foot { display: flex; align-items: center; gap: 14px; margin-top: 4px; color: var(--text-dim); font-size: .95rem; }
+.vc-date { flex: 1; }
+.vc-closed { color: var(--danger); font-weight: 600; }
+.vc-cta { display: inline-flex; align-items: center; gap: 2px; font-weight: 600; color: var(--primary); }
+.vc-card.is-skeleton { gap: 12px; }
+.vc-card.is-skeleton .skeleton { display: block; }
+
+/* The listing page. */
+.vc-detail-employer { display: flex; align-items: flex-start; gap: 16px; margin-top: 8px; }
+.vc-detail-employer .jb-h1 { margin: 0 0 4px; }
+.vc-facts-list .vc-salary { font-size: 1.35rem; }
+.vc-rich { color: var(--text); line-height: 1.6; overflow-wrap: anywhere; }
+.vc-rich p { margin: 0 0 10px; }
+.vc-rich h3, .vc-rich h4, .vc-rich h5 { margin: 14px 0 6px; font-size: 1.02rem; font-weight: 700; color: var(--ink); }
+.vc-rich ul, .vc-rich ol { margin: 0 0 12px; padding-left: 22px; }
+.vc-rich ul { list-style: disc; }
+.vc-rich ol { list-style: decimal; }
+.vc-rich li { margin: 3px 0; }
+.vc-rich strong { color: var(--ink); }
+.vc-skills { margin-top: 2px; }
+.vc-employer-panel .vc-detail-employer { margin-top: 0; }
+.vc-employer-links { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+@media (max-width: 640px) {
+  .vc-detail-employer { gap: 12px; }
+  .vc-tools { width: 100%; justify-content: space-between; }
+  .vc-sort { flex: 1; }
+  .vc-sort .jb-select { width: 100%; }
 }

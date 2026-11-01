@@ -15,17 +15,30 @@
  * before anything is sent. For a listing an organisation published on WomanUP
  * nothing leaves the platform: the box is her consent for that one
  * organisation to read the listed fields here. The server checks all of it
- * again.
+ * again. A vacancy read from hh.uz is applied to on hh.uz: the panel is one
+ * link out, and it says that nothing is sent.
+ *
+ * "Courses for this vacancy's requirements" is the server's choice, the same
+ * for everyone: the catalogue's courses that teach what the listing asks for,
+ * chosen by the model when it is on and by skill overlap when it is not — the
+ * panel says which, and that the choice is a suggestion.
  */
 
 import Link from "next/link";
 import { useId, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { ApiError } from "@/services/api";
-import { portal, type ApplicationRecord, type OpportunityDetail } from "@/services/portal";
-import { skillStatusKey, sourceKey } from "@/utils/format";
+import {
+  portal,
+  type ApplicationRecord,
+  type OpportunityDetail,
+  type SuggestedCourse,
+} from "@/services/portal";
+import { proficiencyKey, skillStatusKey, sourceKey } from "@/utils/format";
 import { Hint, Meter } from "@/components/guide/Parts";
 import { OrgLine } from "@/components/org/Parts";
+import { useApi } from "@/components/learning/useApi";
+import { ErrorNote } from "@/components/ui";
 import { fill, ineligibleReason, statusKey } from "./format";
 
 /* ---- what this means for you ------------------------------------------ */
@@ -283,6 +296,7 @@ export function ApplyPanel({
       : null;
   const needsConsent = Boolean(detail.sharing.partner && !detail.sharing.consent_given);
   const blocked = ineligibleReason(detail.eligibility);
+  const sourceName = t(sourceKey(detail.source));
 
   async function send() {
     if (needsConsent && !agreed) {
@@ -307,7 +321,28 @@ export function ApplyPanel({
   }
 
   let body;
-  if (!signedIn) {
+  if (detail.apply_url) {
+    // Applying happens on the source site. No sign-in is needed to get
+    // there, nothing is recorded here, and the panel says so plainly.
+    body = (
+      <>
+        <a
+          href={detail.apply_url}
+          className="btn btn-primary jb-btn-lg"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+        >
+          {fill(t("job.applyOn"), { source: sourceName })}
+          <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M8 4H4.5A1.5 1.5 0 003 5.5v10A1.5 1.5 0 004.5 17h10a1.5 1.5 0 001.5-1.5V12M12 3h5v5M17 3l-8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+        <p className="jb-muted">
+          {fill(t("job.apply.external"), { source: sourceName })} {t("job.apply.externalOpens")}
+        </p>
+      </>
+    );
+  } else if (!signedIn) {
     body = (
       <Link href="/login" className="btn btn-primary jb-btn-lg">
         {t(words.signIn)}
@@ -452,6 +487,97 @@ export function ApplyPanel({
       </h2>
       {body}
       {error}
+    </section>
+  );
+}
+
+
+/* ---- courses for the requirements ------------------------------------- */
+
+const META_SEP = " · ";
+
+export function CoursesPanel({
+  id,
+  load,
+}: {
+  id: string;
+  /** Where the choice comes from: the catalogue listing by default, or a
+   *  marketplace vacancy's. Either answers with the same shape. */
+  load?: () => Promise<{ mode: "ai" | "rules"; items: SuggestedCourse[] }>;
+}) {
+  const { t, tx } = useI18n();
+  const { data, loading, error, retry } = useApi(
+    () => (load ? load() : portal.opportunityCourses(id)),
+    [id, load],
+  );
+  const items = data?.items ?? [];
+
+  return (
+    <section className="jb-panel jb-courses" aria-labelledby="jb-courses-h" aria-busy={loading}>
+      <div className="jb-courses-head">
+        <h2 id="jb-courses-h" className="jb-h2">
+          {t("job.courses.title")}
+        </h2>
+        {data && items.length > 0 && (
+          <span className={`jb-mode is-${data.mode}`}>
+            {t(data.mode === "ai" ? "job.courses.ai" : "job.courses.rules")}
+          </span>
+        )}
+      </div>
+      <p className="jb-muted">{t("job.courses.lead")}</p>
+
+      {loading ? (
+        <p className="jb-muted" role="status">
+          {t("job.courses.loading")}
+        </p>
+      ) : error || !data ? (
+        <div className="stack" style={{ gap: 10 }}>
+          <ErrorNote message={t("job.courses.error")} />
+          <button type="button" className="btn btn-outline btn-sm" onClick={retry}>
+            {t("lms.err.retry")}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <p className="jb-muted">{t("job.courses.none")}</p>
+      ) : (
+        <ul className="jb-course-list">
+          {items.map((item) => {
+            const program = item.program;
+            const href = `/dasturlar/${program.id}`;
+            const meta = [
+              program.provider,
+              program.duration_hours ? fill(t("job.courses.hours"), { n: program.duration_hours }) : null,
+              program.level ? t(proficiencyKey(program.level)) : null,
+            ]
+              .filter(Boolean)
+              .join(META_SEP);
+            const reason = tx(item.reason_i18n);
+            return (
+              <li key={program.id}>
+                <div className="jb-course-main">
+                  <Link href={href} className="jb-course-title">
+                    {tx(program.title_i18n)}
+                  </Link>
+                  {meta && <p className="jb-course-meta">{meta}</p>}
+                  {reason && <p className="jb-course-reason">{reason}</p>}
+                  {item.covers.length > 0 && (
+                    <p className="jb-fit-source">
+                      {fill(t("job.courses.covers"), { skills: item.covers.join(", ") })}
+                    </p>
+                  )}
+                </div>
+                <Link href={href} className="btn btn-outline btn-sm">
+                  {t("job.courses.open")}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {data && items.length > 0 && (
+        <p className="jb-note">{t(data.mode === "ai" ? "job.courses.note" : "job.courses.noteRules")}</p>
+      )}
     </section>
   );
 }

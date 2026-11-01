@@ -1115,6 +1115,9 @@ export interface OpportunityFit {
 export interface OpportunityCard extends Opportunity {
   external_url: string | null;
   is_open: boolean;
+  /** Where she applies when applying happens off the platform — a vacancy
+   *  from hh.uz is applied to on hh.uz. Null when WomanUP takes the application. */
+  apply_url: string | null;
   skills: SkillRef[];
   /** Null for a visitor. */
   fit: OpportunityFit | null;
@@ -1205,6 +1208,119 @@ export interface OpportunityDetail extends OpportunityCard {
   };
   application: ApplicationRecord | null;
   other_requirements: string[];
+}
+
+/** A course chosen for a listing's requirements, with what it covers and why. */
+export interface SuggestedCourse {
+  program: {
+    id: string;
+    slug: string;
+    title_i18n: Record<string, string>;
+    provider: string | null;
+    external_url: string | null;
+    category: string;
+    format: string;
+    level: ProficiencyLevel | null;
+    duration_hours: number | null;
+    has_certificate: boolean;
+    skills_taught: string[];
+  };
+  /** The listing's own requirement words this course teaches. */
+  covers: string[];
+  /** One sentence per language when the model chose; empty when the rules did. */
+  reason_i18n: Record<string, string>;
+}
+
+export interface CourseSuggestions {
+  opportunity_id: string;
+  /** How the courses were chosen: by the model over the catalogue, or by skill overlap. */
+  mode: "ai" | "rules";
+  generated_at: string | null;
+  items: SuggestedCourse[];
+}
+
+// ---- Vacancy marketplace ------------------------------------------------------
+//
+// Real listings from the configured job board (HeadHunter today), in the
+// portal's own shape whatever the board. Nothing here is about the reader;
+// applying happens on the board through the listing's link.
+
+export interface VacancySalary {
+  amount_from: number | null;
+  amount_to: number | null;
+  currency: string | null;
+  gross: boolean | null;
+}
+
+export interface VacancyEmployer {
+  id: string | null;
+  name: string;
+  url: string | null;
+  logo_url: string | null;
+  description_html: string | null;
+  industries: string[];
+  site_url: string | null;
+  trusted: boolean | null;
+}
+
+export interface Vacancy {
+  provider: string;
+  id: string;
+  title: string;
+  employer: VacancyEmployer;
+  /** Null when the employer stated no salary; the page says so. */
+  salary: VacancySalary | null;
+  area: string | null;
+  region: string | null;
+  work_formats: string[];
+  schedule: string | null;
+  employment: string | null;
+  experience: string | null;
+  published_at: string | null;
+  snippet: string;
+  /** The original listing, where she applies. */
+  url: string;
+  language: string;
+  is_internship: boolean;
+  professional_roles: string[];
+  is_active: boolean;
+}
+
+export interface VacancyDetail extends Vacancy {
+  description_html: string;
+  description_text: string;
+  skills: string[];
+  languages: string[];
+  address: string | null;
+  has_test: boolean;
+}
+
+export interface VacancyPage {
+  items: Vacancy[];
+  total: number;
+  page: number;
+  pages: number;
+  per_page: number;
+}
+
+export interface VacancyMeta {
+  provider: { name: string; label: string; site_url: string };
+  regions: string[];
+  experience: string[];
+  employment: string[];
+  schedule: string[];
+  work_format: string[];
+  sort: string[];
+  picks: string[];
+  categories: { id: string; name: string; roles: number }[];
+}
+
+export interface VacancyCourses {
+  provider: string;
+  vacancy_id: string;
+  mode: "ai" | "rules";
+  generated_at: string | null;
+  items: SuggestedCourse[];
 }
 
 export interface DiscoverParams {
@@ -2303,6 +2419,15 @@ export const portal = {
   },
   opportunity: (id: string) =>
     api.get<OpportunityDetail>(`/opportunities/${encodeURIComponent(id)}`),
+  opportunityCourses: (id: string) =>
+    api.get<CourseSuggestions>(`/opportunities/${encodeURIComponent(id)}/courses`),
+
+  vacancies: {
+    meta: () => api.get<VacancyMeta>("/vacancies/meta"),
+    search: (params: URLSearchParams) => api.get<VacancyPage>(`/vacancies?${params.toString()}`),
+    get: (id: string) => api.get<VacancyDetail>(`/vacancies/${encodeURIComponent(id)}`),
+    courses: (id: string) => api.get<VacancyCourses>(`/vacancies/${encodeURIComponent(id)}/courses`),
+  },
   /** Apply from the confirm step. `consent` is her agreement, given there, to
    *  share the listed fields with the listing's partner platform. */
   applyTo: (id: string, consent: boolean) =>

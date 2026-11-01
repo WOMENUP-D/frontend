@@ -51,6 +51,9 @@ const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> =
   // platform can lead is the first thing a newcomer wants to know.
   { href: "/kasb", key: "nav.career", guest: true },
   { href: "/imkoniyatlar", key: "nav.opportunities", guest: true },
+  // Real listings from the job board, beside the portal's own opportunities:
+  // the same search, a different source. Open to a visitor.
+  { href: "/vakansiyalar", key: "nav.vacancies", guest: true },
   // Beside the listings: an event is something she attends, not something she
   // applies to, but it is found the same way. Open to a visitor.
   { href: "/tadbirlar", key: "nav.events", guest: true },

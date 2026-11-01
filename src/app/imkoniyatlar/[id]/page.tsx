@@ -9,7 +9,9 @@
  * open in place; they are there when she wants them, not in her way.
  *
  * Every word about her fit, her eligibility and what applying shares comes
- * from the server; the page only arranges it.
+ * from the server; the page only arranges it. So do the courses chosen for the
+ * listing's requirements, which load on their own so a slow choice never holds
+ * the listing itself back.
  */
 
 import Link from "next/link";
@@ -20,8 +22,8 @@ import { getAccessToken } from "@/services/api";
 import { portal, type OpportunityDetail } from "@/services/portal";
 import { useApi } from "@/components/learning/useApi";
 import { ErrorNote, Loading } from "@/components/ui";
-import { money, regionKey, typeKey } from "@/utils/format";
-import { ApplyPanel, FitPanel, Requirements } from "@/components/jobs/Detail";
+import { money, regionKey, sourceKey, typeKey } from "@/utils/format";
+import { ApplyPanel, CoursesPanel, FitPanel, Requirements } from "@/components/jobs/Detail";
 import { Clock, Pin, SaveButton } from "@/components/jobs/JobCard";
 import { deadlineLine, fill, rewardText } from "@/components/jobs/format";
 import { OrgLine } from "@/components/org/Parts";
@@ -131,6 +133,21 @@ export default function OpportunityPage() {
               <dd>{pay}</dd>
             </div>
           )}
+          {detail.apply_url && (
+            <div>
+              <dt>{t("job.source")}</dt>
+              <dd>
+                <a
+                  href={detail.apply_url}
+                  className="jb-inline-link"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                >
+                  {t(sourceKey(detail.source))}
+                </a>
+              </dd>
+            </div>
+          )}
           {terms.length > 0 && (
             <div>
               <dt>{t("biz.terms")}</dt>
@@ -160,6 +177,7 @@ export default function OpportunityPage() {
 
       <div className="jb-detail-main">
         <FitPanel detail={detail} />
+        <CoursesPanel id={detail.id} />
         <Requirements detail={detail} />
       </div>
     </main>
