@@ -21,16 +21,35 @@ export function PromoSlot({ slot }: { slot: SlotId }) {
 
   return (
     <div className={`promo-slot promo-slot-${items.length > 1 ? "pair" : "solo"}`}>
-      {items.map((p) => (
-        <Link key={p.id} href={p.href} className={`promo promo-${p.tone}`}>
-          <span className="promo-label">{t(p.sponsor)}</span>
-          <span className="promo-title">{t(p.title)}</span>
-          <span className="promo-body">{t(p.body)}</span>
-          <span className="promo-cta">
-            {t(p.cta)} <span aria-hidden="true">→</span>
-          </span>
-        </Link>
-      ))}
+      {items.map((p) => {
+        const inner = (
+          <>
+            <span className="promo-label">{t(p.sponsor)}</span>
+            <span className="promo-title">{t(p.title)}</span>
+            <span className="promo-body">{t(p.body)}</span>
+            <span className="promo-cta">
+              {t(p.cta)} <span aria-hidden="true">→</span>
+            </span>
+          </>
+        );
+        // A partner's site is left through a real link in a new tab: the
+        // reader keeps her place here, and the partner is named on the card.
+        return p.external ? (
+          <a
+            key={p.id}
+            href={p.href}
+            className={`promo promo-${p.tone}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {inner}
+          </a>
+        ) : (
+          <Link key={p.id} href={p.href} className={`promo promo-${p.tone}`}>
+            {inner}
+          </Link>
+        );
+      })}
     </div>
   );
 }

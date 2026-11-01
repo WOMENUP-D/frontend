@@ -25,6 +25,9 @@ export interface Promo {
   body: MessageKey;
   cta: MessageKey;
   href: string;
+  /** The promotion leaves WomanUP for the partner's own site. Rendered as a
+   *  plain link that opens in a new tab, never as a client-side route. */
+  external?: boolean;
   /** Whose promotion it is, shown to the reader. An unlabelled promotion in the
    *  middle of a state portal reads as editorial, which it is not. */
   sponsor: MessageKey;
@@ -36,32 +39,36 @@ export interface Promo {
 const BOOK: Record<SlotId, Promo[]> = {
   "home-top": [
     {
-      id: "edu-job-vacancies",
-      title: "promo.eduJob.title",
-      body: "promo.eduJob.body",
-      cta: "promo.eduJob.cta",
-      href: "/imkoniyatlar",
-      sponsor: "promo.sponsor.eduJob",
+      id: "tijoratmarkazi",
+      title: "promo.tijorat.title",
+      body: "promo.tijorat.body",
+      cta: "promo.tijorat.cta",
+      href: "https://tijoratmarkazi.uz",
+      external: true,
+      sponsor: "promo.sponsor.tijorat",
       tone: "plum",
     },
     {
-      id: "invest-hub-grants",
-      title: "promo.investHub.title",
-      body: "promo.investHub.body",
-      cta: "promo.investHub.cta",
-      href: "/imkoniyatlar",
-      sponsor: "promo.sponsor.investHub",
+      id: "wbip",
+      title: "promo.wbip.title",
+      body: "promo.wbip.body",
+      cta: "promo.wbip.cta",
+      // The bare domain serves a certificate for another host; `www` is
+      // the address the site itself answers on.
+      href: "https://www.wbip.uz",
+      external: true,
+      sponsor: "promo.sponsor.wbip",
       tone: "sand",
     },
   ],
   "home-mid": [
     {
-      id: "tijorat-markazi",
-      title: "promo.commerce.title",
-      body: "promo.commerce.body",
-      cta: "promo.commerce.cta",
-      href: "/dasturlar",
-      sponsor: "promo.sponsor.commerce",
+      id: "hh-vacancies",
+      title: "promo.jobs.title",
+      body: "promo.jobs.body",
+      cta: "promo.jobs.cta",
+      href: "/vakansiyalar",
+      sponsor: "promo.sponsor.jobs",
       tone: "rose",
     },
   ],
