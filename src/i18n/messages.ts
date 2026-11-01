@@ -48,7 +48,7 @@ export const messages = {
   "auth.requiredHint":{ uz: "Poçta va parol bilan kiring — bir daqiqada.", ru: "Войдите по почте и паролю — это займёт минуту.", en: "Sign in with your email and password — it takes a minute." },
 
   // ---- landing ------------------------------------------------------
-  "landing.eyebrow":  { uz: "Özbekiston iqtisodiyot assambleyasi", ru: "Ассамблея экономики Узбекистана", en: "Economic Assembly of Uzbekistan" },
+  "landing.eyebrow":  { uz: "Özbekiston Iqtisodiyot Assambleyasi", ru: "Экономическая ассамблея Узбекистана", en: "Economic Assembly of Uzbekistan" },
   "landing.title1":   { uz: "Har bir ayol uçun", ru: "Для каждой женщины —", en: "For every woman —" },
   "landing.title2":   { uz: "individual rivojlaniş yöli", ru: "индивидуальный путь развития", en: "an individual path of development" },
   "landing.lead":     { uz: "WomanUP — taʼlim, kasb, iş, tadbirkorlik, soğliq, oila va liderlik böyiça şaxsiy rivojlanişni boşqaradigan yagona milliy raqamli platforma.", ru: "WomanUP — единая национальная цифровая платформа, которая ведёт личное развитие в образовании, профессии, работе, предпринимательстве, здоровье, семье и лидерстве.", en: "WomanUP is a single national digital platform guiding personal development across education, profession, work, entrepreneurship, health, family and leadership." },
@@ -120,7 +120,7 @@ export const messages = {
 
   // Career progress, shown as one instrument rather than three vignettes.
   "ls.dashTitle":     { uz: "Rivojlaniş jarayoni", ru: "Прогресс развития", en: "Career progress" },
-  "ls.dashCaption":   { uz: "Sakkizta yönaliş böyiça kompozit ball. Har bir bajarilgan qadam uni kötaradi.", ru: "Композитный балл по восьми направлениям. Каждый выполненный шаг его поднимает.", en: "A composite score across eight dimensions. Every step you complete lifts it." },
+  "ls.dashCaption":   { uz: "Sakkizta yönaliş böyiça umumiy natija. Har bir bajarilgan qadam uni kötaradi.", ru: "Общий результат по восьми направлениям. Каждый выполненный шаг его поднимает.", en: "Your overall result across eight areas. Every step you complete lifts it." },
   "ls.dashNext":      { uz: "Keyingi qadamingiz", ru: "Ваш следующий шаг", en: "Your next step" },
   "ls.dashNextT":     { uz: "Rezyumeni yangilang va uçta vakansiyaga ariza yuboring", ru: "Обновите резюме и подайте заявки на три вакансии", en: "Update your CV and apply to three vacancies" },
   "ls.dashNextD":     { uz: "Reja şu qadamda kutib turibdi. Uni bajarsangiz, bandlik böyiça ball ösadi.", ru: "План ждёт именно этого шага. Выполните его — и балл по занятости вырастет.", en: "Your plan is waiting on this one. Complete it and the employment score moves." },
@@ -156,11 +156,11 @@ export const messages = {
   "foot.portal":      { uz: "Portal", ru: "Портал", en: "Portal" },
 
   "step.id.t":        { uz: "WomanUP ID", ru: "WomanUP ID", en: "WomanUP ID" },
-  "step.id.d":        { uz: "Telefon raqami orqali röyxatdan ötiş va yagona profil", ru: "Регистрация по номеру телефона и единый профиль", en: "Sign up by phone and get one unified profile" },
+  "step.id.d":        { uz: "Elektron poçta orqali röyxatdan ötiş va yagona profil", ru: "Регистрация по e-mail и единый профиль", en: "Sign up by e-mail and get one unified profile" },
   "step.diag.t":      { uz: "Diagnostika", ru: "Диагностика", en: "Assessment" },
   "step.diag.d":      { uz: "10–15 daqiqada ehtiyoj va boşlanğiç holatni aniqlaş", ru: "За 10–15 минут определяем потребности и стартовую точку", en: "Needs and a starting point, in 10–15 minutes" },
   "step.score.t":     { uz: "Development Score", ru: "Development Score", en: "Development Score" },
-  "step.score.d":     { uz: "8 ölçov böyiça 0–100 ballik kompozit indeks", ru: "Композитный индекс 0–100 по восьми измерениям", en: "A 0–100 composite index across eight dimensions" },
+  "step.score.d":     { uz: "Kuçli tomonlaringiz va ösiş nuqtalaringizni körsatadigan şaxsiy natija", ru: "Личный результат: ваши сильные стороны и точки роста", en: "A personal result that shows your strengths and growth areas" },
   "step.plan.t":      { uz: "Individual reja", ru: "Индивидуальный план", en: "Individual plan" },
   "step.plan.d":      { uz: "Sizning holatingizga moslaştirilgan aniq qadamlar", ru: "Конкретные шаги под вашу ситуацию", en: "Concrete steps fitted to your situation" },
   "step.prog.t":      { uz: "Dasturlar", ru: "Программы", en: "Programmes" },
@@ -640,7 +640,7 @@ export const messages = {
   "foot.email":       { uz: "info@womanup.uz", ru: "info@womanup.uz", en: "info@womanup.uz" },
   "foot.socialLabel": { uz: "Ijtimoiy tarmoqlar", ru: "Соцсети", en: "Social" },
   "foot.soon":        { uz: "tez orada", ru: "скоро", en: "coming soon" },
-  "foot.org":         { uz: "Özbekiston Iqtisodiy Assambleyasi", ru: "Экономическая ассамблея Узбекистана", en: "Economic Assembly of Uzbekistan" },
+  "foot.org":         { uz: "Özbekiston Iqtisodiyot Assambleyasi", ru: "Экономическая ассамблея Узбекистана", en: "Economic Assembly of Uzbekistan" },
 
   // ---- Sign-in and welcome ---------------------------------------
   "login.newHint":     { uz: "Birinçi marta kiryapsizmi? Koddan keyin ism, familiya va viloyatni söraymiz — bir daqiqadan kam.", ru: "Входите впервые? После кода спросим имя, фамилию и регион — меньше минуты.", en: "First time here? After the code we ask for your name, surname and region — under a minute." },
@@ -659,11 +659,11 @@ export const messages = {
   "login.tooMany":     { uz: "Juda köp uriniş. Bir daqiqadan söng qayta urinib köring.", ru: "Слишком много попыток. Попробуйте через минуту.", en: "Too many attempts. Try again in a minute." },
   "login.emailWhy":    { uz: "Şu poçta bilan tizimga kirasiz", ru: "С этой почтой вы будете входить", en: "This is the address you will sign in with" },
   "login.orDivider":   { uz: "yoki", ru: "или", en: "or" },
-  "login.googleSoon":  { uz: "Google orqali kiriş hali sozlanmagan. Hozirça raqam orqali kiring.", ru: "Вход через Google пока не настроен. Войдите по номеру телефона.", en: "Google sign-in is not configured yet. Use your phone number for now." },
+  "login.googleSoon":  { uz: "Google orqali kiriş hali sozlanmagan. Hozirça elektron poçta va parol bilan kiring.", ru: "Вход через Google пока не настроен. Войдите по e-mail и паролю.", en: "Google sign-in is not configured yet. Use your e-mail and password for now." },
   "login.googleWait":  { uz: "Google oynasi oçilmoqda...", ru: "Открываем окно Google...", en: "Opening Google..." },
   "login.googleErr":   { uz: "Google orqali kirib bölmadi. Qaytadan urinib köring.", ru: "Не удалось войти через Google. Попробуйте ещё раз.", en: "Google sign-in failed. Please try again." },
-  "login.googleDown":  { uz: "Google hozir javob bermayapti. Bir daqiqadan söng urinib köring yoki raqam orqali kiring.", ru: "Google сейчас не отвечает. Попробуйте через минуту или войдите по номеру.", en: "Google is not responding right now. Try again in a minute, or use your phone number." },
-  "login.googleBlocked": { uz: "Brauzer Google oynasini bloklab qöydi. Bloklaşni öçiring yoki raqam orqali kiring.", ru: "Браузер заблокировал окно Google. Разрешите всплывающие окна или войдите по номеру.", en: "Your browser blocked the Google window. Allow pop-ups, or sign in with your phone number." },
+  "login.googleDown":  { uz: "Google hozir javob bermayapti. Bir daqiqadan söng urinib köring yoki elektron poçta orqali kiring.", ru: "Google сейчас не отвечает. Попробуйте через минуту или войдите по e-mail.", en: "Google is not responding right now. Try again in a minute, or use your e-mail and password." },
+  "login.googleBlocked": { uz: "Brauzer Google oynasini bloklab qöydi. Bloklaşni öçiring yoki elektron poçta orqali kiring.", ru: "Браузер заблокировал окно Google. Разрешите всплывающие окна или войдите по e-mail.", en: "Your browser blocked the Google window. Allow pop-ups, or sign in with your e-mail and password." },
   "login.googleStaff": { uz: "Bu xodim akkaunti — login va parol bilan kiring.", ru: "Это служебный аккаунт — войдите по логину и паролю.", en: "This is a staff account — sign in with your login and password." },
   "login.badge":       { uz: "Bir daqiqada kiring", ru: "Вход за минуту", en: "Sign in in a minute" },
   "login.lead":        { uz: "Poçta va parol — boşqa heç narsa kerak emas. Kutiş yöq.", ru: "Почта и пароль — больше ничего не нужно. Ждать не придётся.", en: "An address and a password — nothing else, and no waiting." },
@@ -1041,7 +1041,7 @@ export const messages = {
   // ---- Staff sign-in ----------------------------------------------
   "sl.badge":     { uz: "Xizmat kirişi", ru: "Служебный вход", en: "Staff access" },
   "sl.title":     { uz: "Boşqaruv paneli", ru: "Панель управления", en: "Management panel" },
-  "sl.lead":      { uz: "Login va parol bilan kiring. Xizmat akkauntiga SMS kod kerak emas.", ru: "Войдите по логину и паролю. Служебному аккаунту SMS-код не нужен.", en: "Sign in with a login and a password. A staff account needs no SMS code." },
+  "sl.lead":      { uz: "Xodimlar uçun kiriş: login va parol bilan.", ru: "Вход для сотрудников: по логину и паролю.", en: "Staff sign-in: with a login and a password." },
   "sl.login":     { uz: "Login", ru: "Логин", en: "Login" },
   "pr.more":      { uz: "Yana körsatiş", ru: "Показать ещё", en: "Show more" },
   "pr.shown":     { uz: "{total} tadan {n} tasi", ru: "Показано {n} из {total}", en: "{n} of {total} shown" },
@@ -1083,7 +1083,7 @@ export const messages = {
   "sl.checking":  { uz: "Tekşirilmoqda…", ru: "Проверяем…", en: "Checking…" },
   "sl.wrong":     { uz: "Login yoki parol notöğri", ru: "Неверный логин или пароль", en: "Wrong login or password" },
   "sl.tooMany":   { uz: "Juda köp uriniş. Bir daqiqadan söng qayta urining.", ru: "Слишком много попыток. Повторите через минуту.", en: "Too many attempts. Try again in a minute." },
-  "sl.userLogin": { uz: "Men foydalanuvçiman — telefon orqali kiriş", ru: "Я пользователь — вход по телефону", en: "I'm a learner — sign in by phone" },
+  "sl.userLogin": { uz: "Men foydalanuvçiman — elektron poçta orqali kiriş", ru: "Я пользователь — вход по e-mail", en: "I'm a learner — sign in by e-mail" },
 
   // ---- promotion slots ---------------------------------------------
   // Promo copy is UI copy: it goes through i18n like everything else, and the
