@@ -7,6 +7,9 @@ test("old digraphs become the reformed letters", () => {
   assert.equal(toNewAlphabet("Toshkent shahri"), "Toşkent şahri");
   assert.equal(toNewAlphabet("Chiroyli gʻoya"), "Çiroyli ğoya");
   assert.equal(toNewAlphabet("O‘rganish"), "Örganiş");
+  assert.equal(toNewAlphabet("to'g'ridan-to'g'ri"), "töğridan-töğri");
+  assert.equal(toNewAlphabet("To’g’ri yo’l"), "Töğri yöl");
+  assert.equal(toNewAlphabet("ta'lim va ma'no"), "ta'lim va ma'no");
   assert.equal(toNewAlphabet("YaTT yoki MChJ"), "YaTT yoki MÇJ");
   assert.equal(toNewAlphabet("maʼlumot va taʼlim"), "maʼlumot va taʼlim");
 });
