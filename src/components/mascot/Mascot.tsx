@@ -267,7 +267,7 @@ export function Mascot() {
           setOpen((value) => !value);
         }}
       >
-        <MascotFigure mood={open ? "happy" : "idle"} />
+        <MascotFigure size={90} mood={open ? "happy" : "idle"} />
       </button>
     </div>
   );

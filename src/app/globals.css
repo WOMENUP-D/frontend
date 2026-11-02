@@ -6785,11 +6785,11 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
   --wu-bow: #e27d98;
   --wu-bow-light: #f3a7b8;
   --wu-bow-deep: #c35f7b;
-  position: fixed; left: 18px; bottom: 18px; z-index: 90;
+  position: fixed; left: 18px; bottom: 24px; z-index: 90;
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
   pointer-events: none;
 }
-.wu-right { left: auto; right: 18px; align-items: flex-end; }
+.wu-right { left: auto; right: 36px; align-items: flex-end; }
 .wu > * { pointer-events: auto; }
 [data-theme="dark"] .wu {
   --wu-petal: #ee9faa;
@@ -6802,8 +6802,8 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 
 .wu-button {
   all: unset; pointer-events: auto; cursor: pointer; display: grid; place-items: center;
-  width: 72px; height: 72px; border-radius: 50%;
-  filter: drop-shadow(0 10px 18px rgba(120, 60, 80, .22));
+  width: 100px; height: 100px; border-radius: 50%;
+  filter: drop-shadow(0 12px 22px rgba(120, 60, 80, .24));
   transform: translateY(16px) scale(.6); opacity: 0;
   transition: transform .5s cubic-bezier(.2, .9, .3, 1.3), opacity .4s ease, filter .25s ease;
 }
@@ -6842,12 +6842,12 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 /* A word from the blossom: rare, short, dismissed by a tap. */
 .wu-bubble {
   all: unset; pointer-events: auto; cursor: pointer; max-width: min(260px, 72vw);
-  margin-left: 58px; padding: 10px 14px; border-radius: 14px 14px 14px 4px;
+  margin-left: 80px; padding: 10px 14px; border-radius: 14px 14px 14px 4px;
   background: var(--surface); color: var(--ink); border: 1px solid var(--border-strong);
   box-shadow: var(--card-lift); font-size: .9rem; line-height: 1.4;
   position: relative; animation: wu-bubble-in .35s cubic-bezier(.2, .9, .3, 1.2);
 }
-.wu-right .wu-bubble { margin-left: 0; margin-right: 58px; border-radius: 14px 14px 4px 14px; }
+.wu-right .wu-bubble { margin-left: 0; margin-right: 80px; border-radius: 14px 14px 4px 14px; }
 .wu-bubble:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 @keyframes wu-bubble-in { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 
@@ -6906,10 +6906,10 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 .wu-send { padding: 0 14px; min-width: 44px; }
 
 @media (max-width: 600px) {
-  .wu { left: 12px; bottom: 12px; }
-  .wu-right { right: 12px; }
-  .wu-button { width: 60px; height: 60px; }
-  .wu-button .wu-figure { width: 54px; height: 54px; }
+  .wu { left: 14px; bottom: 14px; }
+  .wu-right { right: 14px; }
+  .wu-button { width: 78px; height: 78px; }
+  .wu-button .wu-figure { width: 68px; height: 68px; }
   .wu.is-open .wu-button { display: none; }
   .wu.is-open { left: 0; right: 0; bottom: 0; align-items: stretch; }
   .wu-chat { width: 100%; max-height: 88vh; border-radius: 18px 18px 0 0; border-bottom: 0; transform-origin: bottom center; }
