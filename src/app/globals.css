@@ -6842,12 +6842,19 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
    face. Everything that moves is CSS and stops under reduced motion; the
    chat is the portal assistant in a window the size of a hand. */
 .wu {
-  --wu-petal: #e8a6b4;
-  --wu-petal-light: #fbe3e8;
-  --wu-face: #fff7f3;
-  --wu-ink: #4a2b33;
-  --wu-cheek: rgba(214, 112, 134, .45);
-  --wu-leaf: #7fa48a;
+  --wu-petal: #f4b3bb;
+  --wu-petal-light: #fdd9dc;
+  --wu-petal-deep: #e28c9c;
+  --wu-ink: #2b1a20;
+  --wu-cheek: rgba(239, 128, 150, .72);
+  --wu-mouth: #8a2d3d;
+  --wu-tongue: #f4919f;
+  --wu-stamen: #f1b43a;
+  --wu-stamen-light: #ffe08a;
+  --wu-stem: #fce3e6;
+  --wu-bow: #e27d98;
+  --wu-bow-light: #f3a7b8;
+  --wu-bow-deep: #c35f7b;
   position: fixed; left: 18px; bottom: 18px; z-index: 90;
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
   pointer-events: none;
@@ -6855,11 +6862,12 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 .wu-right { left: auto; right: 18px; align-items: flex-end; }
 .wu > * { pointer-events: auto; }
 [data-theme="dark"] .wu {
-  --wu-petal: #d98aa0;
-  --wu-petal-light: #f3c7d2;
-  --wu-face: #fff3ee;
-  --wu-cheek: rgba(230, 130, 150, .5);
-  --wu-leaf: #8db899;
+  --wu-petal: #ee9faa;
+  --wu-petal-light: #f9cdd2;
+  --wu-petal-deep: #d2788b;
+  --wu-cheek: rgba(236, 120, 145, .78);
+  --wu-bow: #dc7590;
+  --wu-bow-light: #f0a0b2;
 }
 
 .wu-button {
@@ -6874,27 +6882,31 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 .wu-button:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
 .wu-button:active .wu-figure { transform: scale(.94); }
 
-/* The figure floats; the eyes blink; the leaf waves now and then. */
+/* The figure floats; the eyes blink; the bow bobs now and then. */
 .wu-figure { display: block; overflow: visible; transition: transform .25s ease; animation: wu-float 4.2s ease-in-out infinite; }
 .wu-button:hover .wu-figure { transform: scale(1.06) rotate(-4deg); }
-.wu-petal { stroke: rgba(120, 60, 80, .18); stroke-width: .6; transition: fill .3s; }
+.wu-petal { stroke: rgba(150, 70, 90, .09); stroke-width: .5; transition: fill .3s; }
 .wu-petals { animation: wu-breathe 4.2s ease-in-out infinite; transform-origin: center; }
-.wu-face { fill: var(--wu-face); stroke: rgba(120, 60, 80, .16); stroke-width: .6; }
-.wu-eye { fill: var(--wu-ink); transform-origin: center; animation: wu-blink 5.6s infinite; }
-.wu-eyes { transform-origin: 0 -1.6px; }
+.wu-eye { transform-box: fill-box; transform-origin: center; animation: wu-blink 5.6s infinite; }
+.wu-eye-ball { fill: var(--wu-ink); }
+.wu-eye-light { fill: #fff; }
 .wu-cheek { fill: var(--wu-cheek); }
-.wu-smile { fill: none; stroke: var(--wu-ink); stroke-width: 1.2; stroke-linecap: round; transition: d .2s; }
-.wu-figure.is-happy .wu-smile { d: path("M-4 3 Q0 7.6 4 3"); }
-.wu-figure.is-happy .wu-eye { ry: 1.4; }
-.wu-leaf { fill: var(--wu-leaf); transform-origin: 14px 9px; animation: wu-wave 9s ease-in-out infinite; }
+.wu-smile { fill: var(--wu-mouth); transition: d .2s; }
+.wu-tongue { fill: var(--wu-tongue); }
+.wu-stem { fill: none; stroke: var(--wu-stem); stroke-width: .9; stroke-linecap: round; }
+.wu-bow-loop { stroke: var(--wu-bow-deep); stroke-width: .35; }
+.wu-bow-knot { fill: var(--wu-bow-deep); }
+.wu-figure.is-happy .wu-smile { d: path("M-3.4 3.2 Q0 2.4 3.4 3.2 Q3 9.6 0 9.6 Q-3 9.6 -3.4 3.2 Z"); }
+.wu-figure.is-happy .wu-eye-ball { ry: 2.2; }
+.wu-bow { transform-origin: -11.5px -14.5px; animation: wu-bob 9s ease-in-out infinite; }
 .wu-button[data-poke="1"] .wu-figure { animation: wu-float 4.2s ease-in-out infinite, wu-pop .5s ease; }
-.wu-button:hover .wu-leaf { animation: wu-wave-now .9s ease-in-out; }
+.wu-button:hover .wu-bow { animation: wu-bob-now .9s ease-in-out; }
 
 @keyframes wu-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
 @keyframes wu-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 @keyframes wu-blink { 0%, 91%, 100% { transform: scaleY(1); } 94%, 97% { transform: scaleY(.08); } }
-@keyframes wu-wave { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-22deg); } 80% { transform: rotate(14deg); } 86% { transform: rotate(-16deg); } 92% { transform: rotate(0); } }
-@keyframes wu-wave-now { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-24deg); } 60% { transform: rotate(16deg); } }
+@keyframes wu-bob { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(-9deg); } 80% { transform: rotate(6deg); } 86% { transform: rotate(-5deg); } 92% { transform: rotate(0); } }
+@keyframes wu-bob-now { 0%, 100% { transform: rotate(0); } 30% { transform: rotate(-11deg); } 60% { transform: rotate(7deg); } }
 @keyframes wu-pop { 0% { transform: scale(1); } 35% { transform: scale(.9, 1.08); } 70% { transform: scale(1.06, .95); } 100% { transform: scale(1); } }
 
 /* A word from the blossom: rare, short, dismissed by a tap. */
@@ -6973,7 +6985,7 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
   .wu-chat { width: 100%; max-height: 88vh; border-radius: 18px 18px 0 0; border-bottom: 0; transform-origin: bottom center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wu-figure, .wu-petals, .wu-eye, .wu-leaf, .wu-bubble, .wu-chat, .wu-msg { animation: none !important; }
+  .wu-figure, .wu-petals, .wu-eye, .wu-bow, .wu-bubble, .wu-chat, .wu-msg { animation: none !important; }
   .wu-button { transition: opacity .2s; }
 }
 
