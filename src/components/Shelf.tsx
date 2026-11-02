@@ -79,10 +79,16 @@ export function Shelf({ programs }: { programs: Program[] }) {
               style={{ width: spineWidth(program.duration_hours) }}
               onClick={() => setOpenId(picked ? null : program.id)}
               aria-expanded={picked}
-              title={`${tx(program.title_i18n)} — ${program.duration_hours ?? "—"} ${t("common.hours")}`}
+              title={
+                program.duration_hours != null
+                  ? `${tx(program.title_i18n)} — ${program.duration_hours} ${t("common.hours")}`
+                  : tx(program.title_i18n)
+              }
             >
               <span className="spine-title">{tx(program.title_i18n)}</span>
-              <span className="spine-hours">{program.duration_hours ?? "—"}</span>
+              {program.duration_hours != null && (
+                <span className="spine-hours">{program.duration_hours}</span>
+              )}
             </button>
           );
         })}
