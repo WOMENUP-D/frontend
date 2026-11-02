@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getAccessToken } from "@/services/api";
-import { portal, type Program } from "@/services/portal";
+import { portal, type Program, type ProgramTopic, type ProgramSuggestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
 import Link from "next/link";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey, pluralKey } from "@/utils/format";
+import { levelKey } from "@/components/learning/ui";
 import { Shelf } from "@/components/Shelf";
 import { Reveal } from "@/components/motion/Reveal";
 
@@ -16,6 +17,10 @@ const CATEGORIES = [
   "parenting", "health", "leadership", "legal_literacy",
   "international", "digital_safety",
 ];
+
+const LEVELS = ["beginner", "elementary", "intermediate", "advanced"];
+const DURATIONS = ["short", "medium", "long"];
+const LANGUAGES = ["uz", "ru", "en"];
 
 /* The bar on each card is a length compared against the longest thing on
    offer, so the scale has to be the catalogue's own maximum rather than a
@@ -46,6 +51,24 @@ export default function ProgramsPage() {
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [category, setCategory] = useState("");
+  /* The second row of filters: what the courses teach, as the courses are
+     tagged. The eight directions are coarse — "digital" holds Python, Docker
+     and English alike — so a subject row lets her narrow to the one thing she
+     came for. */
+  const [skill, setSkill] = useState("");
+  const [topics, setTopics] = useState<ProgramTopic[]>([]);
+  /* The fine filters. Level and duration only ever match a course that states
+     them — the imported courses state neither, so these narrow to our own. */
+  const [level, setLevel] = useState("");
+  const [duration, setDuration] = useState("");
+  const [language, setLanguage] = useState("");
+  /* Titles that contain what she has typed, for the search field's list. */
+  const [suggestions, setSuggestions] = useState<ProgramSuggestion[]>([]);
+  /* Forty subjects is nine rows of chips before the first course. The row
+     shows the most-taught dozen and opens the rest on request; a subject
+     chosen from the address stays visible whichever half it is in. */
+  const [allTopics, setAllTopics] = useState(false);
+  const TOPICS_SHOWN = 12;
   const [search, setSearch] = useState("");
   // What is actually asked of the server. Typing "бухгалтерия" fired eleven
   // requests and the list flickered under her hands on every one of them.
@@ -76,9 +99,48 @@ export default function ProgramsPage() {
      `useSearchParams`, which would push this page behind a Suspense boundary
      for one string available on mount. */
   useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get("category");
+    const params = new URLSearchParams(window.location.search);
+    const wanted = params.get("category");
     if (wanted && CATEGORIES.includes(wanted)) setCategory(wanted);
+    const subject = params.get("skill");
+    if (subject) setSkill(subject.slice(0, 80));
+    const lvl = params.get("level");
+    if (lvl && LEVELS.includes(lvl)) setLevel(lvl);
+    const dur = params.get("duration");
+    if (dur && DURATIONS.includes(dur)) setDuration(dur);
+    const lang = params.get("language");
+    if (lang && LANGUAGES.includes(lang)) setLanguage(lang);
   }, []);
+
+  /* The filters live in the address, so a filtered page can be shared and
+     survives a refresh. The search text does not: it can be a person's name. */
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (skill) params.set("skill", skill);
+    if (level) params.set("level", level);
+    if (duration) params.set("duration", duration);
+    if (language) params.set("language", language);
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [category, skill, level, duration, language]);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    portal.programSuggest(query).then(setSuggestions).catch(() => setSuggestions([]));
+  }, [query]);
+
+  /* The subjects on offer follow the direction: within "finance" the row says
+     taxes, accounting, investing — not Python. */
+  useEffect(() => {
+    portal
+      .programTopics(category ? `?category=${category}` : "")
+      .then(setTopics)
+      .catch(() => setTopics([]));
+  }, [category]);
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(search.trim()), 300);
@@ -96,15 +158,24 @@ export default function ProgramsPage() {
   function pageQuery(number: number) {
     const params = new URLSearchParams({ size: String(PAGE_SIZE), page: String(number) });
     if (category) params.set("category", category);
+    if (skill) params.set("skill", skill);
+    if (level) params.set("level", level);
+    if (duration) params.set("duration", duration);
+    if (language) params.set("language", language);
     if (query) params.set("search", query);
     return `?${params}`;
   }
 
+  /* Two requests can be in flight when the address sets a filter right after
+     the first load; only the latest one may write, or the stale answer wins. */
+  const requestSeq = useRef(0);
   useEffect(() => {
     setLoading(true);
     setPage(1);
+    const mine = ++requestSeq.current;
     portal.programs(pageQuery(1))
       .then((result) => {
+        if (mine !== requestSeq.current) return;
         setPrograms(result.items);
         setTotal(result.total);
         // A search is reported as a count of results, never as the text typed:
@@ -112,14 +183,14 @@ export default function ProgramsPage() {
         if (query) {
           track("catalogue_search", {
             path: "/dasturlar",
-            properties: { results: result.total, category: category || undefined },
+            properties: { results: result.total, category: category || undefined, skill: skill || undefined },
           });
         }
       })
       .catch(() => setError("pr.errLoad"))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query]);
+  }, [category, query, skill, level, duration, language]);
 
   /** The next page, appended — the list she is reading does not jump. */
   async function loadMore() {
@@ -171,7 +242,13 @@ export default function ProgramsPage() {
           onChange={(event) => setSearch(event.target.value)}
           type="search"
           aria-label={t("pr.search")}
+          list="course-titles"
         />
+        <datalist id="course-titles">
+          {suggestions.map((item) => (
+            <option key={item.id} value={tx(item.title_i18n)} />
+          ))}
+        </datalist>
 
         {/* The row scrolls sideways on a phone, so the chosen category can sit
             off-screen — after arriving from a direction card it always did. */}
@@ -184,13 +261,103 @@ export default function ProgramsPage() {
                   node.scrollIntoView({ block: "nearest", inline: "center" });
                 }
               }}
-              onClick={() => setCategory(key)}
+              onClick={() => {
+                setCategory(key);
+                setSkill("");
+              }}
               className={category === key ? "chip chip-on" : "chip"}
               aria-pressed={category === key}
             >
               {key ? t(categoryKey(key)) : t("common.all")}
             </button>
           ))}
+        </div>
+
+        {topics.length > 0 && (
+          <div className="cat-filters cat-scroll cat-topics" role="group" aria-label={t("pr.topics")}>
+            {topics
+              .filter((topic, index) => allTopics || index < TOPICS_SHOWN || topic.label === skill)
+              .map((topic) => (
+              <button
+                key={topic.label}
+                ref={(node) => {
+                  if (node && skill === topic.label) {
+                    node.scrollIntoView({ block: "nearest", inline: "center" });
+                  }
+                }}
+                onClick={() => setSkill(skill === topic.label ? "" : topic.label)}
+                className={skill === topic.label ? "chip chip-on" : "chip"}
+                aria-pressed={skill === topic.label}
+              >
+                {tx(topic.title_i18n) || topic.label}
+                <span className="chip-count">{topic.count}</span>
+              </button>
+            ))}
+            {topics.length > TOPICS_SHOWN && (
+              <button
+                type="button"
+                className="chip chip-more"
+                onClick={() => setAllTopics((value) => !value)}
+                aria-expanded={allTopics}
+              >
+                {allTopics
+                  ? t("pr.fewerTopics")
+                  : t("pr.moreTopics").replace("{n}", String(topics.length - TOPICS_SHOWN))}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="cat-fine" role="group" aria-label={t("pr.filters")}>
+          <select
+            className="input"
+            value={level}
+            onChange={(event) => setLevel(event.target.value)}
+            aria-label={t("pr.level")}
+          >
+            <option value="">{t("pr.level")}: {t("common.all")}</option>
+            {LEVELS.map((value) => (
+              <option key={value} value={value}>{t(levelKey(value))}</option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={duration}
+            onChange={(event) => setDuration(event.target.value)}
+            aria-label={t("pr.duration")}
+          >
+            <option value="">{t("pr.duration")}: {t("common.all")}</option>
+            {DURATIONS.map((value) => (
+              <option key={value} value={value}>{t(`pr.duration.${value}` as MessageKey)}</option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            aria-label={t("pr.language")}
+          >
+            <option value="">{t("pr.language")}: {t("common.all")}</option>
+            {LANGUAGES.map((value) => (
+              <option key={value} value={value}>{t(`pr.lang.${value}` as MessageKey)}</option>
+            ))}
+          </select>
+          {(category || skill || level || duration || language || search) && (
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => {
+                setCategory("");
+                setSkill("");
+                setLevel("");
+                setDuration("");
+                setLanguage("");
+                setSearch("");
+              }}
+            >
+              {t("pr.reset")}
+            </button>
+          )}
         </div>
       </header>
 
@@ -205,7 +372,8 @@ export default function ProgramsPage() {
               giving when a filter is on: with an empty catalogue it sent a
               reader round a loop that no tap could end, so the page goes
               straight to the courses below instead. */}
-          {!loading && !error && programs.length === 0 && (category || query)
+          {!loading && !error && programs.length === 0
+            && (category || query || skill || level || duration || language)
             && catalogueHasAny !== false && (
               <Empty title={t("pr.notFound")} hint={t("pr.notFoundHint")} />
             )}
@@ -296,6 +464,12 @@ export default function ProgramsPage() {
                   <div className="prog-foot">
                     <span className="prog-marks">
                       <span className="prog-fmt">{t(formatKey(program.format))}</span>
+                      {program.level && (
+                        <span className="prog-fmt">{t(levelKey(program.level))}</span>
+                      )}
+                      {program.language && (
+                        <span className="prog-fmt">{t(`pr.lang.${program.language}` as MessageKey)}</span>
+                      )}
                       {program.has_certificate && (
                         <span className="prog-fmt prog-cert">{t("pr.certificate")}</span>
                       )}
