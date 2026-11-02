@@ -44,6 +44,10 @@ const nextConfig = {
       // where a signed-in woman is sent instead of 404.
       { source: "/yangiliklar", destination: "/kabinet", permanent: false },
       { source: "/yangiliklar/:slug", destination: "/kabinet", permanent: false },
+      // The career-paths section was taken down; its addresses were in the
+      // menu and in the getting-started guide, so they lead to the catalogue.
+      { source: "/kasb", destination: "/dasturlar", permanent: false },
+      { source: "/kasb/:slug", destination: "/dasturlar", permanent: false },
     ];
   },
 };

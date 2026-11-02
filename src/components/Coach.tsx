@@ -44,10 +44,11 @@ export function suggestionText(
   return fill(t(suggestion.key as MessageKey), suggestion.params);
 }
 
-/** Where a reference points. Only the kinds the server can produce. */
-export function referenceHref(reference: CoachReference): string {
-  if (reference.kind === "career_path" && reference.slug) {
-    return `/kasb/${reference.slug}`;
+/** Where a reference points. Only the kinds the server can produce; a career
+ *  direction has no page of its own any more, so it is named but not linked. */
+export function referenceHref(reference: CoachReference): string | null {
+  if (reference.kind === "career_path") {
+    return null;
   }
   if (reference.kind === "learning_path" && reference.slug) {
     return `/talim/yollar/${reference.slug}`;
@@ -251,11 +252,18 @@ export function CoachReferences({ references }: { references: CoachReference[] }
     <div className="stack" style={{ gap: 6 }}>
       <span className="eyebrow">{t("coach.references")}</span>
       <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-        {references.map((reference) => (
-          <Link key={reference.id} href={referenceHref(reference)} className="chip">
-            {tx(reference.title_i18n)}
-          </Link>
-        ))}
+        {references.map((reference) => {
+          const href = referenceHref(reference);
+          return href ? (
+            <Link key={reference.id} href={href} className="chip">
+              {tx(reference.title_i18n)}
+            </Link>
+          ) : (
+            <span key={reference.id} className="chip">
+              {tx(reference.title_i18n)}
+            </span>
+          );
+        })}
       </div>
     </div>
   );

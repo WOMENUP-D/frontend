@@ -89,12 +89,10 @@ export function orderedReasons(reasons: MatchReason[]): MatchReason[] {
 
 /** What would help when nothing fits — only the things she has not done. */
 export function missingSignals(signals: {
-  career?: boolean;
   interests?: boolean;
   score?: boolean;
-}): ("career" | "profile" | "score")[] {
-  const out: ("career" | "profile" | "score")[] = [];
-  if (!signals.career) out.push("career");
+}): ("profile" | "score")[] {
+  const out: ("profile" | "score")[] = [];
   if (!signals.interests) out.push("profile");
   if (!signals.score) out.push("score");
   return out;
