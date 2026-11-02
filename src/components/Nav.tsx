@@ -46,10 +46,6 @@ const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> =
   // Next to the catalogue on purpose: the catalogue is what she can enrol in,
   // this is where she actually studies. It is hers, so no `guest` flag.
   { href: "/talim", key: "nav.learning" },
-  // Between learning and the listings, because that is what it joins: what
-  // she learns, and the work it can lead to. Open to a visitor — where the
-  // platform can lead is the first thing a newcomer wants to know.
-  { href: "/kasb", key: "nav.career", guest: true },
   { href: "/imkoniyatlar", key: "nav.opportunities", guest: true },
   // Real listings from the job board, beside the portal's own opportunities:
   // the same search, a different source. Open to a visitor.

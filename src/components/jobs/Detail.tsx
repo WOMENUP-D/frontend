@@ -148,9 +148,7 @@ export function FitPanel({ detail }: { detail: OpportunityDetail }) {
           {career && (
             <li>
               <Mark kind="have" />
-              <Link href={`/kasb/${career.career_slug}`} className="jb-inline-link">
-                {fill(t("job.fit.career"), { career: tx(career.career_title_i18n) })}
-              </Link>
+              <span>{fill(t("job.fit.career"), { career: tx(career.career_title_i18n) })}</span>
             </li>
           )}
           {region && (

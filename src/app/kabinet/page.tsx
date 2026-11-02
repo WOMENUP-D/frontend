@@ -15,7 +15,6 @@ import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth, ScoreRing } from "
 import { YourWeek } from "@/components/home/YourWeek";
 import { GettingStarted } from "@/components/home/GettingStarted";
 import { DimensionInsights, ForYou, NextSteps } from "@/components/Recommendations";
-import { MyCareer } from "@/components/career/MyCareer";
 import { SkillsSection } from "@/components/Skills";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
@@ -428,10 +427,6 @@ export default function CabinetPage() {
           ) : (
             recs && <NextSteps steps={recs.next_steps} />
           )}
-
-          {/* Her career direction: the stage she is on and a way back to it,
-              or — when she has none — one sentence and one way to find one. */}
-          <MyCareer />
 
           <div>
             <div className="spread" style={{ marginBottom: 4 }}>

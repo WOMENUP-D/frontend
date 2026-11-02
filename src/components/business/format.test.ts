@@ -101,9 +101,9 @@ test("what she runs and chose come before where she lives", () => {
 });
 
 test("the empty state suggests only what she has not done", () => {
-  assert.deepEqual(missingSignals({}), ["career", "profile", "score"]);
-  assert.deepEqual(missingSignals({ career: true, interests: true, score: true }), []);
-  assert.deepEqual(missingSignals({ career: true, score: true }), ["profile"]);
+  assert.deepEqual(missingSignals({}), ["profile", "score"]);
+  assert.deepEqual(missingSignals({ interests: true, score: true }), []);
+  assert.deepEqual(missingSignals({ score: true }), ["profile"]);
 });
 
 test("terms are the listing's own, in plain words, and a price of zero reads as free", () => {

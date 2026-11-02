@@ -5151,285 +5151,6 @@ button.ed-row { cursor: pointer; }
   .journey-chevron, .journey-title { transition: none; }
 }
 
-/* ==================================================================
-   Career paths (/kasb, /kasb/[slug], the cabinet card)
-   ================================================================== */
-
-.cp-page { font-size: 1.0625rem; line-height: 1.55; }
-.cp-page .btn { min-height: 48px; font-size: 1rem; white-space: normal; text-align: center; }
-.cp-page a:focus-visible,
-.cp-page button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-.cp-hero { max-width: 760px; margin-bottom: 26px; }
-.cp-h1 {
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 1.45rem + 2.4vw, 3rem);
-  line-height: 1.1;
-  color: var(--ink);
-  margin: 0 0 12px;
-  overflow-wrap: anywhere;
-}
-.cp-h2 { font-family: var(--font-display); font-size: 1.55rem; color: var(--ink); margin: 0 0 14px; }
-.cp-lead { font-size: 1.15rem; color: var(--text-dim); max-width: 62ch; margin: 0; }
-.cp-muted { color: var(--text-dim); }
-.cp-inline-link { color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-.cp-signin {
-  margin: 0 0 20px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: var(--bg-2);
-  color: var(--text);
-}
-.cp-mine { max-width: 760px; margin-bottom: 28px; }
-
-/* Filter: two kinds of work, as big radio pills. The chosen one is filled
-   *and* carries a check, so it is not told apart by colour alone. */
-.cp-filter { border: 0; padding: 0; margin: 0 0 22px; display: flex; flex-wrap: wrap; gap: 8px; }
-.cp-filter-option {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 18px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
-  background: var(--control);
-  color: var(--ink);
-  font-weight: 600;
-  cursor: pointer;
-}
-.cp-filter-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.cp-filter-option.is-on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
-.cp-filter-option.is-on::before { content: "✓" / ""; font-weight: 700; }
-.cp-filter-option:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-/* Catalogue cards. */
-.cp-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-  gap: 18px;
-}
-.cp-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 22px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  transition: border-color .15s, transform .15s;
-}
-.cp-card.is-chosen { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
-.cp-card:focus-within { outline: 2px solid var(--primary); outline-offset: 3px; }
-@media (hover: hover) {
-  .cp-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-  .cp-card:hover .cp-card-cta { gap: 10px; }
-}
-.cp-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.cp-card-icon, .mycareer-icon, .cp-head-icon {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  border-radius: 50%;
-  background: var(--grad-soft), var(--bg-2);
-  color: var(--primary);
-}
-.cp-card-icon { width: 52px; height: 52px; }
-.cp-flag {
-  font-size: .82rem;
-  font-weight: 600;
-  line-height: 1.3;
-  padding: 5px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--primary);
-  color: var(--primary);
-  text-align: center;
-}
-.cp-flag.is-chosen { background: var(--primary); color: var(--on-primary); }
-.cp-card-title { margin: 0; font-family: var(--font-display); font-size: 1.45rem; line-height: 1.2; }
-.cp-card-link { color: var(--ink); text-decoration: none; }
-/* The title's link covers the card, so the whole card is one target. */
-.cp-card-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
-.cp-card-link:focus-visible { outline: none; }
-.cp-card-summary { margin: 0; color: var(--text-dim); }
-.cp-card-need { margin: 0; font-weight: 600; color: var(--ink); }
-.cp-card-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.cp-card-facts li {
-  font-size: .9rem;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--bg-2);
-  color: var(--text);
-}
-.cp-card-cta {
-  margin-top: auto;
-  padding-top: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  font-weight: 600;
-  color: var(--primary);
-  transition: gap .15s;
-}
-
-.cp-empty {
-  padding: 32px;
-  border-radius: var(--radius);
-  border: 1px dashed var(--border-strong);
-  max-width: 640px;
-}
-.cp-empty p { color: var(--text-dim); }
-.cp-empty-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-
-/* ---- the cabinet card ------------------------------------------------- */
-.mycareer {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 22px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-.mycareer.is-empty { border-style: dashed; }
-.mycareer-label { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-dim); font-family: var(--font-ui); }
-.mycareer-row { display: flex; align-items: center; gap: 14px; }
-.mycareer-icon { width: 56px; height: 56px; }
-.mycareer-text { min-width: 0; }
-.mycareer-title { margin: 0; font-family: var(--font-display); font-size: 1.4rem; line-height: 1.2; color: var(--ink); overflow-wrap: anywhere; }
-.mycareer-meta { margin: 2px 0 0; color: var(--text-dim); }
-.mycareer-none { margin: 0; font-size: 1.1rem; color: var(--ink); }
-.mycareer-hint { margin: 0; color: var(--text-dim); }
-.mycareer-action { align-self: flex-start; min-height: 48px; font-size: 1rem; white-space: normal; text-align: center; }
-
-/* ---- one direction ---------------------------------------------------- */
-.cp-detail {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "back" "head" "side" "route";
-  gap: 22px;
-}
-.cp-back { grid-area: back; justify-self: start; }
-.cp-head { grid-area: head; }
-.cp-side { grid-area: side; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.cp-route { grid-area: route; min-width: 0; }
-@media (min-width: 1100px) {
-  .cp-detail {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-    grid-template-areas: "back back" "head head" "route side";
-    column-gap: 48px;
-  }
-  .cp-side { position: sticky; top: calc(var(--header-h) + 18px); align-self: start; }
-}
-
-.cp-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  color: var(--text-dim);
-  font-weight: 600;
-  text-decoration: none;
-}
-.cp-back:hover { color: var(--ink); }
-.cp-head { display: flex; align-items: flex-start; gap: 18px; }
-.cp-head-icon { width: 68px; height: 68px; margin-top: 4px; }
-.cp-head-text { min-width: 0; }
-.cp-kind { margin: 0 0 6px; font-weight: 600; color: var(--primary); }
-
-.cp-choice {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--surface);
-}
-.cp-choice-hint { margin: 0; color: var(--text-dim); }
-.cp-chosen { margin: 0; display: inline-flex; align-items: center; gap: 10px; font-weight: 600; color: var(--ink); }
-.cp-chosen svg, .cp-evidence svg { width: 22px; height: 22px; flex: none; }
-.cp-chosen circle, .cp-evidence circle { fill: var(--success); }
-.cp-chosen path, .cp-evidence path { fill: none; stroke: var(--bg); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.cp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.cp-btn-lg { min-height: 52px !important; padding: 14px 26px; font-size: 1.04rem !important; }
-
-/* Stage contents. */
-.cp-stage { display: flex; flex-direction: column; gap: 12px; }
-.cp-what { margin: 0; color: var(--text-dim); max-width: 62ch; }
-.cp-note {
-  margin: 0;
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border-left: 3px solid var(--border-strong);
-  color: var(--text);
-  max-width: 62ch;
-}
-.cp-skillgroup { display: flex; flex-direction: column; gap: 8px; }
-.cp-skillgroup-label, .cp-list-label, .cp-path-label { margin: 6px 0 0; font-weight: 600; color: var(--text-dim); font-size: .95rem; }
-.cp-dimnotes { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.cp-dimnotes li {
-  padding: 12px 16px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border-left: 3px solid var(--gold);
-  max-width: 62ch;
-}
-.cp-path {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border-radius: 14px;
-  background: var(--bg-2);
-}
-.cp-path-title { margin: 0; font-family: var(--font-display); font-size: 1.2rem; color: var(--ink); }
-.cp-btn { align-self: flex-start; }
-.cp-rows { list-style: none; margin: 0; padding: 0; }
-.cp-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 16px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-}
-.cp-row:first-child { border-top: 0; }
-.cp-row-main { flex: 1 1 240px; min-width: 0; }
-.cp-row-title { margin: 0; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
-.cp-row-meta { margin: 2px 0 0; color: var(--text-dim); display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.cp-row-skills { margin: 4px 0 0; font-size: .95rem; color: var(--text); }
-.cp-row-skills-label { color: var(--text-dim); }
-.cp-row-action { flex: none; }
-.cp-type { font-size: .85rem; padding: 2px 10px; border-radius: 999px; background: var(--bg-2); color: var(--text); }
-.cp-evidence ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.cp-evidence li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.cp-serial { font-family: var(--font-mono); font-size: .82rem; color: var(--text-dim); }
-
-@media (max-width: 560px) {
-  .journey { --node: 30px; --node-top: 16px; }
-  .journey-step { gap: 10px; }
-  .journey-head { padding: 12px 14px; }
-  .journey-panel { padding: 2px 14px 18px; }
-  .cp-head { gap: 12px; }
-  .cp-head-icon { width: 52px; height: 52px; }
-  .cp-card { padding: 18px; }
-  .cp-choice { padding: 16px; }
-  .cp-actions > .btn { flex: 1 1 100%; }
-  .cp-row-action, .cp-row-action .btn { width: 100%; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cp-card, .cp-card-cta { transition: none; }
-  .cp-card:hover { transform: none; }
-}
 
 /* ==================================================================
    Jobs and opportunities (/imkoniyatlar, /imkoniyatlar/[id], tracker)
@@ -7269,36 +6990,36 @@ a.nb-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2p
 /* Blossom light — one pseudo-element, shared by every card that navigates or
    holds an action. Cards that only report a figure stay flat on purpose, and
    the closing panel keeps its own two corner washes instead. */
-.tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next {
+.tile, .face-card, .prog-card, .ev-card, .jb-card, .wk-tile, .dash-next {
   position: relative; isolation: isolate;
 }
 .tile::after, .face-card::after, .prog-card::after, .ev-card::after, .jb-card::after,
-.cp-card::after, .wk-tile::after, .dash-next::after {
+.wk-tile::after, .dash-next::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: 1;
   pointer-events: none;
   background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), var(--bloom-glow), transparent 70%);
   mix-blend-mode: multiply;
   opacity: 0; transition: opacity .4s var(--ease-bloom);
 }
-[data-theme="dark"] :is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next)::after {
+[data-theme="dark"] :is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .wk-tile, .dash-next)::after {
   mix-blend-mode: screen;
 }
-:is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next):is(:hover, :focus-within)::after {
+:is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .wk-tile, .dash-next):is(:hover, :focus-within)::after {
   opacity: 1;
 }
 
 /* The lift: two pixels, and the same two for the keyboard. */
-.jb-card, .ev-card, .cp-card, .wk-tile {
+.jb-card, .ev-card, .wk-tile {
   transition: border-color .2s var(--ease-bloom), transform .25s var(--ease-bloom), box-shadow .25s var(--ease-bloom);
 }
-:is(.jb-card, .ev-card, .cp-card, .wk-tile):is(:hover, :focus-within) {
+:is(.jb-card, .ev-card, .wk-tile):is(:hover, :focus-within) {
   border-color: var(--border-strong);
   transform: translateY(-2px);
   box-shadow: var(--card-lift);
 }
 .tile:focus-within { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow); }
 /* A finger gets a press where a cursor gets a hover. */
-:is(.tile, .face-card, .ev-card, .jb-card, .cp-card, .wk-tile):active {
+:is(.tile, .face-card, .ev-card, .jb-card, .wk-tile):active {
   transform: translateY(0) scale(.985);
   transition-duration: .08s;
 }
@@ -7388,8 +7109,8 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
   }
   .dash-track > span, .dash-ring, .face-mark { transition: none; }
   .btn-primary:not(:disabled):hover::after { animation: none; }
-  :is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next)::after { transition: none; }
-  :is(.jb-card, .ev-card, .cp-card, .wk-tile, .tile):is(:hover, :focus-within), :is(.tile, .face-card, .ev-card, .jb-card, .cp-card, .wk-tile):active { transform: none; }
+  :is(.tile, .face-card, .prog-card, .ev-card, .jb-card, .wk-tile, .dash-next)::after { transition: none; }
+  :is(.jb-card, .ev-card, .wk-tile, .tile):is(:hover, :focus-within), :is(.tile, .face-card, .ev-card, .jb-card, .wk-tile):active { transform: none; }
 }
 
 /* ---- Vacancy marketplace ------------------------------------------------

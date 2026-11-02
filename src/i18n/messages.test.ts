@@ -26,8 +26,7 @@ test("career and job messages quote the same facts in every language", () => {
     ([key]) =>
       key.startsWith("car.") ||
       key.startsWith("job.") ||
-      key.startsWith("coach.q.career") ||
-      key === "nav.career",
+      key.startsWith("coach.q.career"),
   );
   assert.ok(career.length > 60);
   for (const [key, entry] of career) {
