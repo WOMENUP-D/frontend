@@ -139,7 +139,9 @@ export function Mascot() {
   }, [open]);
 
   if (hiddenOn(pathname)) return null;
-  const side = pathname?.startsWith("/talim") ? "right" : "left";
+  // Bottom-right on every page: that is where she is expected, and the left
+  // edge is where a page's own content begins.
+  const side = "right";
 
   return (
     <div className={`wu wu-${side}${arrived ? " is-here" : ""}${open ? " is-open" : ""}`}>
