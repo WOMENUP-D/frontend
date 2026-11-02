@@ -3556,14 +3556,6 @@ button.ed-row { cursor: pointer; }
    tiles say what the record adds up to, and they read as one thought on one
    line. The four figures used to sit further down the page as a numbered list,
    which made them look like navigation rather than a summary. */
-.profcard-row {
-  display: grid;
-  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
-  margin-bottom: 28px;
-}
-
 .pstats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3591,11 +3583,6 @@ button.ed-row { cursor: pointer; }
   margin-top: 7px;
   font-size: 0.83rem;
   color: var(--text-dim);
-}
-
-@media (max-width: 900px) {
-  .profcard-row { grid-template-columns: minmax(0, 1fr); }
-  .profcard-row .profcard { max-width: 380px; }
 }
 
 @media (max-width: 520px) {

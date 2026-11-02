@@ -36,7 +36,11 @@ export function YourWeek() {
 
   return (
     <Section title={t("week.title")} lead={t("week.lead")} className="wk">
-      {lesson && (
+      {/* Only a course with a lesson to return to. A partner course has none —
+          its lessons live on the partner's site — so "continue, 0%" would send
+          her to a page with nothing on it. When our own courses arrive, this
+          card comes back by itself. */}
+      {lesson && Object.keys(lesson.lesson_title_i18n).length > 0 && (
         <div className="wk-continue">
           <p className="wk-kicker">
             <Icon name="book" />
