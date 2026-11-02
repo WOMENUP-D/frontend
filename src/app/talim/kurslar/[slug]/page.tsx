@@ -31,6 +31,7 @@ import {
 } from "@/services/portal";
 import { useApi } from "@/components/learning/useApi";
 import { track } from "@/services/analytics";
+import { hostOf } from "@/utils/url";
 import {
   art,
   isComplete,
@@ -131,6 +132,7 @@ export default function CoursePage() {
   const { course } = data;
   const lessons = lessonsOf(course);
   const next = nextLessonOf(course, current);
+  const outside = course.external_url ? hostOf(course.external_url) : null;
 
   return (
     <>
@@ -160,7 +162,9 @@ export default function CoursePage() {
 
           <section className="lms-sec">
             <SectionHead title={t("lms.course.contents")} />
-            {lessons.length ? (
+            {outside ? (
+              <OutsideNotice host={outside} href={course.external_url ?? ""} />
+            ) : lessons.length ? (
               <div style={{ display: "grid", gap: 14 }}>
                 {course.modules.map((module) => (
                   <ModuleBlock
@@ -182,6 +186,7 @@ export default function CoursePage() {
           course={course}
           enrollment={current}
           next={next}
+          outside={outside}
           onEnrolled={(value) => setEnrollment(value)}
         />
       </div>
@@ -190,6 +195,24 @@ export default function CoursePage() {
 }
 
 /* ---- pieces ---------------------------------------------------------- */
+
+/** A course that is not ours. The lessons, the sign-up and the certificate
+ *  live on the partner's site, so the page says so and sends her there in
+ *  the same tab — a second tab left her wondering which window she was in. */
+function OutsideNotice({ host, href }: { host: string; href: string }) {
+  const { t } = useI18n();
+  return (
+    <EmptyState
+      title={t("lms.course.outside").replace("{host}", host)}
+      hint={t("lms.course.outsideHint")}
+      action={
+        <a className="lms-btn lms-btn-primary" href={href} rel="noopener noreferrer">
+          {t("lms.course.goOutside")}
+        </a>
+      }
+    />
+  );
+}
 
 function Back() {
   const { t } = useI18n();
@@ -317,11 +340,13 @@ function ModuleBlock({
  *  review. A finished course sends "Review" back to the first lesson rather
  *  than to this page, so the action is never a link to where you already are. */
 function Panel({
-  course, enrollment, next, onEnrolled,
+  course, enrollment, next, outside, onEnrolled,
 }: {
   course: ProgramDetail;
   enrollment: Enrollment | null;
   next: ProgramLesson | null;
+  /** The partner's host when the course is taught elsewhere. */
+  outside: string | null;
   onEnrolled: (enrollment: Enrollment) => void;
 }) {
   const { t, tx } = useI18n();
@@ -353,16 +378,25 @@ function Panel({
   return (
     <aside className="lms-side-panel">
       <section className="lms-card lms-card-pad">
-        <h2 className="lms-goal-title">{t("lms.course.progress")}</h2>
+        <h2 className="lms-goal-title">
+          {outside ? t("lms.course.outsideTitle") : t("lms.course.progress")}
+        </h2>
 
-        <div style={{ display: "grid", justifyItems: "center", gap: 10, margin: "16px 0 8px" }}>
-          <Ring percent={enrollment?.progress_percent ?? 0} size={104} />
-          {counts.total > 0 && (
-            <strong style={{ fontSize: "0.92rem" }}>
-              {counts.done} / {counts.total} {t("lms.course.lessons")}
-            </strong>
-          )}
-        </div>
+        {outside ? (
+          <p className="lms-course-by" style={{ margin: "10px 0 16px" }}>
+            {t("lms.course.outside").replace("{host}", outside)}{" "}
+            {t("lms.course.outsideHint")}
+          </p>
+        ) : (
+          <div style={{ display: "grid", justifyItems: "center", gap: 10, margin: "16px 0 8px" }}>
+            <Ring percent={enrollment?.progress_percent ?? 0} size={104} />
+            {counts.total > 0 && (
+              <strong style={{ fontSize: "0.92rem" }}>
+                {counts.done} / {counts.total} {t("lms.course.lessons")}
+              </strong>
+            )}
+          </div>
+        )}
 
         {/* Time left is dropped once there is none: "0 min" is noise. */}
         {left > 0 && (
@@ -372,7 +406,16 @@ function Panel({
           </p>
         )}
 
-        {enrollment ? (
+        {outside ? (
+          <a
+            className="lms-btn lms-btn-primary"
+            style={{ width: "100%" }}
+            href={course.external_url ?? ""}
+            rel="noopener noreferrer"
+          >
+            {t("lms.course.goOutside")}
+          </a>
+        ) : enrollment ? (
           target && (
             <Link
               className="lms-btn lms-btn-primary"
