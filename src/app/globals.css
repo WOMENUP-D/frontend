@@ -7151,3 +7151,63 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
   .vc-sort { flex: 1; }
   .vc-sort .jb-select { width: 100%; }
 }
+
+/* ---- diagnostic v3: the profile block, open answers ----------------------- */
+.dg-part { display: block; font-size: .78rem; font-weight: 600; letter-spacing: .02em; color: var(--text-dim); }
+.dg-optional { margin-left: 10px; font-size: .8rem; font-weight: 500; color: var(--text-dim); white-space: nowrap; }
+.dg-text { display: flex; flex-direction: column; gap: 6px; }
+.dg-text textarea {
+  width: 100%; min-height: 120px; resize: vertical; padding: 12px 14px; font: inherit; line-height: 1.5;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.dg-text textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-color: var(--primary); }
+.dg-text-count { align-self: flex-end; font-variant-numeric: tabular-nums; }
+
+/* ---- result: who she is, the courses, the route --------------------------- */
+.dr-about-grid { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.dr-about-row { padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); min-width: 0; }
+.dr-about-row dt { font-size: .8rem; color: var(--text-dim); margin-bottom: 4px; }
+.dr-about-row dd { margin: 0; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.dr-about-wide { grid-column: 1 / -1; }
+.dr-about-quote { font-weight: 450 !important; font-style: italic; line-height: 1.5; }
+
+.dr-courses-state { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.dr-rec { display: flex; flex-direction: column; gap: 22px; }
+.dr-mode { margin: 0; }
+.dr-summary { margin: 0; padding: 14px 18px; border-left: 3px solid var(--primary); background: var(--grad-soft); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.dr-summary p { margin: 0; line-height: 1.55; }
+.dr-summary p + p { margin-top: 6px; }
+.dr-gaps { display: flex; flex-direction: column; gap: 8px; }
+.dr-gaps-title { font-weight: 650; color: var(--ink); }
+.dr-gap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.dr-gap { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: .9rem; color: var(--ink); }
+.dr-gap-why { font-size: .74rem; color: var(--text-dim); }
+.dr-follow { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--surface-2); line-height: 1.5; }
+.dr-h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-size: 1.08rem; }
+.dr-prio { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); flex: none; }
+.dr-prio-high { background: var(--primary); }
+.dr-prio-medium { background: var(--accent, var(--primary)); opacity: .6; }
+.dr-course-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.dr-course { padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dr-course-head { display: flex; flex-direction: column; gap: 2px; }
+.dr-course-title { margin: 0; font-size: 1.02rem; }
+.dr-course-title a { color: var(--ink); text-decoration: none; }
+.dr-course-title a:hover { color: var(--primary); }
+.dr-course-meta { font-size: .84rem; color: var(--text-dim); }
+.dr-course-body { margin: 0; display: grid; gap: 8px; }
+.dr-course-body dt { font-size: .78rem; color: var(--text-dim); margin-bottom: 2px; }
+.dr-course-body dd { margin: 0; line-height: 1.5; color: var(--text); }
+.dr-course-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.dr-course-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-sm { font-size: .78rem; padding: 3px 8px; }
+.dr-road-stages { list-style: none; margin: 0; padding: 0; counter-reset: stage; display: flex; flex-direction: column; gap: 10px; }
+.dr-road-stage { counter-increment: stage; display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.dr-road-stage::before { content: counter(stage); grid-row: 1 / span 2; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: var(--primary); }
+.dr-road-title { font-weight: 650; color: var(--ink); }
+.dr-road-items { grid-column: 2; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dr-road-item { line-height: 1.5; }
+.dr-road-item.is-course a { color: var(--primary); }
+.dr-road-item.is-activity { color: var(--text); }
+.dr-road-item.is-activity::before { content: "→ "; color: var(--text-dim); }
+.dr-rec-notes { margin: 0; padding-left: 18px; color: var(--text-dim); line-height: 1.5; }
+.dr-rec-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
