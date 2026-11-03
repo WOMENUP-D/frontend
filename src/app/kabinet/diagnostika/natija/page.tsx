@@ -56,7 +56,6 @@ const PROFILE_QUESTION: Record<string, string> = {
   situation: "pro.q1",
   goal_primary: "pro.q3",
   interests: "pro.q6",
-  hours: "pro.q23",
 };
 
 const PRIORITIES: RecommendationPriority[] = ["high", "medium", "additional"];
@@ -349,7 +348,6 @@ export default function DiagnosticResultPage() {
     if (profile.interests?.length) {
       rows.push(["dr.about.interests", profile.interests.map((v) => label("interests", v)).join(", ")]);
     }
-    if (profile.hours) rows.push(["dr.about.hours", label("hours", profile.hours)]);
     if (rows.length === 0 && !profile.goal_text) return null;
     return (
       <section aria-labelledby="dr-about" className="dr-about">

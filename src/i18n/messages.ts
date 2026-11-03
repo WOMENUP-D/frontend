@@ -2435,7 +2435,7 @@ export const messages = {
   "ds.how":            { uz: "Qanday işlaydi?", ru: "Как это работает?", en: "How does it work?" },
   // ---- diagnostic v2 ------------------------------------------------------
   "dg.title":        { uz: "Rivojlaniş diagnostikasi", ru: "Диагностика развития", en: "Development check-in" },
-  "dg.intro":        { uz: "Avval siz haqingizda: vaziyat, maqsad va qiziqişlar — şunga qarab savollar moslaşadi. Keyin 8 yönaliş böyiça 17 savol. Taxminan 10 daqiqa.", ru: "Сначала о вас: ситуация, цель и интересы — от этого зависят дальнейшие вопросы. Затем 17 вопросов по 8 направлениям. Около 10 минут.", en: "First about you: your situation, goal and interests — the next questions follow from them. Then 17 questions across 8 areas. About 10 minutes." },
+  "dg.intro":        { uz: "Avval siz haqingizda: vaziyat, maqsad va qiziqişlar — şunga qarab keyingi savollar moslaşadi. Keyin 8 yönaliş böyiça bittadan savol. Taxminan 3–4 daqiqa.", ru: "Сначала о вас: ситуация, цель и интересы — от этого зависят дальнейшие вопросы. Затем по одному вопросу на каждое из 8 направлений. Около 3–4 минут.", en: "First about you: your situation, goal and interests — the next questions follow from them. Then one question for each of the 8 areas. About 3–4 minutes." },
   "dg.part.profile": { uz: "Siz haqingizda", ru: "О вас", en: "About you" },
   "dg.part.score":   { uz: "Development Score", ru: "Development Score", en: "Development Score" },
   "dg.sec.about":        { uz: "Vaziyat", ru: "Ситуация", en: "Situation" },
@@ -2501,7 +2501,6 @@ export const messages = {
   "dr.about.situation": { uz: "Vaziyat", ru: "Ситуация", en: "Situation" },
   "dr.about.goal":      { uz: "Asosiy maqsad", ru: "Главная цель", en: "Main goal" },
   "dr.about.interests": { uz: "Qiziqişlar", ru: "Интересы", en: "Interests" },
-  "dr.about.hours":     { uz: "Haftasiga vaqt", ru: "Время в неделю", en: "Time a week" },
   "dr.about.inWords":   { uz: "Öz sözlaringiz bilan", ru: "Своими словами", en: "In your words" },
   "dr.courses":         { uz: "Maqsadingiz uçun kurslar", ru: "Курсы для вашей цели", en: "Courses for your goal" },
   "dr.coursesLead":     { uz: "Katalogdan maqsadingiz, qiziqişlaringiz va hali yetişmayotgan könikmalar böyiça tanlangan. Boşlaşdan oldin kurs sahifasini kö'ring — qaror sizniki.", ru: "Подобраны из каталога по вашей цели, интересам и навыкам, которых пока не хватает. Перед стартом откройте страницу курса — решение за вами.", en: "Chosen from the catalogue for your goal, your interests and the skills you still need. Open a course page before you start — the decision is yours." },
