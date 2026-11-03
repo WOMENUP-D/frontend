@@ -1,15 +1,19 @@
 "use client";
 
 /**
- * The development check-in (diagnostic v2): 25 questions, one per screen.
+ * The development check-in (diagnostic v3): first who she is and what she
+ * wants, then the 17 scored questions — one question per screen.
  *
- * One question at a time because each one asks her to place herself on a
- * five-step ladder, and five long options side by side with two more
- * questions underneath is a form, not a conversation. The section and the
- * count stay on screen so she always knows where she is and how much is left.
+ * The first block adapts to her: a student is asked about her studies, an
+ * entrepreneur about her business, and a skills question appears only for a
+ * field she said she is drawn to. The rule for each question comes with it
+ * from the server (`show_if`) and is read here against her draft exactly as
+ * the server reads it against the submission, so what she is shown and what
+ * is scored never disagree.
  *
- * Only her choices leave the browser — the option ids. What an option is
- * worth, the scores and the priorities are worked out on the server.
+ * Only her choices leave the browser — option ids, and the text she typed
+ * for the two open questions. What an option is worth, the scores, the
+ * profile and the priorities are worked out on the server.
  *
  * Answers are kept in localStorage as she goes, so a closed tab or a dropped
  * connection costs her nothing. The draft carries the run's own id, which the
@@ -17,20 +21,23 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
 import { portal, type DiagnosticQuestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
-import { useI18n } from "@/i18n";
+import { shownQuestions } from "@/components/diagnostic/branching";
+import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
-const DRAFT_ITEM = "womanup.diagnostic.v2";
+const DRAFT_ITEM = "womanup.diagnostic.v3";
 
 interface Draft {
   clientRef: string;
   startedAt: string;
-  index: number;
+  /** The question she is on, by code — stable while earlier answers change
+   *  which questions are shown. */
+  code: string | null;
   answers: Record<string, string[]>;
   /** The question ids it was answered against — a changed set voids it. */
   questionIds: string[];
@@ -58,11 +65,18 @@ function freshDraft(questions: DiagnosticQuestion[]): Draft {
   return {
     clientRef: crypto.randomUUID(),
     startedAt: new Date().toISOString(),
-    index: 0,
+    code: null,
     answers: {},
     questionIds: questions.map((q) => q.id),
   };
 }
+
+const isMulti = (q: DiagnosticQuestion) => q.type === "goals" || q.type === "multi_choice";
+const isText = (q: DiagnosticQuestion) => q.type === "text";
+
+/** An answer counts when something was chosen, or typed. */
+const answered = (q: DiagnosticQuestion, chosen: string[]) =>
+  isText(q) ? Boolean(chosen[0]?.trim()) : chosen.length > 0;
 
 export default function DiagnosticPage() {
   const { t, tx } = useI18n();
@@ -91,7 +105,7 @@ export default function DiagnosticPage() {
           saved.questionIds.length === ids.length &&
           saved.questionIds.every((id, i) => id === ids[i]);
         if (usable && Object.keys(saved.answers).length > 0) {
-          setDraft({ ...saved, index: Math.min(saved.index, ids.length - 1) });
+          setDraft(saved);
           setResumed(true);
         } else {
           setDraft(freshDraft(list));
@@ -99,7 +113,7 @@ export default function DiagnosticPage() {
           // same run continued, so it is not counted again.
           track("development_test_started", {
             path: "/kabinet/diagnostika",
-            properties: { resumed: false },
+            properties: { resumed: false, version: 3 },
           });
         }
       })
@@ -122,13 +136,25 @@ export default function DiagnosticPage() {
     if (draft) writeDraft(draft);
   }, [draft]);
 
+  /* The questions she is actually shown, given what she has answered so far. */
+  const shown = useMemo(
+    () => (questions && draft ? shownQuestions(questions, draft.answers) : []),
+    [questions, draft],
+  );
+
+  const index = useMemo(() => {
+    if (!draft?.code) return 0;
+    const at = shown.findIndex((q) => q.code === draft.code);
+    return at >= 0 ? at : 0;
+  }, [draft?.code, shown]);
+
   /* A new question takes focus, so a screen reader announces it and the
      keyboard starts from the top of the new screen. Not on first load: the
      page heading is what should be read first. */
   useEffect(() => {
     if (!moved.current) return;
     heading.current?.focus();
-  }, [draft?.index]);
+  }, [index]);
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
 
@@ -147,7 +173,7 @@ export default function DiagnosticPage() {
 
   if (!questions || !draft) return <main className="wrap page"><Loading rows={3} /></main>;
 
-  if (questions.length === 0) {
+  if (questions.length === 0 || shown.length === 0) {
     return (
       <main className="wrap page">
         <Empty title={t("as.noQuestions")} hint={t("as.noQuestionsHint")} />
@@ -155,18 +181,25 @@ export default function DiagnosticPage() {
     );
   }
 
-  const total = questions.length;
-  const index = Math.min(draft.index, total - 1);
-  const question = questions[index];
+  const total = shown.length;
+  const question = shown[index];
   const chosen = draft.answers[question.id] ?? [];
-  const isGoals = question.type === "goals";
+  const multi = isMulti(question);
+  const text = isText(question);
   const last = index === total - 1;
-  const section = question.dimension ? t(dimensionKey(question.dimension)) : t("dg.goals");
+  const scored = question.section === "score";
+  const section = scored && question.dimension
+    ? t(dimensionKey(question.dimension))
+    : t(`dg.sec.${question.section ?? "about"}` as MessageKey);
+  const part = t(scored ? "dg.part.score" : "dg.part.profile");
+  const has = answered(question, chosen);
+  const canGo = has || question.optional;
 
   function go(next: number) {
     moved.current = true;
     setError(null);
-    setDraft((d) => (d ? { ...d, index: next } : d));
+    const target = shown[Math.max(0, Math.min(next, shown.length - 1))];
+    setDraft((d) => (d ? { ...d, code: target.code } : d));
   }
 
   function choose(optionId: string) {
@@ -174,12 +207,19 @@ export default function DiagnosticPage() {
       if (!d) return d;
       const current = d.answers[question.id] ?? [];
       let next: string[];
-      if (!isGoals) next = [optionId];
+      if (!multi) next = [optionId];
       else if (current.includes(optionId)) next = current.filter((id) => id !== optionId);
       else if (current.length < question.max_choices) next = [...current, optionId];
       else next = current;
       return { ...d, answers: { ...d.answers, [question.id]: next } };
     });
+  }
+
+  function type(value: string) {
+    const kept = question.max_length ? value.slice(0, question.max_length) : value;
+    setDraft((d) =>
+      d ? { ...d, answers: { ...d.answers, [question.id]: kept ? [kept] : [] } } : d,
+    );
   }
 
   function startOver() {
@@ -190,7 +230,7 @@ export default function DiagnosticPage() {
     setDraft(freshDraft(questions));
     track("development_test_started", {
       path: "/kabinet/diagnostika",
-      properties: { resumed: false },
+      properties: { resumed: false, version: 3 },
     });
   }
 
@@ -202,9 +242,14 @@ export default function DiagnosticPage() {
       await portal.submitDiagnostic({
         client_ref: draft.clientRef,
         started_at: draft.startedAt,
-        answers: questions
-          .filter((q) => (draft.answers[q.id] ?? []).length > 0)
-          .map((q) => ({ question_id: q.id, option_ids: draft.answers[q.id] })),
+        // Only what she was shown and answered: a hidden question's old answer
+        // would be dropped by the server anyway.
+        answers: shown
+          .filter((q) => answered(q, draft.answers[q.id] ?? []))
+          .map((q) => ({
+            question_id: q.id,
+            option_ids: isText(q) ? [draft.answers[q.id][0].trim()] : draft.answers[q.id],
+          })),
       });
       writeDraft(null);
       router.push("/kabinet/diagnostika/natija");
@@ -212,7 +257,7 @@ export default function DiagnosticPage() {
       setSaving(false);
       const detail = err instanceof ApiError ? (err.detail as { code?: string; items?: string[] }) : null;
       if (detail?.code === "incomplete" && detail.items?.length) {
-        const first = questions.findIndex((q) => q.code === detail.items![0]);
+        const first = shown.findIndex((q) => q.code === detail.items![0]);
         if (first >= 0) go(first);
         setError(t("dg.errIncomplete"));
       } else if (detail?.code === "invalid_question") {
@@ -225,8 +270,9 @@ export default function DiagnosticPage() {
     }
   }
 
-  const answered = chosen.length > 0;
   const name = `q-${question.id}`;
+  const progress = t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total));
+  const typed = text ? (chosen[0] ?? "") : "";
 
   return (
     <main className="wrap page">
@@ -245,15 +291,16 @@ export default function DiagnosticPage() {
         </header>
 
         <div className="dg-where">
-          <span className="dg-section">{section}</span>
-          <span className="faint dg-count">
-            {t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total))}
+          <span className="dg-section">
+            <span className="dg-part">{part}</span>
+            {section}
           </span>
+          <span className="faint dg-count">{progress}</span>
         </div>
         <div
           className="lq-progress"
           role="progressbar"
-          aria-label={t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total))}
+          aria-label={progress}
           aria-valuemin={0}
           aria-valuemax={total}
           aria-valuenow={index + 1}
@@ -269,32 +316,53 @@ export default function DiagnosticPage() {
         >
           <h2 ref={heading} id={`${name}-text`} tabIndex={-1} className="dg-question">
             {tx(question.text_i18n)}
+            {question.optional && <span className="dg-optional">{t("dg.optional")}</span>}
           </h2>
           {question.hint_i18n && (
             <p id={`${name}-hint`} className="muted small dg-hint">{tx(question.hint_i18n)}</p>
           )}
 
-          <div className="dg-options">
-            {question.options.map((option) => {
-              const on = chosen.includes(option.id);
-              const full = isGoals && !on && chosen.length >= question.max_choices;
-              return (
-                <label key={option.id} className={`dg-option${on ? " on" : ""}${full ? " off" : ""}`}>
-                  <input
-                    type={isGoals ? "checkbox" : "radio"}
-                    name={name}
-                    value={option.id}
-                    checked={on}
-                    disabled={full || saving}
-                    onChange={() => choose(option.id)}
-                  />
-                  <span className="dg-mark" aria-hidden="true" />
-                  <span className="dg-label">{tx(option.label_i18n)}</span>
-                </label>
-              );
-            })}
-          </div>
-          {isGoals && (
+          {text ? (
+            <div className="dg-text">
+              <textarea
+                id={`${name}-input`}
+                rows={4}
+                value={typed}
+                maxLength={question.max_length ?? undefined}
+                placeholder={t("dg.textPlaceholder")}
+                disabled={saving}
+                onChange={(e) => type(e.target.value)}
+                aria-labelledby={`${name}-text`}
+              />
+              {question.max_length && (
+                <span className="faint small dg-text-count" aria-live="polite">
+                  {typed.length} / {question.max_length}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="dg-options">
+              {question.options.map((option) => {
+                const on = chosen.includes(option.id);
+                const full = multi && !on && chosen.length >= question.max_choices;
+                return (
+                  <label key={option.id} className={`dg-option${on ? " on" : ""}${full ? " off" : ""}`}>
+                    <input
+                      type={multi ? "checkbox" : "radio"}
+                      name={name}
+                      value={option.id}
+                      checked={on}
+                      disabled={full || saving}
+                      onChange={() => choose(option.id)}
+                    />
+                    <span className="dg-mark" aria-hidden="true" />
+                    <span className="dg-label">{tx(option.label_i18n)}</span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          {multi && (
             <p className="faint small" aria-live="polite">
               {t("dg.chosen")
                 .replace("{n}", String(chosen.length))
@@ -318,9 +386,11 @@ export default function DiagnosticPage() {
             type="button"
             className="btn btn-primary"
             onClick={() => (last ? void submit() : go(index + 1))}
-            disabled={!answered || saving}
+            disabled={!canGo || saving}
           >
-            {last ? (saving ? t("dg.saving") : t("dg.finish")) : t("dg.next")}
+            {last
+              ? (saving ? t("dg.saving") : t("dg.finish"))
+              : (has ? t("dg.next") : t("dg.skip"))}
           </button>
         </div>
       </div>

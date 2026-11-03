@@ -278,18 +278,59 @@ export interface ScoreInsights extends DevelopmentScore {
 // The browser sends which option she chose and nothing else: what an option is
 // worth, the scores and the priorities are all decided on the server.
 
+/** When a question is shown: after a given answer to an earlier question, or
+ *  after any of several. Evaluated in the browser against the draft and on
+ *  the server against the submission, the same way. */
+export type DiagnosticShowIf =
+  | { question: string; in: string[] }
+  | { any: Array<{ question: string; in: string[] }> };
+
 export interface DiagnosticQuestion {
   id: string;
-  /** Language-independent: "edu.q1", "fam.q19", "goals.q25". */
+  /** Language-independent: "pro.q1", "edu.q1", "fam.q19". */
   code: string;
-  /** Null for the goals question, which measures no dimension. */
+  /** Null for a profile question, which measures no dimension. */
   dimension: string | null;
-  type: "single_choice" | "routing" | "goals";
+  /** The profile block is single_choice / multi_choice / goals / text; the
+   *  scored block is single_choice; routing steers which block is shown. */
+  type: "single_choice" | "routing" | "goals" | "multi_choice" | "text";
   order_index: number;
   text_i18n: Record<string, string>;
   hint_i18n: Record<string, string> | null;
   max_choices: number;
   options: Array<{ id: string; label_i18n: Record<string, string> }>;
+  /** "profile" | "situation" | "skills" | "learning" | "score" — the screen heading. */
+  section: string | null;
+  optional: boolean;
+  show_if: DiagnosticShowIf | null;
+  /** For a text question: how many characters the server keeps. */
+  max_length: number | null;
+}
+
+/** What she said about herself, as the server derived it from her answers. */
+export interface DiagnosticProfile {
+  version: number;
+  situation?: string;
+  situation_other?: string;
+  goal_primary?: string;
+  goals_other?: string[];
+  goals?: string[];
+  goal_text?: string;
+  interests?: string[];
+  study_field?: string;
+  practice?: string;
+  first_job_when?: string;
+  position?: string;
+  career_wish?: string;
+  experience?: string;
+  business_stage?: string;
+  business_challenges?: string[];
+  job_search_duration?: string;
+  skill_levels?: Record<string, number>;
+  difficulties?: string[];
+  formats?: string[];
+  hours?: string;
+  language?: string;
 }
 
 export type DiagnosticLevel =
@@ -327,6 +368,60 @@ export interface DiagnosticResult {
   next_steps: NextStep[];
   goals: string[];
   family_focus: string | null;
+  /** Null for an attempt taken before the profile block existed. */
+  profile: DiagnosticProfile | null;
+}
+
+export type RecommendationPriority = "high" | "medium" | "additional";
+
+/** One course chosen for her, with why in her words and what it gives. */
+export interface RecommendedCourse {
+  program: Program;
+  priority: RecommendationPriority;
+  why_i18n: Record<string, string>;
+  outcome_i18n: Record<string, string>;
+  covers: SkillRef[];
+  enrollment_status: EnrollmentStatus | null;
+}
+
+export interface RoadmapItem {
+  kind: "course" | "activity";
+  program_id: string | null;
+  activity: string | null;
+  text_i18n: Record<string, string> | null;
+}
+
+export interface RoadmapStage {
+  title_i18n: Record<string, string>;
+  items: RoadmapItem[];
+}
+
+export interface DiagnosticGap {
+  slug: string;
+  name_i18n: Record<string, string>;
+  /** goal | goal_other | interest | difficulty | dimension */
+  why: string;
+  source: string;
+}
+
+/** The courses chosen from an attempt: the rules found and ranked them, the
+ *  model (when on) explained them. `mode` says which wrote the words. */
+export interface DiagnosticRecommendation {
+  attempt_id: string;
+  generated_at: string;
+  mode: "ai" | "rules" | "insufficient";
+  summary: {
+    goal_i18n: Record<string, string>;
+    situation_i18n: Record<string, string>;
+    gaps_i18n: Record<string, string[]>;
+  };
+  courses: RecommendedCourse[];
+  roadmap: RoadmapStage[];
+  next_steps: Array<Record<string, string>>;
+  follow_up: Record<string, string> | null;
+  gaps: DiagnosticGap[];
+  /** True while the model has yet to write its words; the page polls. */
+  ai_pending: boolean;
 }
 
 export interface DiagnosticHistoryItem {
@@ -2312,6 +2407,15 @@ export const portal = {
       `/diagnostic/result${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
     ),
   diagnosticHistory: () => api.get<DiagnosticHistoryItem[]>("/diagnostic/history"),
+  diagnosticRecommendations: (attemptId?: string) =>
+    api.get<DiagnosticRecommendation>(
+      `/diagnostic/recommendations${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
+    ),
+  refreshDiagnosticRecommendations: (attemptId?: string) =>
+    api.post<DiagnosticRecommendation>(
+      `/diagnostic/recommendations/refresh${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
+      {},
+    ),
   questionnaire: () => api.get<Questionnaire>("/assessments/questionnaire"),
   learningProfile: () => api.get<LearningProfileRead>("/assessments/learning-profile"),
   saveLearning: (answers: Record<string, unknown>) =>
