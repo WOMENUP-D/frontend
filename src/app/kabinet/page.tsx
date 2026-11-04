@@ -166,18 +166,12 @@ function ProfileSummary({
   account,
   persona,
   name,
-  active,
-  done,
-  score,
   t,
 }: {
   profile: Profile | null;
   account: Account | null;
   persona: AssistantProfile | null;
   name: string;
-  active: number;
-  done: number;
-  score: DevelopmentScore | null;
   t: (key: MessageKey) => string;
 }) {
   const shortId = account?.id ? account.id.split("-")[0].toUpperCase() : "—";
@@ -208,35 +202,55 @@ function ProfileSummary({
   const place = profile?.district ?? (account?.region ? t(regionKey(account.region)) : null);
   const percent = profile?.completeness_percent ?? 0;
 
+  return (
+    <ProfileCard
+      headingLevel={1}
+      name={name}
+      initials={initials}
+      womanupId={shortId}
+      age={age}
+      city={place}
+      joined={joined}
+      completeness={percent}
+      fillHref="/welcome"
+      portfolioHref="/kabinet/portfolio"
+    />
+  );
+}
+
+/**
+ * The four figures that summarise the state of her account. They sit at the
+ * top of the wide column, level with the card: in a row of their own above
+ * the page they left the whole height of the card empty beneath them.
+ */
+function ProfileStats({
+  profile,
+  active,
+  done,
+  score,
+  t,
+}: {
+  profile: Profile | null;
+  active: number;
+  done: number;
+  score: DevelopmentScore | null;
+  t: (key: MessageKey) => string;
+}) {
+  const percent = profile?.completeness_percent ?? 0;
   const tiles: ReadonlyArray<[string, string | number]> = [
     [t("cab.activeCourses"), active],
     [t("cab.completed"), done],
     [t("cab.profileFull"), `${percent}%`],
     [t("cab.totalScore"), score ? Math.round(score.composite) : "—"],
   ];
-
   return (
-    <div className="profcard-row">
-      <ProfileCard
-        headingLevel={1}
-        name={name}
-        initials={initials}
-        womanupId={shortId}
-        age={age}
-        city={place}
-        joined={joined}
-        completeness={percent}
-        fillHref="/welcome"
-        portfolioHref="/kabinet/portfolio"
-      />
-      <div className="pstats">
-        {tiles.map(([label, value]) => (
-          <div className="pstat" key={label}>
-            <div className="pstat-value">{value}</div>
-            <span className="pstat-label">{label}</span>
-          </div>
-        ))}
-      </div>
+    <div className="pstats">
+      {tiles.map(([label, value]) => (
+        <div className="pstat" key={label}>
+          <div className="pstat-value">{value}</div>
+          <span className="pstat-label">{label}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -322,17 +336,6 @@ export default function CabinetPage() {
 
   return (
     <main className="wrap page">
-      <ProfileSummary
-        profile={profile}
-        account={account}
-        persona={persona}
-        name={displayName}
-        active={active}
-        done={done}
-        score={score}
-        t={t}
-      />
-
       {/* For somebody new: five steps, each a link. Hidden by one tap, and
           never shown to a woman who has started a course. */}
       <GettingStarted isNew={enrollments.length === 0} />
@@ -340,6 +343,14 @@ export default function CabinetPage() {
       <div className="ed-split">
         {/* Score rides along as the reader scrolls */}
         <aside className="ed-aside stack" style={{ gap: 16 }}>
+          {/* Her card first — who she is — then how she is doing. */}
+          <ProfileSummary
+            profile={profile}
+            account={account}
+            persona={persona}
+            name={displayName}
+            t={t}
+          />
           {/* The name and the profession used to be repeated here above the
               score. The profile card carries both, so this said them twice —
               and on an account with no name filled in it said "Пользователь"
@@ -387,6 +398,8 @@ export default function CabinetPage() {
         </aside>
 
         <div className="stack" style={{ gap: 26 }}>
+          <ProfileStats profile={profile} active={active} done={done} score={score} t={t} />
+
           {/* Her week first: the lesson she left off at, then the next event,
               task and listing — each a real record or not drawn at all. */}
           <YourWeek />

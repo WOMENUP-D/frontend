@@ -257,7 +257,6 @@ export default function ProgramsPage() {
                     {program.external_url ? (
                       <a
                         href={program.external_url}
-                        target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${tx(program.title_i18n)} — ${t("pc.opens")} ${hostOf(program.external_url)}`}
                       >
@@ -308,7 +307,6 @@ export default function ProgramsPage() {
                         <a
                           className="btn btn-outline btn-sm"
                           href={program.external_url}
-                          target="_blank"
                           rel="noopener noreferrer"
                         >
                           {hostOf(program.external_url)}

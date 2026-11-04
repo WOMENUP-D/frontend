@@ -20,6 +20,7 @@ import type {
   ProgramDetail,
   ProgramLesson,
 } from "@/services/portal";
+import { hostOf } from "@/utils/url";
 
 export type CourseStatus = "not_started" | "in_progress" | "completed";
 
@@ -72,6 +73,9 @@ export interface CourseView {
   percent: number;
   art: Art;
   href: string;
+  /** The site the course is taught on when it is not ours — the card and the
+   *  page send her there, in the same tab, instead of to an empty syllabus. */
+  outside: string | null;
 }
 
 export function viewOf(program: Program, enrollment: Enrollment | null = null): CourseView {
@@ -81,7 +85,8 @@ export function viewOf(program: Program, enrollment: Enrollment | null = null): 
     status: statusOf(enrollment),
     percent: enrollment?.progress_percent ?? 0,
     art: art(program.category),
-    href: `/talim/kurslar/${program.slug}`,
+    href: program.external_url || `/talim/kurslar/${program.slug}`,
+    outside: program.external_url ? hostOf(program.external_url) : null,
   };
 }
 

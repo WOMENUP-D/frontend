@@ -1288,6 +1288,10 @@ export const messages = {
   "lms.course.back":     { uz: "Kurslarga qaytiş", ru: "Вернуться к курсам", en: "Back to courses" },
   "lms.course.noLessons": { uz: "Bu kursda hali dars yöq", ru: "В этом курсе пока нет уроков", en: "This course has no lessons yet" },
   "lms.course.noLessonsHint": { uz: "Dastur tayyorlanmoqda — tez orada oçiladi.", ru: "Программа готовится — скоро откроется.", en: "The programme is being prepared and opens shortly." },
+  "lms.course.outside":      { uz: "Bu kurs {host} saytida ötadi", ru: "Этот курс проходит на сайте {host}", en: "This course is taught on {host}" },
+  "lms.course.outsideHint":  { uz: "Darslar, röyxatdan ötiş va sertifikat — öşa yerda.", ru: "Уроки, запись и сертификат — там.", en: "Lessons, sign-up and the certificate are there." },
+  "lms.course.outsideTitle": { uz: "Hamkor kursi", ru: "Курс партнёра", en: "Partner course" },
+  "lms.course.goOutside":    { uz: "Kursga ötiş", ru: "Перейти к курсу", en: "Go to the course" },
   "lms.course.notFound": { uz: "Kurs topilmadi", ru: "Курс не найден", en: "Course not found" },
   "lms.course.notFoundHint": { uz: "Havola eskirgan bölişi mumkin.", ru: "Возможно, ссылка устарела.", en: "The link may be out of date." },
 

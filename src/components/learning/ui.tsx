@@ -159,7 +159,7 @@ export function SectionHead({
  *  would then be two opinions about the same course. */
 export function CourseCard({ view }: { view: CourseView }) {
   const { t, tx } = useI18n();
-  const { program, status, percent, art, href } = view;
+  const { program, status, percent, art, href, outside } = view;
 
   const actionKey: MessageKey =
     status === "completed" ? "lms.course.review"
@@ -172,7 +172,11 @@ export function CourseCard({ view }: { view: CourseView }) {
         <Cover tone={art.tone} emblem={art.emblem} />
         <div style={{ minWidth: 0 }}>
           <h3 className="lms-course-title">
-            <Link href={href}>{tx(program.title_i18n)}</Link>
+            {outside ? (
+              <a href={href} rel="noopener noreferrer">{tx(program.title_i18n)}</a>
+            ) : (
+              <Link href={href}>{tx(program.title_i18n)}</Link>
+            )}
           </h3>
           {program.provider && <p className="lms-course-by">{program.provider}</p>}
         </div>
@@ -184,19 +188,31 @@ export function CourseCard({ view }: { view: CourseView }) {
         <span>
           {program.level ? t(levelKey(program.level)) : t(`cat.${program.category}` as MessageKey)}
           {program.duration_weeks ? ` · ${program.duration_weeks} ${t("common.weeks")}` : ""}
+          {outside ? ` · ${outside}` : ""}
         </span>
         <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
       </div>
 
       <div className="lms-course-foot">
         <StatusBadge status={status} />
-        <Link
-          className="lms-btn lms-btn-quiet lms-btn-sm"
-          href={href}
-          style={{ marginLeft: "auto" }}
-        >
-          {t(actionKey)}
-        </Link>
+        {outside ? (
+          <a
+            className="lms-btn lms-btn-quiet lms-btn-sm"
+            href={href}
+            rel="noopener noreferrer"
+            style={{ marginLeft: "auto" }}
+          >
+            {t(actionKey)}
+          </a>
+        ) : (
+          <Link
+            className="lms-btn lms-btn-quiet lms-btn-sm"
+            href={href}
+            style={{ marginLeft: "auto" }}
+          >
+            {t(actionKey)}
+          </Link>
+        )}
       </div>
     </article>
   );
