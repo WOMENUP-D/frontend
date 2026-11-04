@@ -487,6 +487,26 @@ export interface ProgramDetail extends Program {
   assessment_type: string | null;
 }
 
+/** One subject the catalogue teaches, with how many courses teach it. The
+ *  label is the one the courses are tagged with; the name is the taxonomy's,
+ *  in her language, when the taxonomy knows the label. */
+export interface ProgramTopic {
+  label: string;
+  slug: string | null;
+  title_i18n: Record<string, string>;
+  direction: string | null;
+  count: number;
+}
+
+/** A course title offered while she types: enough to open the course. */
+export interface ProgramSuggestion {
+  id: string;
+  slug: string;
+  title_i18n: Record<string, string>;
+  provider: string | null;
+  external_url: string | null;
+}
+
 export interface Program {
   id: string;
   slug: string;
@@ -502,6 +522,8 @@ export interface Program {
   learning_outcomes: Array<Record<string, string>>;
   has_certificate: boolean;
   provider: string | null;
+  /** The language it is taught in: uz, ru or en. */
+  language: string | null;
   /** Set when the course belongs to somebody else and lives on their site. */
   external_url?: string | null;
   source?: string | null;
@@ -2438,6 +2460,9 @@ export const portal = {
     api.post<NavigatorAnswer>("/ai/navigator", { message }),
 
   programs: (query = "") => api.get<Page<Program>>(`/programs${query}`),
+  programTopics: (query = "") => api.get<ProgramTopic[]>(`/programs/topics${query}`),
+  programSuggest: (q: string) => api.get<ProgramSuggestion[]>(`/programs/suggest?q=${encodeURIComponent(q)}`),
+  programRelated: (id: string, limit = 6) => api.get<Program[]>(`/programs/${id}/related?limit=${limit}`),
   program: (id: string) => api.get<ProgramDetail>(`/programs/${id}`),
   /** The same card by its readable name — what the learning section links to. */
   programBySlug: (slug: string) =>

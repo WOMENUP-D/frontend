@@ -1934,6 +1934,18 @@ button.ed-row { cursor: pointer; }
   display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
   margin-top: 4px;
 }
+/* The second row: what the courses teach. Quieter than the directions. */
+.cat-topics { margin-top: 10px; }
+.chip-more { font-style: italic; }
+.pd-body.is-single { grid-template-columns: minmax(0, 1fr); }
+.pd-body.is-single > aside { max-width: 560px; }
+.cat-topics .chip { font-size: .86rem; }
+/* The fine filters: three small selects and, once anything is set, a reset. */
+.cat-fine {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
+  margin-top: 12px;
+}
+.cat-fine .input { width: auto; min-width: 150px; padding-block: 8px; font-size: .9rem; }
 /* On a phone ten categories wrapped into five rows — 212px, a third of the
    screen, before a single programme was visible, and every chip was under the
    44px a thumb needs. One row that scrolls sideways costs 56px and each chip
