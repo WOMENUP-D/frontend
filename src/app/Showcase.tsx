@@ -1,17 +1,13 @@
 "use client";
 
 /**
- * The three showcase sections on the landing page.
+ * The showcase sections on the landing page.
  *
  * The page used to describe the portal in prose — six numbered rows and six
  * directions — without showing a single thing that is actually in it. A visitor
  * read *about* the product instead of seeing it. These sections pull real rows
  * from the public endpoints, so the landing page is never more optimistic than
  * the database.
- *
- * The progress dashboard is drawn rather than screenshotted: a real ring, real
- * dimension bars, a real next step. Screenshots would go stale, would not
- * translate, and would not follow the theme.
  */
 
 import Link from "next/link";
@@ -20,93 +16,6 @@ import { portal, type Opportunity, type OpportunityStats, type Program } from "@
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, money, sourceKey, typeKey } from "@/utils/format";
 import { CountUp, Reveal } from "@/components/motion/Reveal";
-
-/* ---------------------------------------- career progress, as one instrument */
-
-/** The composite score, the dimensions under it and the single next step
- *  beside it. This used to be three separate vignettes — a ring, a checklist
- *  and a streak grid — which showed three features rather than one product.
- *  A woman does not open a dashboard to admire three widgets; she opens it to
- *  find out where she stands and what to do next. */
-export function CareerProgress() {
-  const { t } = useI18n();
-
-  const score = 58;
-  const dims: ReadonlyArray<[MessageKey, number]> = [
-    ["dim.education_skills", 78],
-    ["dim.employment", 56],
-    ["dim.entrepreneurship", 39],
-    ["dim.financial_literacy", 61],
-  ];
-
-  const size = 112;
-  const stroke = 9;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-
-  return (
-    <section className="section">
-      <div className="wrap">
-        <div className="sec-head">
-          <h2>{t("ls.pathTitle")}</h2>
-          <p>{t("ls.pathLead")}</p>
-        </div>
-
-        <Reveal className="dash">
-          <div className="dash-main">
-            <span className="dash-label">{t("ls.dashTitle")}</span>
-
-            <div className="dash-figure">
-              <svg width={size} height={size} aria-hidden="true" style={{ flex: "none" }}>
-                <circle
-                  cx={size / 2} cy={size / 2} r={radius}
-                  fill="none" stroke="var(--surface-2)" strokeWidth={stroke}
-                />
-                <circle
-                  className="dash-ring"
-                  cx={size / 2} cy={size / 2} r={radius}
-                  fill="none" stroke="var(--gold)" strokeWidth={stroke} strokeLinecap="round"
-                  strokeDasharray={`${(circumference * score) / 100} ${circumference}`}
-                  transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                />
-              </svg>
-              <div className="stack" style={{ gap: 8 }}>
-                <span className="dash-value">
-                  <CountUp value={score} />
-                  <em> / 100</em>
-                </span>
-                <p className="dash-caption">{t("ls.dashCaption")}</p>
-              </div>
-            </div>
-
-            <div className="dash-bars">
-              {dims.map(([key, value]) => (
-                <div key={key} className="dash-row">
-                  <span>{t(key)}</span>
-                  <span className="dash-pct">{value}%</span>
-                  <span className="dash-track">
-                    <span style={{ width: `${value}%` }} />
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* One recommendation, not a list of them. A plan that offers four
-              equally weighted next steps is a plan nobody starts. */}
-          <aside className="dash-next">
-            <span className="dash-label">{t("ls.dashNext")}</span>
-            <h3>{t("ls.dashNextT")}</h3>
-            <p>{t("ls.dashNextD")}</p>
-            <Link href="/reja" className="btn btn-primary btn-sm">
-              {t("ls.dashCta")}
-            </Link>
-          </aside>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
 
 /* -------------------------------------------- live rows from the API */
 

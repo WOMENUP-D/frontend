@@ -227,55 +227,6 @@ export function Roadmap() {
   );
 }
 
-/* ---------------------------------------------------------- wellbeing */
-
-const HABITS: ReadonlyArray<[MessageKey, MessageKey]> = [
-  ["well.1.t", "well.1.d"],
-  ["well.2.t", "well.2.d"],
-  ["well.3.t", "well.3.d"],
-  ["well.4.t", "well.4.d"],
-];
-
-export function Wellbeing() {
-  const { t } = useI18n();
-  return (
-    <section className="section">
-      <div className="wrap">
-        <div className="sec-head">
-          <h2>{t("landing.wellTitle")}</h2>
-          <p>{t("landing.wellLead")}</p>
-        </div>
-
-        <Reveal className="well-grid" stagger>
-          <div className="stack" style={{ gap: 16 }}>
-            <div className="reminder">
-              <span className="dash-label">{t("well.today")}</span>
-              <blockquote>{t("well.todayQuote")}</blockquote>
-            </div>
-
-            {/* The disclaimer sits inside the section rather than under it: the
-                platform never issues a medical verdict, and the place to say so
-                is beside the advice, not in a footnote. */}
-            <div className="well-note">
-              <h3>{t("well.note.t")}</h3>
-              <p className="muted small">{t("well.note.d")}</p>
-            </div>
-          </div>
-
-          <div className="well-list">
-            {HABITS.map(([title, text]) => (
-              <div key={title} className="well-item">
-                <strong>{t(title)}</strong>
-                <span className="muted small">{t(text)}</span>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
 /* ------------------------------------------------------------------ pricing */
 
 const FREE: MessageKey[] = ["price.f1", "price.f2", "price.f3", "price.f4"];

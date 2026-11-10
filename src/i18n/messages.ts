@@ -85,8 +85,6 @@ export const messages = {
   "landing.roadTitle":{ uz: "Maqsadingizni yöl xaritasiga aylantiring", ru: "Превратите цель в дорожную карту", en: "Turn your ambition into a roadmap" },
   "landing.roadLead": { uz: "Röyxatdan ötişdan real imkoniyatgaça — oltita bosqiç, bitta yöl.", ru: "От регистрации до реальной возможности — шесть этапов, один путь.", en: "From sign-up to a real opportunity — six stages, one route." },
 
-  "landing.wellTitle":{ uz: "Özingizga ham ğamxörlik qiling", ru: "Позаботьтесь и о себе", en: "Take care of yourself, too" },
-  "landing.wellLead": { uz: "Rivojlaniş çarçoq hisobiga bölmasligi kerak. Kundalik kiçik odatlar rejaning bir qismidir.", ru: "Развитие не должно идти за счёт усталости. Небольшие ежедневные привычки — часть плана.", en: "Growth should not be paid for in exhaustion. Small daily habits are part of the plan." },
 
   "landing.ctaTitle": { uz: "Kelajagingiz qurişga arziydi", ru: "Ваше будущее стоит того, чтобы его строить", en: "Your future is worth building" },
   "landing.ctaLead":  { uz: "Bugun bitta kiçik qadamdan boşlang — qolganini reja körsatadi.", ru: "Начните сегодня с одного небольшого шага — остальное покажет план.", en: "Start today with one small step — the plan shows the rest." },
@@ -104,30 +102,6 @@ export const messages = {
   "ai.teaseS3":       { uz: "hh.uzʼdagi 3 ta boşlanğiç vakansiya", ru: "3 стартовые вакансии с hh.uz", en: "3 entry-level vacancies from hh.uz" },
   "ai.teaseInput":    { uz: "Xabar yozing…", ru: "Напишите сообщение…", en: "Type a message…" },
   "ai.teaseCta":      { uz: "AI yordamçini oçiş", ru: "Открыть ИИ-помощника", en: "Open the AI assistant" },
-
-  // Wellbeing: habits, never a diagnosis. The note says so out loud, because
-  // the platform is forbidden from issuing medical verdicts.
-  "well.note.t":      { uz: "Bu tibbiy xulosa emas", ru: "Это не медицинское заключение", en: "This is not a medical verdict" },
-  "well.note.d":      { uz: "WomanUP taşxis qöymaydi va davolaş tayinlamaydi. Bu yerda faqat kundalik odatlar böyiça eslatmalar bor — soğliq masalasida şifokorga murojaat qiling.", ru: "WomanUP не ставит диагнозов и не назначает лечение. Здесь только напоминания о повседневных привычках — по вопросам здоровья обращайтесь к врачу.", en: "WomanUP issues no diagnosis and prescribes no treatment. What is here are reminders about daily habits — for anything medical, see a doctor." },
-  "well.1.t":         { uz: "Harakat", ru: "Движение", en: "Movement" },
-  "well.1.d":         { uz: "Kuniga 20–30 daqiqa yuriş ham hisobga olinadi. Muhimi — muntazamlik.", ru: "Даже 20–30 минут ходьбы в день засчитываются. Важна регулярность.", en: "Even 20–30 minutes of walking a day counts. Regularity is what matters." },
-  "well.2.t":         { uz: "Uyqu", ru: "Сон", en: "Sleep" },
-  "well.2.d":         { uz: "Dam olmasdan örganiş sekin keçadi. Uyqu — rejaning bir qismi.", ru: "Учёба без отдыха идёт медленно. Сон — часть плана.", en: "Learning without rest goes slowly. Sleep is part of the plan." },
-  "well.3.t":         { uz: "Muvozanat", ru: "Баланс", en: "Balance" },
-  "well.3.d":         { uz: "Oila, iş va öqiş orasida çegara qöyiş — kuçsizlik emas, tartib.", ru: "Границы между семьёй, работой и учёбой — это не слабость, а порядок.", en: "A boundary between family, work and study is order, not weakness." },
-  "well.4.t":         { uz: "Yordam söraş", ru: "Просьба о помощи", en: "Asking for help" },
-  "well.4.d":         { uz: "Mentor, muvofiqlaştiruvçi yoki şifokor — yordam söraş ham qadam.", ru: "Ментор, координатор или врач — просьба о помощи тоже шаг.", en: "A mentor, a coordinator or a doctor — asking for help is a step too." },
-
-  // Career progress, shown as one instrument rather than three vignettes.
-  "ls.dashTitle":     { uz: "Rivojlaniş jarayoni", ru: "Прогресс развития", en: "Career progress" },
-  "ls.dashCaption":   { uz: "Sakkizta yönaliş böyiça umumiy natija. Har bir bajarilgan qadam uni kötaradi.", ru: "Общий результат по восьми направлениям. Каждый выполненный шаг его поднимает.", en: "Your overall result across eight areas. Every step you complete lifts it." },
-  "ls.dashNext":      { uz: "Keyingi qadamingiz", ru: "Ваш следующий шаг", en: "Your next step" },
-  "ls.dashNextT":     { uz: "Rezyumeni yangilang va uçta vakansiyaga ariza yuboring", ru: "Обновите резюме и подайте заявки на три вакансии", en: "Update your CV and apply to three vacancies" },
-  "ls.dashNextD":     { uz: "Reja şu qadamda kutib turibdi. Uni bajarsangiz, bandlik böyiça ball ösadi.", ru: "План ждёт именно этого шага. Выполните его — и балл по занятости вырастет.", en: "Your plan is waiting on this one. Complete it and the employment score moves." },
-  "ls.dashCta":       { uz: "Rejani davom ettiriş", ru: "Продолжить план", en: "Continue roadmap" },
-
-  "well.today":       { uz: "Bugungi eslatma", ru: "Напоминание на сегодня", en: "Today's reminder" },
-  "well.todayQuote":  { uz: "Dam oliş ham rivojlanişning bir qismi.", ru: "Отдых — тоже часть развития.", en: "Rest is also part of progress." },
 
   // ---- pricing ------------------------------------------------------
   "price.title":      { uz: "Öz surʼatingizni tanlang", ru: "Выберите свой темп", en: "Choose your pace" },
@@ -967,8 +941,6 @@ export const messages = {
   "act.streakHint":{ uz: "Har kuni bitta kiçik qadam seriyani saqlaydi.", ru: "Один маленький шаг в день сохраняет серию.", en: "One small step a day keeps the streak." },
 
   // ---- Landing showcase sections ----------------------------------
-  "ls.pathTitle":   { uz: "Bu şunçaki kurslar katalogi emas", ru: "Это не просто каталог курсов", en: "This is not just a course catalogue" },
-  "ls.pathLead":    { uz: "Diagnostika sizni tuşunadi, reja yölni körsatadi, imkoniyatlar esa natijaga olib boradi.", ru: "Диагностика вас понимает, план показывает путь, возможности доводят до результата.", en: "The diagnostic understands you, the plan shows the way, the opportunities lead to a result." },
   "ls.step1Title":  { uz: "Development Score", ru: "Development Score", en: "Development Score" },
   "ls.step1Lead":   { uz: "Sakkizta yönaliş böyiça 0 dan 100 gaça — kuçli va zaif tomonlaringiz körinadi.", ru: "От 0 до 100 по восьми направлениям — видно, где вы сильны, а где нужна поддержка.", en: "0 to 100 across eight dimensions — your strengths and where support is needed." },
   "ls.step2Title":  { uz: "Şaxsiy reja", ru: "Личный план", en: "Your own plan" },
