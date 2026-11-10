@@ -105,7 +105,7 @@ export function Questionnaire({
         // her behind a minute of spinner would be worse than the click it
         // replaces.
         markPlanGenerating();
-        void portal.generatePlan("6m", apiLocale).catch(() => {
+        void portal.generatePlan("3m", apiLocale).catch(() => {
           // The roadmap page generates its own draft if this never lands, so a
           // failure here costs a wait, not the plan.
           clearPlanGenerating();

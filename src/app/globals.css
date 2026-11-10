@@ -7210,3 +7210,9 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
 .dr-road-item.is-activity::before { content: "→ "; color: var(--text-dim); }
 .dr-rec-notes { margin: 0; padding-left: 18px; color: var(--text-dim); line-height: 1.5; }
 .dr-rec-foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Plan length ----------
+   The one-month / three-month choice sits with the button it changes. */
+.plan-make { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.plan-make-center { justify-content: center; }
+.plan-make .cat-view button { min-height: 40px; }
