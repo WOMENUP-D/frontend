@@ -43,7 +43,7 @@ test("one line says when: a range on one day, both ends across days", () => {
   );
   assert.equal(whenLine(START, null, "ru", TZ), "20 октября, 10:00");
   assert.equal(dateText(START, "en", TZ), "20 October");
-  assert.equal(longDate(START, "uz", TZ), "Seshanba, 20-oktabr");
+  assert.equal(longDate(START, "uz", TZ), "Seşanba, 20-oktabr");
   assert.equal(longDate(START, "uz-Cyrl", TZ), "Сешанба, 20-октябр");
 });
 

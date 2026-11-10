@@ -31,6 +31,12 @@ import { COLUMNS, LEVEL_TONES, studyYear, type StudyDay } from "@/content/study-
 
 const WEEKDAY_KEYS = ["wd.mon", "wd.tue", "wd.wed", "wd.thu", "wd.fri", "wd.sat", "wd.sun"] as const;
 
+/** "yanvar" → "Yan", "января" → "Янв": the ruler has room for three letters. */
+function shortMonth(name: string): string {
+  const head = name.slice(0, 3);
+  return head.charAt(0).toUpperCase() + head.slice(1);
+}
+
 export function StudyYearView({ anchor }: { anchor: Date }) {
   const { t, tx } = useI18n();
 
@@ -74,8 +80,8 @@ export function StudyYearView({ anchor }: { anchor: Date }) {
             {/* Month ruler. A label sits over the column its month begins in,
                 so the year reads left to right through the months. */}
             <div className="lms-year-months" aria-hidden="true">
-              {year.monthAt.map((label, index) => (
-                <span key={`m-${index}`}>{label}</span>
+              {year.monthAt.map((month, index) => (
+                <span key={`m-${index}`}>{month === null ? "" : shortMonth(t(monthKey(month)))}</span>
               ))}
             </div>
 

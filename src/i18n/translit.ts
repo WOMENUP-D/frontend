@@ -1,6 +1,9 @@
 /**
  * Uzbek Latin → Cyrillic transliteration.
  *
+ * Reads both the reformed alphabet (ö ğ ş ç) the portal writes and the old
+ * digraphs (oʻ gʻ sh ch) still found in older records.
+ *
  * uz-Latn and uz-Cyrl are the same language in two scripts, so the Cyrillic
  * locale is derived mechanically instead of being kept as a second dictionary.
  * That also covers content coming from the database (programme titles,
@@ -28,6 +31,8 @@ const SINGLES: Readonly<Record<string, string>> = {
   j: "ж", k: "к", l: "л", m: "м", n: "н", o: "о", p: "п", q: "қ",
   r: "р", s: "с", t: "т", u: "у", v: "в", x: "х", y: "й", z: "з",
   c: "к",
+  // The reformed alphabet's single letters.
+  "ö": "ў", "ğ": "ғ", "ş": "ш", "ç": "ч",
   // tutuq belgisi — the apostrophe that is not part of oʻ / gʻ
   "'": "ъ", "ʼ": "ъ", "’": "ъ",
 };
@@ -145,5 +150,5 @@ export function toCyrillic(text: string): string {
 
 function convertProse(text: string): string {
   // Split on runs of Latin letters plus the apostrophes Uzbek uses.
-  return text.replace(/[A-Za-z][A-Za-z'ʼ’ʻ‘ōḡ]*/g, (word) => convertWord(word));
+  return text.replace(/[A-Za-zÖöĞğŞşÇç][A-Za-zÖöĞğŞşÇç'ʼ’ʻ‘ōḡ]*/g, (word) => convertWord(word));
 }

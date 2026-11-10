@@ -13,7 +13,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ApiError, setTokens, staffHome } from "@/services/api";
+import { ApiError, setAccessToken, staffHome } from "@/services/api";
 import { staffLogin } from "@/services/auth";
 import { useI18n } from "@/i18n";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -32,7 +32,7 @@ export default function StaffLoginPage() {
     setError(null);
     try {
       const tokens = await staffLogin(login.trim(), password);
-      setTokens(tokens.access_token, tokens.refresh_token);
+      setAccessToken(tokens.access_token);
       router.push(staffHome());
     } catch (err) {
       setError(

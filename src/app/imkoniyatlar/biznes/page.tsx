@@ -24,8 +24,7 @@ import { BusinessCard } from "@/components/business/BusinessCard";
 import { missingSignals } from "@/components/business/format";
 import { fill } from "@/components/jobs/format";
 
-const HELP: Record<"career" | "profile" | "score", { href: string; key: MessageKey }> = {
-  career: { href: "/kasb", key: "biz.empty.career" },
+const HELP: Record<"profile" | "score", { href: string; key: MessageKey }> = {
   profile: { href: "/welcome", key: "biz.empty.profile" },
   score: { href: "/kabinet/diagnostika", key: "biz.empty.score" },
 };

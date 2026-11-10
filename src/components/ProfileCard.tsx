@@ -142,7 +142,7 @@ export function ProfileCard({
     joined && { icon: <IconCalendar />, label: t("prof.joined"), value: joined },
   ].filter(Boolean) as ProfileCardFact[];
 
-  const fillLabel = t("prof.fill");
+  const fillLabel = percent >= 100 ? t("prof.edit") : t("prof.fill");
   const Heading = (headingLevel === 1 ? "h1" : "h2") as "h1" | "h2";
 
   return (

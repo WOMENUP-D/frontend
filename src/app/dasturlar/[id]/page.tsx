@@ -17,9 +17,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getAccessToken } from "@/services/api";
 import { portal, type Program, type ProgramDetail } from "@/services/portal";
+import { track } from "@/services/analytics";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey } from "@/utils/format";
 import { Loading } from "@/components/ui";
+import { levelKey } from "@/components/learning/ui";
+import { hostOf } from "@/utils/url";
 
 export default function ProgramPage() {
   const { t, tx } = useI18n();
@@ -50,10 +53,23 @@ export default function ProgramPage() {
 
   useEffect(() => {
     if (!program) return;
+    // Neighbours by shared subject first, then by direction — never a random
+    // fill: fewer than three is an honest answer.
     portal
-      .programs(`?category=${program.category}&size=4`)
-      .then((page) => setRelated(page.items.filter((p) => p.id !== program.id).slice(0, 3)))
+      .programRelated(program.id, 3)
+      .then((items) => setRelated(items))
       .catch(() => setRelated([]));
+  }, [program]);
+
+  // Which courses are read, as opposed to enrolled in: the catalogue's own
+  // funnel. The id is the course's, never hers.
+  useEffect(() => {
+    if (!program) return;
+    track("program_viewed", {
+      entity_type: "program",
+      entity_id: program.id,
+      properties: { slug: program.slug },
+    });
   }, [program]);
 
   useEffect(() => {
@@ -104,6 +120,32 @@ export default function ProgramPage() {
 
   const totalMinutes = program.modules.reduce((sum, m) => sum + (m.duration_minutes ?? 0), 0);
 
+  const outside = program.external_url ? hostOf(program.external_url) : null;
+  // What the body can say: the description an outside course arrives with,
+  // the outcomes and the modules of our own. Nothing of the three, and the
+  // page keeps to one column rather than leaving the left one blank.
+  const about = tx(program.description_i18n ?? {});
+  const hasBody = Boolean(about) || program.learning_outcomes.length > 0 || program.modules.length > 0;
+  // The first subject the course is tagged with: the way back into the
+  // catalogue for "more like this", which is what a card with no syllabus
+  // of its own can honestly offer.
+  const topic = (program.skills ?? [])[0] ?? null;
+  // Only figures we hold. A dash in a tile is a tile that should not be there.
+  const stats: Array<[string, string]> = [];
+  if (program.modules.length > 0) {
+    stats.push([t("pd.moduleCount").replace("{n}", String(program.modules.length)), t("pd.modules")]);
+  }
+  if (program.duration_hours) {
+    stats.push([`${program.duration_hours} ${t("common.hours")}`, t("pr.duration")]);
+  }
+  if (program.duration_weeks) {
+    stats.push([`${program.duration_weeks} ${t("common.weeks")}`, t("pr.period")]);
+  }
+  if (program.level) stats.push([t(levelKey(program.level)), t("pd.level")]);
+  if (!outside) {
+    stats.push([t(program.has_certificate ? "common.yes" : "common.no"), t("pr.certificate")]);
+  }
+
   return (
     <main>
       {/* --- the header strip, the part she decides from --- */}
@@ -114,7 +156,13 @@ export default function ProgramPage() {
           </Link>
 
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            <span className="badge">{t(categoryKey(program.category))}</span>
+            <Link
+              href={`/dasturlar?category=${program.category}`}
+              className="badge"
+              title={t("pd.allInCategory").replace("{category}", t(categoryKey(program.category)))}
+            >
+              {t(categoryKey(program.category))}
+            </Link>
             <span className="badge badge-grey">{t(formatKey(program.format))}</span>
             {program.has_certificate && (
               <span className="badge badge-green">{t("pr.certificate")}</span>
@@ -131,44 +179,65 @@ export default function ProgramPage() {
             </p>
           )}
 
+          {outside && (
+            <p className="small" style={{ maxWidth: "48rem" }}>
+              {t("lms.course.outside").replace("{host}", outside)} {t("lms.course.outsideHint")}
+            </p>
+          )}
           <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
-            <button
-              className="btn btn-primary btn-lg"
-              onClick={enrol}
-              disabled={busy || enrolled}
-            >
-              {enrolled ? t("pd.enrolled") : signedIn ? t("pd.enrol") : t("pd.signInFirst")}
-            </button>
+            {outside ? (
+              <a
+                className="btn btn-primary btn-lg"
+                href={program.external_url ?? ""}
+                rel="noopener noreferrer"
+              >
+                {t("lms.course.goOutside")}
+              </a>
+            ) : (
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={enrol}
+                disabled={busy || enrolled}
+              >
+                {enrolled ? t("pd.enrolled") : signedIn ? t("pd.enrol") : t("pd.signInFirst")}
+              </button>
+            )}
+            {topic && (
+              <Link
+                className="btn btn-outline btn-lg"
+                href={`/dasturlar?skill=${encodeURIComponent(topic.label)}`}
+              >
+                {t("pd.allOnTopic").replace("{topic}", tx(topic.name_i18n) || topic.label)}
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
       {/* --- the figures, as a strip like the catalogue cards promise --- */}
-      <section className="wrap">
-        <div className="pd-stats">
-          {(
-            [
-              [t("pd.moduleCount").replace("{n}", String(program.modules.length)), t("pd.modules")],
-              [`${program.duration_hours ?? "—"} ${t("common.hours")}`, t("pr.duration")],
-              [`${program.duration_weeks ?? "—"} ${t("common.weeks")}`, t("pr.period")],
-              [t("pd.levelBase"), t("pd.level")],
-              [
-                t(program.has_certificate ? "common.yes" : "common.no"),
-                t("pr.certificate"),
-              ],
-            ] as Array<[string, string]>
-          ).map(([value, label]) => (
-            <div key={label} className="pd-stat">
-              <strong>{value}</strong>
-              <span className="faint">{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {stats.length > 0 && (
+        <section className="wrap">
+          <div className="pd-stats">
+            {stats.map(([value, label]) => (
+              <div key={label} className="pd-stat">
+                <strong>{value}</strong>
+                <span className="faint">{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="section">
-        <div className="wrap pd-body">
+        <div className={`wrap pd-body${hasBody ? "" : " is-single"}`}>
+          {hasBody && (
           <div className="stack" style={{ gap: 34 }}>
+            {about && (
+              <div className="stack" style={{ gap: 14 }}>
+                <h2 className="pd-h2">{t("pd.about")}</h2>
+                <p className="lead" style={{ maxWidth: "48rem" }}>{about}</p>
+              </div>
+            )}
             {program.learning_outcomes.length > 0 && (
               <div className="stack" style={{ gap: 14 }}>
                 <h2 className="pd-h2">{t("pd.outcomes")}</h2>
@@ -242,6 +311,7 @@ export default function ProgramPage() {
               </div>
             )}
           </div>
+          )}
 
           <aside className="stack" style={{ gap: 22 }}>
             {program.skills_taught.length > 0 && (
@@ -273,16 +343,23 @@ export default function ProgramPage() {
       {related.length > 0 && (
         <section className="section ed-alt">
           <div className="wrap stack" style={{ gap: 20 }}>
-            <h2 className="pd-h2">{t("pd.related")}</h2>
+            <div className="spread" style={{ alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+              <h2 className="pd-h2" style={{ margin: 0 }}>{t("pd.related")}</h2>
+              <Link href={`/dasturlar?category=${program.category}`} className="btn btn-outline btn-sm">
+                {t("pd.allInCategory").replace("{category}", t(categoryKey(program.category)))}
+              </Link>
+            </div>
             <div className="showcase-grid">
               {related.map((item) => (
                 <Link key={item.id} href={`/dasturlar/${item.id}`} className="tile">
                   <span className="badge">{t(categoryKey(item.category) as MessageKey)}</span>
                   <h3 className="tile-title">{tx(item.title_i18n)}</h3>
                   <p className="muted small tile-lead">{tx(item.goal_i18n)}</p>
-                  <span className="faint">
-                    {item.duration_hours} {t("common.hours")}
-                  </span>
+                  {item.duration_hours ? (
+                    <span className="faint">
+                      {item.duration_hours} {t("common.hours")}
+                    </span>
+                  ) : null}
                 </Link>
               ))}
             </div>

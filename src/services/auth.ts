@@ -1,9 +1,10 @@
-import { api, clearTokens, setTokens } from "./api";
+import { api, clearSession, setAccessToken } from "./api";
 import { googleSignOut } from "./googleAuth";
 
 export interface TokenPair {
   access_token: string;
-  refresh_token: string;
+  /** Null for browsers: the refresh token travels as an HttpOnly cookie. */
+  refresh_token: string | null;
   token_type: string;
   expires_in: number;
 }
@@ -28,7 +29,7 @@ const GOOGLE_HANDOFF_KEY = "womanup.google_name";
  */
 export async function googleLogin(idToken: string): Promise<GoogleTokenPair> {
   const result = await api.post<GoogleTokenPair>("/auth/google", { id_token: idToken });
-  setTokens(result.access_token, result.refresh_token);
+  setAccessToken(result.access_token);
 
   if (result.given_name || result.family_name) {
     try {
@@ -68,19 +69,24 @@ export async function register(email: string, password: string, acceptedPolicy: 
     accepted_privacy_policy: acceptedPolicy,
     policy_version: PRIVACY_POLICY_VERSION,
   });
-  setTokens(tokens.access_token, tokens.refresh_token);
+  setAccessToken(tokens.access_token);
   return tokens;
 }
 
 /** Come back to an account. */
 export async function passwordLogin(email: string, password: string) {
   const tokens = await api.post<TokenPair>("/auth/login", { email, password });
-  setTokens(tokens.access_token, tokens.refresh_token);
+  setAccessToken(tokens.access_token);
   return tokens;
 }
 
 export function logout(): void {
-  clearTokens();
+  // Tell the server first, while the access token is still at hand: it is
+  // revoked along with the refresh cookie the browser presents, so neither
+  // works again from any copy. Best effort — this tab forgets the session
+  // whether or not the call lands.
+  void api.post<unknown>("/auth/logout", {}).catch(() => undefined);
+  clearSession();
   try {
     window.sessionStorage.removeItem(GOOGLE_HANDOFF_KEY);
   } catch {
@@ -94,4 +100,16 @@ export function logout(): void {
 /** Staff sign-in: a login and a password, never an SMS code. */
 export function staffLogin(login: string, password: string) {
   return api.post<TokenPair>("/auth/staff/login", { login, password });
+}
+
+
+/** End every session of this account, on every device. She signs in again
+ *  here afterwards. */
+export async function logoutEverywhere(): Promise<void> {
+  try {
+    await api.post<unknown>("/auth/logout-all", {});
+  } finally {
+    clearSession();
+    void googleSignOut();
+  }
 }

@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useI18n } from "@/i18n";
 import { portal, type OpportunityCard, type SkillRef } from "@/services/portal";
-import { regionKey, typeKey } from "@/utils/format";
+import { regionKey, sourceKey, typeKey } from "@/utils/format";
 import { Meter } from "@/components/guide/Parts";
 import { OrgLine } from "@/components/org/Parts";
 import { deadlineLine, fill, statusKey } from "./format";
@@ -45,6 +45,11 @@ export function JobCard({ item, signedIn }: { item: OpportunityCard; signedIn: b
     <li className={`jb-card${item.is_open ? "" : " is-closed"}`}>
       <div className="jb-card-top">
         <span className="jb-kind">{t(typeKey(item.type))}</span>
+        {item.apply_url && (
+          <span className="jb-src">
+            {fill(t("job.viaSource"), { source: t(sourceKey(item.source)) })}
+          </span>
+        )}
         {item.application_status && (
           <span className={`jb-status is-${item.application_status}`}>
             {t(statusKey(item.application_status))}

@@ -153,14 +153,18 @@ export function ErrorNote({ message }: { message: string }) {
   );
 }
 
-/** Shown when a screen needs a session and there is none. */
-export function NeedsAuth() {
+/** Shown when a screen needs a session and there is none.
+ *
+ *  `href` names the door: the public sign-in by default, the staff one for the
+ *  management panel — sending a coordinator to the learner form, as this used
+ *  to, left her with a page that could never let her in. */
+export function NeedsAuth({ href = "/login", hint }: { href?: string; hint?: string }) {
   const { t } = useI18n();
   return (
     <Empty
       title={t("auth.required")}
-      hint={t("auth.requiredHint")}
-      action={<Link href="/login" className="btn btn-primary">{t("nav.signIn")}</Link>}
+      hint={hint ?? t("auth.requiredHint")}
+      action={<Link href={href} className="btn btn-primary">{t("nav.signIn")}</Link>}
     />
   );
 }

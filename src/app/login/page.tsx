@@ -13,9 +13,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ApiError, getRoles, staffHome } from "@/services/api";
 import { passwordLogin, register } from "@/services/auth";
+import { track } from "@/services/analytics";
 import { portal } from "@/services/portal";
 import {
   BirthDateField,
@@ -37,19 +38,23 @@ const HOME = "/kabinet";
 /**
  * The ready-made account for a demonstration build.
  *
- * Written against `process.env.NEXT_PUBLIC_DEMO` directly rather than through
- * `showDemo()`: the compiler replaces the variable at build time and drops the
- * whole branch, so a production bundle carries no password at all. Behind a
- * function call it could not know that, and the credentials shipped to every
- * visitor of the sign-in page — where the administrator's password was the
- * same string with one character added.
+ * Written against `process.env.NEXT_PUBLIC_DEMO*` directly rather than
+ * through `showDemo()`: the compiler replaces the variables at build time and
+ * drops the whole branch, so a production bundle carries no credentials at
+ * all. The values themselves are supplied by the demo deployment's
+ * environment; nothing of the kind is written in this file.
  */
 const DEMO_ACCOUNTS =
-  process.env.NEXT_PUBLIC_DEMO === "true"
+  process.env.NEXT_PUBLIC_DEMO === "true" &&
+  process.env.NEXT_PUBLIC_DEMO_EMAIL &&
+  process.env.NEXT_PUBLIC_DEMO_PASSWORD
     ? ([
         {
-          email: "demo@womanup.uz",
-          password: "WomanUP2026",
+          // The demo credentials come from the demo deployment's own
+          // environment, never from the source: a password in a repository is
+          // a password in every clone and every history.
+          email: process.env.NEXT_PUBLIC_DEMO_EMAIL,
+          password: process.env.NEXT_PUBLIC_DEMO_PASSWORD,
           label: "login.roleUser",
           hint: "login.hintUser",
         },
@@ -110,6 +115,15 @@ export default function LoginPage() {
      account cannot lawfully exist without a basis for holding her data, so the
      tick is a precondition of the button rather than a setting to find later. */
   const [agreed, setAgreed] = useState(false);
+
+  /* The sign-up funnel's first step: she touched the form. Reported once per
+     visit to this page, so the figure counts people, not keystrokes. */
+  const started = useRef(false);
+  function onSignupTouched() {
+    if (started.current || mode !== "signup") return;
+    started.current = true;
+    track("registration_started", { path: "/login" });
+  }
 
   const today = useMemo(() => new Date(), []);
   const birthIso = isoBirthDate(birth);
@@ -192,7 +206,7 @@ export default function LoginPage() {
           </ul>
         </section>
 
-        <section className="auth-card stack">
+        <section className="auth-card stack" onFocusCapture={onSignupTouched}>
           <>
             {mode === "signup" && (
               <>
@@ -342,10 +356,12 @@ export default function LoginPage() {
             </details>
           )}
 
-          {/* No staff-sign-in link here: a public sign-in page should not
-              advertise a door that only coordinators and admins can open.
-              Staff reach /admin/login directly. */}
           <p className="faint auth-terms">{t("login.terms")}</p>
+          {/* The staff door, named once and quietly. It was unlinked, so that
+              a public page would not advertise it — and the people it was for
+              could not find it either. The address is public in any case; the
+              password is what guards it. */}
+          <Link href="/admin/login" className="faint auth-staff">{t("login.staff")}</Link>
         </section>
       </div>
 

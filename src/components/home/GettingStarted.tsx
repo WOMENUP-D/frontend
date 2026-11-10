@@ -81,7 +81,6 @@ export function GettingStarted({ isNew }: { isNew: boolean }) {
         label={t("guide.title")}
         steps={[
           { title: t("guide.s1"), body: t("guide.s1.body"), href: "/kabinet/diagnostika" },
-          { title: t("guide.s2"), body: t("guide.s2.body"), href: "/kasb" },
           { title: t("guide.s3"), body: t("guide.s3.body"), href: "/dasturlar" },
           { title: t("guide.s4"), body: t("guide.s4.body"), href: "/talim/amaliyot" },
           { title: t("guide.s5"), body: t("guide.s5.body"), href: "/imkoniyatlar" },

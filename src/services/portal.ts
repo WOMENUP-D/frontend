@@ -278,18 +278,59 @@ export interface ScoreInsights extends DevelopmentScore {
 // The browser sends which option she chose and nothing else: what an option is
 // worth, the scores and the priorities are all decided on the server.
 
+/** When a question is shown: after a given answer to an earlier question, or
+ *  after any of several. Evaluated in the browser against the draft and on
+ *  the server against the submission, the same way. */
+export type DiagnosticShowIf =
+  | { question: string; in: string[] }
+  | { any: Array<{ question: string; in: string[] }> };
+
 export interface DiagnosticQuestion {
   id: string;
-  /** Language-independent: "edu.q1", "fam.q19", "goals.q25". */
+  /** Language-independent: "pro.q1", "edu.q1", "fam.q19". */
   code: string;
-  /** Null for the goals question, which measures no dimension. */
+  /** Null for a profile question, which measures no dimension. */
   dimension: string | null;
-  type: "single_choice" | "routing" | "goals";
+  /** The profile block is single_choice / multi_choice / goals / text; the
+   *  scored block is single_choice; routing steers which block is shown. */
+  type: "single_choice" | "routing" | "goals" | "multi_choice" | "text";
   order_index: number;
   text_i18n: Record<string, string>;
   hint_i18n: Record<string, string> | null;
   max_choices: number;
   options: Array<{ id: string; label_i18n: Record<string, string> }>;
+  /** "profile" | "situation" | "skills" | "learning" | "score" — the screen heading. */
+  section: string | null;
+  optional: boolean;
+  show_if: DiagnosticShowIf | null;
+  /** For a text question: how many characters the server keeps. */
+  max_length: number | null;
+}
+
+/** What she said about herself, as the server derived it from her answers. */
+export interface DiagnosticProfile {
+  version: number;
+  situation?: string;
+  situation_other?: string;
+  goal_primary?: string;
+  goals_other?: string[];
+  goals?: string[];
+  goal_text?: string;
+  interests?: string[];
+  study_field?: string;
+  practice?: string;
+  first_job_when?: string;
+  position?: string;
+  career_wish?: string;
+  experience?: string;
+  business_stage?: string;
+  business_challenges?: string[];
+  job_search_duration?: string;
+  skill_levels?: Record<string, number>;
+  difficulties?: string[];
+  formats?: string[];
+  hours?: string;
+  language?: string;
 }
 
 export type DiagnosticLevel =
@@ -327,6 +368,60 @@ export interface DiagnosticResult {
   next_steps: NextStep[];
   goals: string[];
   family_focus: string | null;
+  /** Null for an attempt taken before the profile block existed. */
+  profile: DiagnosticProfile | null;
+}
+
+export type RecommendationPriority = "high" | "medium" | "additional";
+
+/** One course chosen for her, with why in her words and what it gives. */
+export interface RecommendedCourse {
+  program: Program;
+  priority: RecommendationPriority;
+  why_i18n: Record<string, string>;
+  outcome_i18n: Record<string, string>;
+  covers: SkillRef[];
+  enrollment_status: EnrollmentStatus | null;
+}
+
+export interface RoadmapItem {
+  kind: "course" | "activity";
+  program_id: string | null;
+  activity: string | null;
+  text_i18n: Record<string, string> | null;
+}
+
+export interface RoadmapStage {
+  title_i18n: Record<string, string>;
+  items: RoadmapItem[];
+}
+
+export interface DiagnosticGap {
+  slug: string;
+  name_i18n: Record<string, string>;
+  /** goal | goal_other | interest | difficulty | dimension */
+  why: string;
+  source: string;
+}
+
+/** The courses chosen from an attempt: the rules found and ranked them, the
+ *  model (when on) explained them. `mode` says which wrote the words. */
+export interface DiagnosticRecommendation {
+  attempt_id: string;
+  generated_at: string;
+  mode: "ai" | "rules" | "insufficient";
+  summary: {
+    goal_i18n: Record<string, string>;
+    situation_i18n: Record<string, string>;
+    gaps_i18n: Record<string, string[]>;
+  };
+  courses: RecommendedCourse[];
+  roadmap: RoadmapStage[];
+  next_steps: Array<Record<string, string>>;
+  follow_up: Record<string, string> | null;
+  gaps: DiagnosticGap[];
+  /** True while the model has yet to write its words; the page polls. */
+  ai_pending: boolean;
 }
 
 export interface DiagnosticHistoryItem {
@@ -392,6 +487,26 @@ export interface ProgramDetail extends Program {
   assessment_type: string | null;
 }
 
+/** One subject the catalogue teaches, with how many courses teach it. The
+ *  label is the one the courses are tagged with; the name is the taxonomy's,
+ *  in her language, when the taxonomy knows the label. */
+export interface ProgramTopic {
+  label: string;
+  slug: string | null;
+  title_i18n: Record<string, string>;
+  direction: string | null;
+  count: number;
+}
+
+/** A course title offered while she types: enough to open the course. */
+export interface ProgramSuggestion {
+  id: string;
+  slug: string;
+  title_i18n: Record<string, string>;
+  provider: string | null;
+  external_url: string | null;
+}
+
 export interface Program {
   id: string;
   slug: string;
@@ -407,6 +522,8 @@ export interface Program {
   learning_outcomes: Array<Record<string, string>>;
   has_certificate: boolean;
   provider: string | null;
+  /** The language it is taught in: uz, ru or en. */
+  language: string | null;
   /** Set when the course belongs to somebody else and lives on their site. */
   external_url?: string | null;
   source?: string | null;
@@ -1115,6 +1232,9 @@ export interface OpportunityFit {
 export interface OpportunityCard extends Opportunity {
   external_url: string | null;
   is_open: boolean;
+  /** Where she applies when applying happens off the platform — a vacancy
+   *  from hh.uz is applied to on hh.uz. Null when WomanUP takes the application. */
+  apply_url: string | null;
   skills: SkillRef[];
   /** Null for a visitor. */
   fit: OpportunityFit | null;
@@ -1205,6 +1325,119 @@ export interface OpportunityDetail extends OpportunityCard {
   };
   application: ApplicationRecord | null;
   other_requirements: string[];
+}
+
+/** A course chosen for a listing's requirements, with what it covers and why. */
+export interface SuggestedCourse {
+  program: {
+    id: string;
+    slug: string;
+    title_i18n: Record<string, string>;
+    provider: string | null;
+    external_url: string | null;
+    category: string;
+    format: string;
+    level: ProficiencyLevel | null;
+    duration_hours: number | null;
+    has_certificate: boolean;
+    skills_taught: string[];
+  };
+  /** The listing's own requirement words this course teaches. */
+  covers: string[];
+  /** One sentence per language when the model chose; empty when the rules did. */
+  reason_i18n: Record<string, string>;
+}
+
+export interface CourseSuggestions {
+  opportunity_id: string;
+  /** How the courses were chosen: by the model over the catalogue, or by skill overlap. */
+  mode: "ai" | "rules";
+  generated_at: string | null;
+  items: SuggestedCourse[];
+}
+
+// ---- Vacancy marketplace ------------------------------------------------------
+//
+// Real listings from the configured job board (HeadHunter today), in the
+// portal's own shape whatever the board. Nothing here is about the reader;
+// applying happens on the board through the listing's link.
+
+export interface VacancySalary {
+  amount_from: number | null;
+  amount_to: number | null;
+  currency: string | null;
+  gross: boolean | null;
+}
+
+export interface VacancyEmployer {
+  id: string | null;
+  name: string;
+  url: string | null;
+  logo_url: string | null;
+  description_html: string | null;
+  industries: string[];
+  site_url: string | null;
+  trusted: boolean | null;
+}
+
+export interface Vacancy {
+  provider: string;
+  id: string;
+  title: string;
+  employer: VacancyEmployer;
+  /** Null when the employer stated no salary; the page says so. */
+  salary: VacancySalary | null;
+  area: string | null;
+  region: string | null;
+  work_formats: string[];
+  schedule: string | null;
+  employment: string | null;
+  experience: string | null;
+  published_at: string | null;
+  snippet: string;
+  /** The original listing, where she applies. */
+  url: string;
+  language: string;
+  is_internship: boolean;
+  professional_roles: string[];
+  is_active: boolean;
+}
+
+export interface VacancyDetail extends Vacancy {
+  description_html: string;
+  description_text: string;
+  skills: string[];
+  languages: string[];
+  address: string | null;
+  has_test: boolean;
+}
+
+export interface VacancyPage {
+  items: Vacancy[];
+  total: number;
+  page: number;
+  pages: number;
+  per_page: number;
+}
+
+export interface VacancyMeta {
+  provider: { name: string; label: string; site_url: string };
+  regions: string[];
+  experience: string[];
+  employment: string[];
+  schedule: string[];
+  work_format: string[];
+  sort: string[];
+  picks: string[];
+  categories: { id: string; name: string; roles: number }[];
+}
+
+export interface VacancyCourses {
+  provider: string;
+  vacancy_id: string;
+  mode: "ai" | "rules";
+  generated_at: string | null;
+  items: SuggestedCourse[];
 }
 
 export interface DiscoverParams {
@@ -1742,6 +1975,288 @@ export interface ResultsEvents {
   series: ResultsSeries[];
 }
 
+// ---- Product analytics (admin) -------------------------------------------
+// Did anyone come, who registered, who is still here, where they drop out,
+// which courses they use, is anything broken. Same rules as Results, plus one:
+// a figure whose source only started recording on some date says so in
+// `since`, and is null — never 0 — when that source has never recorded.
+
+export interface AnalyticsFilters {
+  date_from?: string;
+  date_to?: string;
+  /** Count staff accounts' own browsing and actions too. Off by default. */
+  include_staff?: boolean;
+}
+
+export interface AnalyticsScope {
+  period: { date_from: string | null; date_to: string | null; bucket: ResultsBucket };
+  timezone: string;
+  includes_staff: boolean;
+  generated_at: string;
+  cached: boolean;
+  cache_ttl_seconds: number;
+}
+
+export interface Figure {
+  key: string;
+  value: number | null;
+  since: string | null;
+  /** "period" counts the chosen days; "now" is the state today; "live" the last minutes. */
+  kind: "period" | "now" | "live";
+}
+
+export interface Ratio {
+  key: string;
+  value: number | null;
+  numerator: number;
+  denominator: number;
+}
+
+export interface LiveNow {
+  online_now: number;
+  online_signed_in: number;
+  window_minutes: number;
+  as_of: string;
+}
+
+export interface AnalyticsOverview {
+  scope: AnalyticsScope;
+  live: LiveNow;
+  today: Figure[];
+  period: Figure[];
+  active: Figure[];
+  series: ResultsSeries[];
+}
+
+export interface PathStat {
+  path: string;
+  views: number;
+  visitors: number;
+}
+
+export interface AnalyticsTraffic {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  ratios: Ratio[];
+  series: ResultsSeries[];
+  pages: PathStat[];
+  landing: PathStat[];
+  exits: PathStat[];
+  referrers: ResultsGroup[];
+  devices: ResultsGroup[];
+  browsers: ResultsGroup[];
+  systems: ResultsGroup[];
+  locales: ResultsGroup[];
+  collected: Record<string, string | null>;
+}
+
+export interface Stage {
+  key: string;
+  value: number | null;
+  since: string | null;
+  of_previous: number | null;
+  of_first: number | null;
+}
+
+export interface AnalyticsAccounts {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  rates: ResultsRate[];
+  series: ResultsSeries[];
+  by_status: ResultsGroup[];
+  by_provider: ResultsGroup[];
+  by_language: ResultsGroup[];
+  registration: Stage[];
+}
+
+export interface CohortCell {
+  week: number;
+  value: number;
+  share: number | null;
+  complete: boolean;
+}
+
+export interface Cohort {
+  starts: string;
+  size: number;
+  cells: CohortCell[];
+}
+
+export interface AnalyticsEngagement {
+  scope: AnalyticsScope;
+  active: Figure[];
+  series: ResultsSeries[];
+  cohorts: Cohort[];
+  returning: Figure;
+  visits_since: string | null;
+}
+
+export interface AnalyticsFunnel {
+  scope: AnalyticsScope;
+  acquisition: Stage[];
+  journey: Stage[];
+  diagnostic: Stage[];
+}
+
+export interface ProgramStat {
+  id: string;
+  slug: string;
+  title_i18n: Record<string, string>;
+  is_published: boolean;
+  views: number | null;
+  viewers: number | null;
+  enrolled: number;
+  started: number;
+  in_progress_now: number;
+  completed: number;
+  stalled: number;
+  completion: ResultsRate;
+}
+
+export type ProgramStatSort =
+  | "enrolled"
+  | "started"
+  | "completed"
+  | "completion"
+  | "views"
+  | "stalled"
+  | "title";
+
+export interface AnalyticsPrograms {
+  scope: AnalyticsScope;
+  items: ProgramStat[];
+  total: number;
+  page: number;
+  size: number;
+  views_since: string | null;
+}
+
+export interface AnalyticsFeatures {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  ai_by_feature: ResultsGroup[];
+  series: ResultsSeries[];
+}
+
+export interface ActivityItem {
+  id: string;
+  name: string;
+  occurred_at: string;
+  actor: string | null;
+  region: string | null;
+  entity_type: string | null;
+  title_i18n: Record<string, string> | null;
+  properties: Record<string, string | number | boolean>;
+}
+
+export interface AnalyticsActivity {
+  scope: AnalyticsScope;
+  items: ActivityItem[];
+  total: number;
+  page: number;
+  size: number;
+  since: string | null;
+}
+
+export interface AnalyticsErrors {
+  scope: AnalyticsScope;
+  figures: Figure[];
+  series: ResultsSeries[];
+  by_route: ResultsGroup[];
+  by_status: ResultsGroup[];
+  since: string | null;
+}
+
+/** Query string for the analytics endpoints: the period plus the staff switch. */
+function analyticsQuery(f: AnalyticsFilters, extra: Record<string, string | undefined> = {}): string {
+  return queryOf({
+    date_from: f.date_from,
+    date_to: f.date_to,
+    include_staff: f.include_staff ? "true" : undefined,
+    ...extra,
+  });
+}
+
+// ---- Participant roster (admin) -----------------------------------------
+// One row per woman. `name` and `email` (masked) arrive only for an
+// administrator; everyone else reads `tag`, a pseudonym that is the same for
+// the same account here and on the activity timeline.
+
+export interface RosterRow {
+  id: string;
+  tag: string;
+  name: string | null;
+  email: string | null;
+  region: string | null;
+  status: string;
+  language: string;
+  joined_at: string;
+  last_active_at: string | null;
+  onboarded: boolean;
+  views: number;
+  sessions: number;
+  active_days: number;
+  score: number | null;
+  score_measured_at: string | null;
+  diagnostics: number;
+  last_diagnostic_at: string | null;
+  courses_enrolled: number;
+  courses_completed: number;
+  certificates: number;
+  plan_accepted: boolean;
+  ai_requests: number;
+  applications: number;
+  cv_entries: number;
+}
+
+export interface Roster {
+  scope: { region: string | null; identifiers: boolean; views_since: string | null; generated_at: string };
+  items: RosterRow[];
+  total: number;
+  page: number;
+  size: number;
+}
+
+export type RosterSort = "last_active" | "joined" | "score" | "views" | "active_days" | "courses" | "name";
+
+export interface RosterQuery {
+  region?: string;
+  status?: string;
+  search?: string;
+  sort?: RosterSort;
+  order?: "asc" | "desc";
+  page?: number;
+  size?: number;
+}
+
+export interface RosterCard {
+  row: RosterRow;
+  dimensions: { dimension: string; baseline: number; current: number; target: number | null }[];
+  courses: {
+    program_id: string;
+    slug: string;
+    title_i18n: Record<string, string>;
+    status: string;
+    progress_percent: number;
+    started_at: string | null;
+    completed_at: string | null;
+    certificate: boolean;
+  }[];
+  events: { name: string; occurred_at: string; title_i18n: Record<string, string> | null }[];
+}
+
+function rosterQuery(q: RosterQuery): string {
+  return queryOf({
+    region: q.region || undefined,
+    status: q.status || undefined,
+    search: q.search || undefined,
+    sort: q.sort,
+    order: q.order,
+    page: q.page ? String(q.page) : undefined,
+    size: q.size ? String(q.size) : undefined,
+  });
+}
+
 export interface AdminFilters {
   date_from?: string;
   date_to?: string;
@@ -1914,6 +2429,15 @@ export const portal = {
       `/diagnostic/result${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
     ),
   diagnosticHistory: () => api.get<DiagnosticHistoryItem[]>("/diagnostic/history"),
+  diagnosticRecommendations: (attemptId?: string) =>
+    api.get<DiagnosticRecommendation>(
+      `/diagnostic/recommendations${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
+    ),
+  refreshDiagnosticRecommendations: (attemptId?: string) =>
+    api.post<DiagnosticRecommendation>(
+      `/diagnostic/recommendations/refresh${attemptId ? `?attempt_id=${encodeURIComponent(attemptId)}` : ""}`,
+      {},
+    ),
   questionnaire: () => api.get<Questionnaire>("/assessments/questionnaire"),
   learningProfile: () => api.get<LearningProfileRead>("/assessments/learning-profile"),
   saveLearning: (answers: Record<string, unknown>) =>
@@ -1936,6 +2460,9 @@ export const portal = {
     api.post<NavigatorAnswer>("/ai/navigator", { message }),
 
   programs: (query = "") => api.get<Page<Program>>(`/programs${query}`),
+  programTopics: (query = "") => api.get<ProgramTopic[]>(`/programs/topics${query}`),
+  programSuggest: (q: string) => api.get<ProgramSuggestion[]>(`/programs/suggest?q=${encodeURIComponent(q)}`),
+  programRelated: (id: string, limit = 6) => api.get<Program[]>(`/programs/${id}/related?limit=${limit}`),
   program: (id: string) => api.get<ProgramDetail>(`/programs/${id}`),
   /** The same card by its readable name — what the learning section links to. */
   programBySlug: (slug: string) =>
@@ -2021,6 +2548,15 @@ export const portal = {
   },
   opportunity: (id: string) =>
     api.get<OpportunityDetail>(`/opportunities/${encodeURIComponent(id)}`),
+  opportunityCourses: (id: string) =>
+    api.get<CourseSuggestions>(`/opportunities/${encodeURIComponent(id)}/courses`),
+
+  vacancies: {
+    meta: () => api.get<VacancyMeta>("/vacancies/meta"),
+    search: (params: URLSearchParams) => api.get<VacancyPage>(`/vacancies?${params.toString()}`),
+    get: (id: string) => api.get<VacancyDetail>(`/vacancies/${encodeURIComponent(id)}`),
+    courses: (id: string) => api.get<VacancyCourses>(`/vacancies/${encodeURIComponent(id)}/courses`),
+  },
   /** Apply from the confirm step. `consent` is her agreement, given there, to
    *  share the listed fields with the listing's partner platform. */
   applyTo: (id: string, consent: boolean) =>
@@ -2215,6 +2751,9 @@ export const portal = {
     q.set("offset", String(params.offset ?? 0));
     return api.get<AdminUser[]>(`/admin/users?${q}`);
   },
+  roster: (q: RosterQuery = {}) => api.get<Roster>(`/admin/users/roster${rosterQuery(q)}`),
+  rosterCard: (userId: string) => api.get<RosterCard>(`/admin/users/${userId}/card`),
+  rosterExport: (q: RosterQuery = {}) => api.text(`/admin/users/roster/export${rosterQuery(q)}`),
   adminAudit: (limit = 60) => api.get<AuditEntry[]>(`/admin/audit?limit=${limit}`),
   assignRole: (userId: string, role: string) =>
     api.post<{ detail: string }>(`/admin/users/${userId}/roles`, { role }),
@@ -2222,6 +2761,53 @@ export const portal = {
     api.delete<{ detail: string }>(`/admin/users/${userId}/roles/${role}`),
   regionStats: () => api.get<Array<{ region: string; users: number }>>("/admin/stats/regions"),
 
+  analytics: {
+    definitions: () => api.get<Record<string, string>>("/admin/analytics/definitions"),
+    live: (f: AnalyticsFilters) => api.get<LiveNow>(`/admin/analytics/live${analyticsQuery(f)}`),
+    overview: (f: AnalyticsFilters) =>
+      api.get<AnalyticsOverview>(`/admin/analytics/overview${analyticsQuery(f)}`),
+    traffic: (f: AnalyticsFilters) =>
+      api.get<AnalyticsTraffic>(`/admin/analytics/traffic${analyticsQuery(f)}`),
+    accounts: (f: AnalyticsFilters) =>
+      api.get<AnalyticsAccounts>(`/admin/analytics/accounts${analyticsQuery(f)}`),
+    engagement: (f: AnalyticsFilters) =>
+      api.get<AnalyticsEngagement>(`/admin/analytics/engagement${analyticsQuery(f)}`),
+    funnel: (f: AnalyticsFilters) =>
+      api.get<AnalyticsFunnel>(`/admin/analytics/funnel${analyticsQuery(f)}`),
+    programs: (
+      f: AnalyticsFilters,
+      q: {
+        search?: string;
+        sort?: ProgramStatSort;
+        order?: "asc" | "desc";
+        page?: number;
+        size?: number;
+        lang?: "uz" | "ru" | "en";
+      },
+    ) =>
+      api.get<AnalyticsPrograms>(
+        `/admin/analytics/programs${analyticsQuery(f, {
+          search: q.search || undefined,
+          sort: q.sort,
+          order: q.order,
+          page: q.page ? String(q.page) : undefined,
+          size: q.size ? String(q.size) : undefined,
+          lang: q.lang,
+        })}`,
+      ),
+    features: (f: AnalyticsFilters) =>
+      api.get<AnalyticsFeatures>(`/admin/analytics/features${analyticsQuery(f)}`),
+    activity: (f: AnalyticsFilters, q: { page?: number; size?: number; name?: string }) =>
+      api.get<AnalyticsActivity>(
+        `/admin/analytics/activity${analyticsQuery(f, {
+          page: q.page ? String(q.page) : undefined,
+          size: q.size ? String(q.size) : undefined,
+          names: q.name || undefined,
+        })}`,
+      ),
+    errors: (f: AnalyticsFilters) =>
+      api.get<AnalyticsErrors>(`/admin/analytics/errors${analyticsQuery(f)}`),
+  },
   results: {
     overview: (f: ResultsFilters) => api.get<ResultsOverview>(`/admin/results/overview${queryOf(f)}`),
     learning: (f: ResultsFilters) => api.get<ResultsLearning>(`/admin/results/learning${queryOf(f)}`),

@@ -288,7 +288,7 @@ const RU: PolicyDoc = {
     },
     {
       n: "11",
-      title: "Cookies и технические технологии",
+      title: "Cookies и аналогичные технологии",
       blocks: [
         p("WomanUP может использовать файлы cookie и аналогичные технологии для:"),
         ul(

@@ -408,7 +408,6 @@ export default function PlanPage() {
                     item.program_url ? (
                       <a
                         href={item.program_url}
-                        target="_blank"
                         rel="noopener noreferrer"
                         className="ed-title-link"
                       >
@@ -457,7 +456,6 @@ export default function PlanPage() {
                         item.program_url ? (
                           <a
                             href={item.program_url}
-                            target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-outline btn-sm"
                           >

@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { portal, type Opportunity, type OpportunityStats, type Program } from "@/services/portal";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, money, sourceKey, typeKey } from "@/utils/format";
+import { CountUp, Reveal } from "@/components/motion/Reveal";
 
 /* ---------------------------------------- career progress, as one instrument */
 
@@ -51,7 +52,7 @@ export function CareerProgress() {
           <p>{t("ls.pathLead")}</p>
         </div>
 
-        <div className="dash">
+        <Reveal className="dash">
           <div className="dash-main">
             <span className="dash-label">{t("ls.dashTitle")}</span>
 
@@ -62,6 +63,7 @@ export function CareerProgress() {
                   fill="none" stroke="var(--surface-2)" strokeWidth={stroke}
                 />
                 <circle
+                  className="dash-ring"
                   cx={size / 2} cy={size / 2} r={radius}
                   fill="none" stroke="var(--gold)" strokeWidth={stroke} strokeLinecap="round"
                   strokeDasharray={`${(circumference * score) / 100} ${circumference}`}
@@ -70,7 +72,7 @@ export function CareerProgress() {
               </svg>
               <div className="stack" style={{ gap: 8 }}>
                 <span className="dash-value">
-                  {score}
+                  <CountUp value={score} />
                   <em> / 100</em>
                 </span>
                 <p className="dash-caption">{t("ls.dashCaption")}</p>
@@ -100,7 +102,7 @@ export function CareerProgress() {
               {t("ls.dashCta")}
             </Link>
           </aside>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -129,7 +131,7 @@ export function ProgramShowcase() {
           <p>{t("ls.catLead")}</p>
         </div>
 
-        <div className="showcase-grid">
+        <Reveal className="showcase-grid" stagger>
           {items.map((program) => (
             <article key={program.id} className="tile">
               <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
@@ -154,7 +156,7 @@ export function ProgramShowcase() {
               </Link>
             </article>
           ))}
-        </div>
+        </Reveal>
 
         <div className="sec-more">
           <Link href="/dasturlar" className="btn btn-outline">
@@ -223,13 +225,13 @@ export function OpportunityShowcase() {
 
         {stats && stats.total > 0 && (
           <div className="stack" style={{ gap: 10, alignItems: "center" }}>
-            <div className="row" style={{ gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <Reveal className="row" style={{ gap: 8, flexWrap: "wrap", justifyContent: "center" }} stagger>
               <Link href="/imkoniyatlar" className="stat-pill stat-pill-hot stat-pill-link">
-                {t("ls.opTotal")} <strong>{stats.total}</strong>
+                {t("ls.opTotal")} <strong><CountUp value={stats.total} /></strong>
               </Link>
               {stats.regions > 0 && (
                 <Link href="/imkoniyatlar" className="stat-pill stat-pill-link">
-                  {t("ls.opRegions")} <strong>{stats.regions}</strong>
+                  {t("ls.opRegions")} <strong><CountUp value={stats.regions} /></strong>
                 </Link>
               )}
               {/* Each count opens the rows it counted — a pill that reads as a
@@ -240,15 +242,15 @@ export function OpportunityShowcase() {
                   href={`/imkoniyatlar?type=${key}`}
                   className="stat-pill stat-pill-link"
                 >
-                  {t(`typp.${key}` as MessageKey)} <strong>{stats.by_type[key]}</strong>
+                  {t(`typp.${key}` as MessageKey)} <strong><CountUp value={stats.by_type[key]} /></strong>
                 </Link>
               ))}
-            </div>
+            </Reveal>
             <p className="faint center">{t("ls.opOpen")}</p>
           </div>
         )}
 
-        <div className="showcase-grid showcase-grid-2">
+        <Reveal className="showcase-grid showcase-grid-2" stagger>
           {items.map((item) => {
             const reward = rewardLine(item.reward, locale);
             const left = item.deadline
@@ -279,7 +281,7 @@ export function OpportunityShowcase() {
               </Link>
             );
           })}
-        </div>
+        </Reveal>
 
         <div className="sec-more">
           <Link href="/imkoniyatlar" className="btn btn-outline">

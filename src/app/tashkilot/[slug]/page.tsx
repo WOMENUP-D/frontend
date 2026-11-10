@@ -21,6 +21,7 @@ import { regionKey, typeKey } from "@/utils/format";
 import { Clock, Pin } from "@/components/jobs/JobCard";
 import { deadlineLine, fill } from "@/components/jobs/format";
 import { VerifiedMark } from "@/components/org/Parts";
+import { hostOf, safeHttpUrl } from "@/utils/url";
 
 export default function OrganizationPage() {
   const { t, tx } = useI18n();
@@ -72,10 +73,10 @@ export default function OrganizationPage() {
       </Link>
 
       <header className="og-head">
-        {data.logo_url && (
+        {safeHttpUrl(data.logo_url) && (
           // An organisation's own logo, from its own https address.
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="og-logo" src={data.logo_url} alt="" loading="lazy" />
+          <img className="og-logo" src={safeHttpUrl(data.logo_url) ?? undefined} alt="" loading="lazy" />
         )}
         <div className="og-head-text">
           <p className="jb-head-kind">
@@ -112,8 +113,13 @@ export default function OrganizationPage() {
           <div>
             <dt>{t("org.website")}</dt>
             <dd>
-              <a href={data.website} className="jb-inline-link" target="_blank" rel="noopener noreferrer nofollow">
-                {data.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+              <a
+                href={safeHttpUrl(data.website) ?? undefined}
+                className="jb-inline-link"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+              >
+                {hostOf(data.website) ?? data.website}
               </a>
             </dd>
           </div>
