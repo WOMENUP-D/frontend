@@ -15,6 +15,8 @@ import { useI18n, type MessageKey } from "@/i18n";
 import type { CalendarEvent, EventKind, EventStatus, LessonKind } from "@/content/learning";
 import type { LearningPath, PathItemStatus, PathStatus } from "@/services/portal";
 import type { CourseStatus, CourseView, CoverTone } from "@/components/learning/course";
+import { loginHref } from "@/utils/url";
+import { useReturnPath } from "@/components/auth/useReturnPath";
 
 /* ---- label helpers ------------------------------------------------- */
 
@@ -371,13 +373,15 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
  *  is hers: without a session there is no progress to draw. */
 export function NeedsAccount() {
   const { t } = useI18n();
+  // Sign-in mode, and back to this page afterwards (C-07, C-09).
+  const here = useReturnPath();
   return (
     <EmptyState
       mark="◔"
       title={t("auth.required")}
       hint={t("auth.requiredHint")}
       action={
-        <Link className="lms-btn lms-btn-primary" href="/login">
+        <Link className="lms-btn lms-btn-primary" href={loginHref("signin", here)}>
           {t("nav.signIn")}
         </Link>
       }

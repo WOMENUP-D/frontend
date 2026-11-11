@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { getAccessToken, getRoles, isStaff, ORG_ROLES, PANEL_ROLES } from "@/services/api";
+import {
+  getAccessToken,
+  getRoles,
+  isStaff,
+  onTokenChange,
+  ORG_ROLES,
+  PANEL_ROLES,
+} from "@/services/api";
 import { logout } from "@/services/auth";
 import { useI18n, type MessageKey } from "@/i18n";
 import { LangSwitch } from "./LangSwitch";
@@ -98,15 +105,21 @@ export function Nav() {
   const [roles, setRoles] = useState<string[]>([]);
   const pills = useRef<HTMLDivElement>(null);
 
-  // Token lives in localStorage, so this can only run after mount.
+  // The token lives in memory, so this can only run after mount — and it is
+  // re-read whenever the token changes, so a session that dies in the
+  // background stops showing "Sign out" (C-25).
   useEffect(() => {
-    const token = Boolean(getAccessToken());
-    setAuthed(token);
-    // A coordinator has no cabinet, no diagnostic and no plan of her own, so
-    // the learner navigation is dead weight in her header — it was showing her
-    // six links she has no reason to open.
-    setStaff(Boolean(token) && isStaff());
-    setRoles(token ? getRoles() : []);
+    const read = () => {
+      const token = Boolean(getAccessToken());
+      setAuthed(token);
+      // A coordinator has no cabinet, no diagnostic and no plan of her own, so
+      // the learner navigation is dead weight in her header — it was showing
+      // her six links she has no reason to open.
+      setStaff(Boolean(token) && isStaff());
+      setRoles(token ? getRoles() : []);
+    };
+    read();
+    return onTokenChange(read);
   }, [pathname]);
 
   /* On a phone the pills are a sideways strip, and the one for the page she
@@ -121,14 +134,26 @@ export function Nav() {
     strip.scrollLeft += box.left - frame.left - (frame.width - box.width) / 2;
   }, [pathname, authed, staff]);
 
-  function signOut() {
+  const [leaving, setLeaving] = useState(false);
+  async function signOut() {
     // One sign-out path: it drops the tokens and anything a provider left
-    // behind, so nothing survives into the next person's session.
-    logout();
-    setAuthed(false);
-    setStaff(false);
-    router.push(staff ? "/admin/login" : "/");
+    // behind, so nothing survives into the next person's session. Awaited, so
+    // the server has revoked the session before the next page can ask for one.
+    setLeaving(true);
+    const toPanelDoor = staff;
+    try {
+      await logout();
+    } finally {
+      setLeaving(false);
+      setAuthed(false);
+      setStaff(false);
+      router.push(toPanelDoor ? "/admin/login" : "/");
+    }
   }
+
+  // The sign-in page is where "Get started" leads; on it, the button went
+  // nowhere (C-23).
+  const onAuthPage = pathname === "/login" || pathname.startsWith("/parol-tiklash");
 
   return (
     <nav className="nav">
@@ -162,15 +187,15 @@ export function Nav() {
           <ThemeToggle />
           {authed && !staff && <NotificationBell />}
           {authed ? (
-            <button className="nav-plain" onClick={signOut}>
+            <button className="nav-plain" onClick={() => void signOut()} disabled={leaving}>
               {t("nav.signOut")}
             </button>
-          ) : (
+          ) : onAuthPage ? null : (
             /* One door, not two. Both of these went to /login, which already
                offers signing in and opening an account side by side — so the
                header was asking her to choose between two words for the same
                screen before she had any reason to care about the difference. */
-            <Link href="/login" className="btn btn-contrast btn-sm btn-pill">
+            <Link href="/login?mode=signup" className="btn btn-contrast btn-sm btn-pill">
               {t("nav.getStarted")}
             </Link>
           )}

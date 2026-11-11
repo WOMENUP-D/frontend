@@ -24,12 +24,37 @@ export interface StorageLike {
 
 let accessToken: string | null = null;
 
+/* ---- QA Phase 2 (auth): token-change subscription ----------------------
+   The header, the session notice and the viewer state all depend on whether
+   this tab holds a session. They used to read it once per navigation, so a
+   session that died in the background left "Sign out" on screen (C-25). */
+type TokenListener = (token: string | null) => void;
+const listeners = new Set<TokenListener>();
+
+/** Called with the new token every time it changes. Returns the unsubscribe. */
+export function onTokenChange(listener: TokenListener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 export function getAccessToken(): string | null {
   return accessToken;
 }
 
 export function setAccessToken(token: string | null, storage?: StorageLike | null): void {
+  const changed = token !== accessToken;
   accessToken = token;
+  if (changed) {
+    for (const listener of [...listeners]) {
+      try {
+        listener(token);
+      } catch {
+        /* One broken subscriber must not stop the others hearing it. */
+      }
+    }
+  }
   if (!storage) return;
   try {
     if (token) storage.setItem(SESSION_MARKER_KEY, "1");
@@ -86,6 +111,22 @@ export function decodeRoles(token: string | null): string[] {
     return Array.isArray(json.roles) ? json.roles.map(String) : [];
   } catch {
     return [];
+  }
+}
+
+/** The `sub` claim (the account id) of a JWT, read without verifying it.
+ *  Used only to key what this browser keeps for one person — a diagnostic
+ *  draft — so the next person on the same handset does not inherit it (I-01). */
+export function decodeSubject(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const [, payload] = token.split(".");
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const binary = typeof atob === "function" ? atob(base64) : Buffer.from(base64, "base64").toString("binary");
+    const json = JSON.parse(binary);
+    return typeof json.sub === "string" && json.sub ? json.sub : null;
+  } catch {
+    return null;
   }
 }
 

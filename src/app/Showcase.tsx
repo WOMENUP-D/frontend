@@ -113,14 +113,25 @@ export function CareerProgress() {
 export function ProgramShowcase() {
   const { t, tx } = useI18n();
   const [items, setItems] = useState<Program[]>([]);
+  // "Empty" and "failed" are different answers: an empty catalogue hides the
+  // section, a failed request says so and offers a retry (E-04).
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setFailed(false);
     portal
       .programs("?size=6")
       .then((page) => setItems(page.items))
-      .catch(() => setItems([]));
-  }, []);
+      .catch(() => {
+        setItems([]);
+        setFailed(true);
+      });
+  }, [attempt]);
 
+  if (failed) {
+    return <SectionFailed title={t("ls.catTitle")} onRetry={() => setAttempt((n) => n + 1)} />;
+  }
   if (items.length === 0) return null;
 
   return (
@@ -198,12 +209,18 @@ export function OpportunityShowcase() {
   const { t, tx, locale } = useI18n();
   const [items, setItems] = useState<Opportunity[]>([]);
   const [stats, setStats] = useState<OpportunityStats | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setFailed(false);
     portal
       .opportunitiesPublic({ size: 4 })
       .then((page) => setItems(page.items))
-      .catch(() => setItems([]));
+      .catch(() => {
+        setItems([]);
+        setFailed(true);
+      });
     // What is on offer, said in numbers rather than adjectives — and said
     // before the page asks anyone to register. Its own request, so a missing
     // count never costs the visitor the listings themselves.
@@ -211,8 +228,11 @@ export function OpportunityShowcase() {
       .opportunityStats()
       .then(setStats)
       .catch(() => setStats(null));
-  }, []);
+  }, [attempt]);
 
+  if (failed) {
+    return <SectionFailed title={t("ls.opTitle")} onRetry={() => setAttempt((n) => n + 1)} />;
+  }
   if (items.length === 0) return null;
 
   return (
@@ -287,6 +307,27 @@ export function OpportunityShowcase() {
           <Link href="/imkoniyatlar" className="btn btn-outline">
             {t("ls.opAll")}
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** A landing section whose request failed: its heading, one line saying so,
+ *  and a retry — instead of the section silently vanishing (E-04). */
+function SectionFailed({ title, onRetry }: { title: string; onRetry: () => void }) {
+  const { t } = useI18n();
+  return (
+    <section className="section">
+      <div className="wrap">
+        <div className="sec-head">
+          <h2>{title}</h2>
+        </div>
+        <div className="au-section-error" role="status">
+          <span className="muted">{t("au.show.err")}</span>
+          <button type="button" className="btn btn-outline btn-sm" onClick={onRetry}>
+            {t("lms.err.retry")}
+          </button>
         </div>
       </div>
     </section>

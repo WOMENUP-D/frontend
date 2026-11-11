@@ -20,6 +20,8 @@ import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
 import { CareerHistory } from "@/components/CareerHistory";
 import { useI18n, type MessageKey } from "@/i18n";
+import { useViewer } from "@/components/auth/useViewer";
+import { AccountSecurity } from "@/components/auth/AccountSecurity";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
 interface Profile {
@@ -276,6 +278,8 @@ export default function CabinetPage() {
      the profile row — the directions are the weakest score dimensions. */
   const [persona, setPersona] = useState<AssistantProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  /* What she has done so far, from the one shared answer (J-01). */
+  const viewer = useViewer();
 
   /* Not through `soft` below: a failure here is shown and can be retried. An
      empty "next step" would read as "nothing to do", which is a different and
@@ -336,9 +340,21 @@ export default function CabinetPage() {
 
   return (
     <main className="wrap page">
-      {/* For somebody new: five steps, each a link. Hidden by one tap, and
-          never shown to a woman who has started a course. */}
-      <GettingStarted isNew={enrollments.length === 0} />
+      {/* No name or date of birth on record: onboarding was skipped or
+          failed, and the age gate treats her as a minor until she says (C-16). */}
+      {viewer?.profileIncomplete && (
+        <div className="notice notice-warn stack" style={{ gap: 8, marginBottom: 18 }}>
+          <strong>{t("au.profile.title")}</strong>
+          <span className="small">{t("au.profile.hint")}</span>
+          <Link href="/welcome" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
+            {t("au.profile.cta")}
+          </Link>
+        </div>
+      )}
+
+      {/* For somebody new: four steps, each a link, the ones she has done
+          ticked. Never shown to a woman who has started a course (C-26). */}
+      <GettingStarted viewer={viewer} />
 
       <div className="ed-split">
         {/* Score rides along as the reader scrolls */}
@@ -410,16 +426,36 @@ export default function CabinetPage() {
               Development Score, which is a separate record that may not exist
               yet — so it disappears once she has done it instead of asking
               again for something already finished. */}
-          {!assessed && (
+          {/* Keyed on the diagnostic itself — the Development Score — and it
+              opens the diagnostic, the same place every other "Start the
+              assessment" goes (C-06). */}
+          {!score && viewer?.stage === "registered" && (
             <Empty
               title={t("cab.noScore")}
               hint={t("cab.noScoreHint")}
               action={
-                <Link href="/welcome?step=assessment" className="btn btn-primary">
+                <Link href="/kabinet/diagnostika" className="btn btn-primary">
                   {t("cab.startAssess")}
                 </Link>
               }
             />
+          )}
+
+          {/* The learning questionnaire is a different, optional instrument,
+              so it has its own name and its own smaller invitation — offered
+              only once the diagnostic is done. */}
+          {score && !assessed && (
+            <div className="notice stack" style={{ gap: 8 }}>
+              <strong>{t("au.lp.title")}</strong>
+              <span className="small muted">{t("au.lp.hint")}</span>
+              <Link
+                href="/welcome?step=assessment"
+                className="btn btn-outline btn-sm"
+                style={{ alignSelf: "flex-start" }}
+              >
+                {t("au.lp.cta")}
+              </Link>
+            </div>
           )}
 
           {/* What to do next, before anything about the past: up to three
@@ -500,10 +536,15 @@ export default function CabinetPage() {
             <Link href="/imkoniyatlar" className="btn btn-outline btn-sm">
               {t("nav.opportunities")}
             </Link>
-            <Link href="/navigator" className="btn btn-outline btn-sm">
-              {t("nav.navigator")}
+            {/* One name and a direct link: the navigator route only redirects
+                to the assistant (E-06). */}
+            <Link href="/yordamchi" className="btn btn-outline btn-sm">
+              {t("asst.nav")}
             </Link>
           </div>
+
+          {/* Sign out everywhere (C-17) and delete the account (I-06). */}
+          <AccountSecurity />
         </div>
       </div>
     </main>

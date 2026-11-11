@@ -4,6 +4,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useI18n } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
+import { loginHref } from "@/utils/url";
+import { useReturnPath } from "./auth/useReturnPath";
 
 export function Bar({ value }: { value: number }) {
   return (
@@ -158,13 +160,19 @@ export function ErrorNote({ message }: { message: string }) {
  *  `href` names the door: the public sign-in by default, the staff one for the
  *  management panel — sending a coordinator to the learner form, as this used
  *  to, left her with a page that could never let her in. */
-export function NeedsAuth({ href = "/login", hint }: { href?: string; hint?: string }) {
+export function NeedsAuth({ href, hint }: { href?: string; hint?: string }) {
   const { t } = useI18n();
+  // The learner door opens on sign-in, not sign-up, and comes back here (C-07, C-09).
+  const here = useReturnPath();
   return (
     <Empty
       title={t("auth.required")}
       hint={hint ?? t("auth.requiredHint")}
-      action={<Link href={href} className="btn btn-primary">{t("nav.signIn")}</Link>}
+      action={
+        <Link href={href ?? loginHref("signin", here)} className="btn btn-primary">
+          {t("nav.signIn")}
+        </Link>
+      }
     />
   );
 }

@@ -28,7 +28,7 @@ import {
   type Recommendations,
   type SkillProfile,
 } from "@/services/portal";
-import { getAccessToken } from "@/services/api";
+import { ApiError, getAccessToken } from "@/services/api";
 import { useApi } from "@/components/learning/useApi";
 import { nextLessonOf, viewsOf } from "@/components/learning/course";
 import {
@@ -65,6 +65,9 @@ export default function LearningDashboard() {
   useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
   const { data, loading, error, retry } = useApi(async () => {
+    // A visitor has no records to ask for: no request, straight to the
+    // sign-in invitation (C-18).
+    if (!getAccessToken()) throw new ApiError("signed out", 401);
     const [enrollments, activity, certificates, skills, recommendations, paths] =
       await Promise.all([
         portal.myEnrollments(),
@@ -89,7 +92,7 @@ export default function LearningDashboard() {
     };
   });
 
-  const head = <Head greeting={greeting} />;
+  const head = <Head greeting={greeting} signedIn={authed ?? Boolean(getAccessToken())} />;
 
   if (authed === false) {
     return (
@@ -316,12 +319,14 @@ export default function LearningDashboard() {
 
 /* ---- pieces ---------------------------------------------------------- */
 
-function Head({ greeting }: { greeting: MessageKey | null }) {
+function Head({ greeting, signedIn }: { greeting: MessageKey | null; signedIn: boolean }) {
   const { t } = useI18n();
   const [name, setName] = useState("");
 
   // Her own name, from her own profile — not a constant in the source.
+  // A visitor has none, and is not asked for it (C-18).
   useEffect(() => {
+    if (!signedIn || !getAccessToken()) return;
     portal
       .profile()
       .then((profile) => {
@@ -329,7 +334,18 @@ function Head({ greeting }: { greeting: MessageKey | null }) {
         setName(full.split(" ")[0] ?? "");
       })
       .catch(() => setName(""));
-  }, []);
+  }, [signedIn]);
+
+  // A visitor is greeted as one: no "keep going, you're doing well" above a
+  // sign-in wall (C-18).
+  if (!signedIn) {
+    return (
+      <header className="lms-head">
+        <h1 className="lms-h1">{t("au.lms.guestH")}</h1>
+        <p className="lms-lead">{t("au.lms.guestLead")}</p>
+      </header>
+    );
+  }
 
   return (
     <header className="lms-head">

@@ -34,6 +34,7 @@ import { JobCard } from "@/components/jobs/JobCard";
 import { FilterControls, FilterSheet, type FilterValue } from "@/components/jobs/Filters";
 import { activeFilters, fill } from "@/components/jobs/format";
 import { Reveal } from "@/components/motion/Reveal";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 const PAGE = 20;
 
@@ -224,9 +225,9 @@ function OpportunitiesView() {
       {authed === false && (
         <p className="jb-guest">
           {t("job.guest")}{" "}
-          <Link href="/login" className="jb-inline-link">
+          <SignInLink className="jb-inline-link">
             {t("car.signInCta")}
-          </Link>
+          </SignInLink>
         </p>
       )}
 

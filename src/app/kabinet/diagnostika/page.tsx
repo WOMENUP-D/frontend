@@ -23,6 +23,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
+import { decodeSubject } from "@/services/tokenStore";
+import { invalidateViewer } from "@/services/viewer";
 import { portal, type DiagnosticQuestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
@@ -31,6 +33,17 @@ import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
 const DRAFT_ITEM = "womanup.diagnostic.v3";
+
+/* The draft is hers: kept under her account id, with the id written into it
+   and checked on the way back, and wiped on sign-out (services/personalData).
+   On a shared handset it used to be resumed by whoever signed in next (I-01). */
+function draftOwner(): string | null {
+  return decodeSubject(getAccessToken());
+}
+
+function draftKey(owner: string): string {
+  return `${DRAFT_ITEM}:${owner}`;
+}
 
 interface Draft {
   clientRef: string;
@@ -41,21 +54,30 @@ interface Draft {
   answers: Record<string, string[]>;
   /** The question ids it was answered against — a changed set voids it. */
   questionIds: string[];
+  /** Whose answers these are. A draft without it, or with another id, is not read. */
+  owner?: string;
 }
 
 function readDraft(): Draft | null {
+  const owner = draftOwner();
+  if (!owner) return null;
   try {
-    const raw = window.localStorage.getItem(DRAFT_ITEM);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    // The unkeyed draft an earlier release wrote cannot say whose it is.
+    window.localStorage.removeItem(DRAFT_ITEM);
+    const raw = window.localStorage.getItem(draftKey(owner));
+    const draft = raw ? (JSON.parse(raw) as Draft) : null;
+    return draft && draft.owner === owner ? draft : null;
   } catch {
     return null;
   }
 }
 
 function writeDraft(draft: Draft | null) {
+  const owner = draftOwner();
+  if (!owner) return;
   try {
-    if (draft) window.localStorage.setItem(DRAFT_ITEM, JSON.stringify(draft));
-    else window.localStorage.removeItem(DRAFT_ITEM);
+    if (draft) window.localStorage.setItem(draftKey(owner), JSON.stringify({ ...draft, owner }));
+    else window.localStorage.removeItem(draftKey(owner));
   } catch {
     /* A browser that blocks storage still gets a working check-in. */
   }
@@ -252,6 +274,8 @@ export default function DiagnosticPage() {
           })),
       });
       writeDraft(null);
+      // She has a score now: every state-dependent button moves on.
+      invalidateViewer();
       router.push("/kabinet/diagnostika/natija");
     } catch (err) {
       setSaving(false);

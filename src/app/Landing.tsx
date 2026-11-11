@@ -17,6 +17,7 @@ import { Blossom } from "@/components/Blossom";
 import { useI18n, type MessageKey } from "@/i18n";
 import { DirectionMark, type MarkKind } from "@/components/DirectionMark";
 import { Reveal, reducedMotion } from "@/components/motion/Reveal";
+import { ViewerCta } from "@/components/auth/ViewerCta";
 
 /* ------------------------------------------------ the AI companion, drawn */
 
@@ -367,9 +368,8 @@ export function ClosingCall() {
 
           <h2>{t("landing.ctaTitle")}</h2>
           <p>{t("landing.ctaLead")}</p>
-          <Link href="/login" className="btn btn-primary btn-lg">
-            {t("landing.ctaBtn")}
-          </Link>
+          {/* The same next step as the hero's, worded for who is looking (C-05). */}
+          <ViewerCta className="btn btn-primary btn-lg" />
         </Reveal>
       </div>
     </section>

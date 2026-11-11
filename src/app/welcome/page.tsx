@@ -28,6 +28,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken, staffHome } from "@/services/api";
+import { loginHref } from "@/utils/url";
 import { takeGoogleName } from "@/services/auth";
 import { portal } from "@/services/portal";
 import { Questionnaire } from "@/components/Questionnaire";
@@ -122,7 +123,7 @@ export default function WelcomePage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/login");
+      router.replace(loginHref("signin", "/welcome"));
       return;
     }
     // Google already told us her name. Asking for it again would be the
