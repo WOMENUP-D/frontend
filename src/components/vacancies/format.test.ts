@@ -22,7 +22,8 @@ const unit = (currency: string | null) => (currency === "RUB" ? "RUB" : "сум"
 test("an amount is grouped with spaces whatever the locale", () => {
   assert.equal(formatAmount(6_000_000), "6 000 000");
   assert.equal(formatAmount(300), "300");
-  assert.equal(currencyUnit("UZS", "uz"), "so'm");
+  assert.equal(currencyUnit("UZS", "uz"), "söm");
+  assert.equal(currencyUnit("UZS", "uz-Cyrl"), "сўм");
   assert.equal(currencyUnit(null, "ru"), "сум");
   assert.equal(currencyUnit("uzs", "en"), "UZS");
   assert.equal(currencyUnit("RUB", "uz"), "RUB");

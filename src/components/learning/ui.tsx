@@ -29,11 +29,17 @@ export const eventStatusKey = (v: EventStatus) => `lms.evst.${v}` as MessageKey;
 export const monthKey = (month: number) => `mon.${month}` as MessageKey;
 
 /** "1h 20m" / "45m" — minutes are unreadable past an hour or so. */
-export function duration(minutes: number, minLabel: string, hourLabel: string): string {
+export function duration(
+  minutes: number,
+  minLabel: string,
+  hourLabel: string | ((hours: number) => string),
+): string {
   if (minutes < 60) return `${minutes} ${minLabel}`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} ${hourLabel} ${rest} ${minLabel}` : `${hours} ${hourLabel}`;
+  // A function gets the count, so the noun agrees with it: 1 час, 2 часа.
+  const hourWord = typeof hourLabel === "function" ? hourLabel(hours) : hourLabel;
+  return rest ? `${hours} ${hourWord} ${rest} ${minLabel}` : `${hours} ${hourWord}`;
 }
 
 /* ---- primitives ----------------------------------------------------- */
@@ -158,7 +164,7 @@ export function SectionHead({
  *  never adds lessons up itself, because the catalogue and the learning section
  *  would then be two opinions about the same course. */
 export function CourseCard({ view }: { view: CourseView }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const { program, status, percent, art, href, outside } = view;
 
   const actionKey: MessageKey =
@@ -187,7 +193,7 @@ export function CourseCard({ view }: { view: CourseView }) {
       <div className="lms-course-meta">
         <span>
           {program.level ? t(levelKey(program.level)) : t(`cat.${program.category}` as MessageKey)}
-          {program.duration_weeks ? ` · ${program.duration_weeks} ${t("common.weeks")}` : ""}
+          {program.duration_weeks ? ` · ${program.duration_weeks} ${tn("unit.week", program.duration_weeks)}` : ""}
           {outside ? ` · ${outside}` : ""}
         </span>
         <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
@@ -238,7 +244,7 @@ export function PathBadge({ status }: { status: PathStatus }) {
  *  what it covers, a route says what it leaves you able to do. Her own gaps
  *  lead it, so the first thing she reads is what she would gain. */
 export function PathCard({ path }: { path: LearningPath }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const { progress } = path;
   const gained = path.new_skills.length ? path.new_skills : path.skills;
 
@@ -281,7 +287,7 @@ export function PathCard({ path }: { path: LearningPath }) {
         <span className="lms-rec-stats">
           <span>{path.program_count} {t("lms.path.courses")}</span>
           {path.level && <span>{t(levelKey(path.level))}</span>}
-          {path.total_hours ? <span>{path.total_hours} {t("common.hours")}</span> : null}
+          {path.total_hours ? <span>{path.total_hours} {tn("unit.hour", path.total_hours)}</span> : null}
         </span>
         <Link
           className="lms-btn lms-btn-quiet lms-btn-sm"

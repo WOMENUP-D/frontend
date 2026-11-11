@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useI18n, type MessageKey } from "@/i18n";
+import { useI18n, type MessageKey, formatDate } from "@/i18n";
 import {
   portal,
   type MyInvitation,
@@ -59,7 +59,7 @@ export function OrganisationsSection() {
   useEffect(load, [load]);
 
   const date = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : locale === "ru" ? "ru-RU" : "uz-UZ");
+    formatDate(locale, iso);
 
   async function answer(invitation: MyInvitation, accept: boolean) {
     setBusy(true);

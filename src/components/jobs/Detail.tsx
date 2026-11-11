@@ -560,7 +560,11 @@ export function CoursesPanel({
                   {reason && <p className="jb-course-reason">{reason}</p>}
                   {item.covers.length > 0 && (
                     <p className="jb-fit-source">
-                      {fill(t("job.courses.covers"), { skills: item.covers.join(", ") })}
+                      {fill(t("job.courses.covers"), {
+                        skills: item.covers
+                          .map((skill) => (typeof skill === "string" ? skill : tx(skill.name_i18n) || skill.label))
+                          .join(", "),
+                      })}
                     </p>
                   )}
                 </div>

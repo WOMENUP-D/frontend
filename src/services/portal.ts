@@ -1342,8 +1342,10 @@ export interface SuggestedCourse {
     has_certificate: boolean;
     skills_taught: string[];
   };
-  /** The listing's own requirement words this course teaches. */
-  covers: string[];
+  /** What of the listing's requirements this course teaches: the listing's
+   *  own words (shown as written), or taxonomy skills with their names in
+   *  every language, which render in the interface language (G-10). */
+  covers: Array<string | SkillRef>;
   /** One sentence per language when the model chose; empty when the rules did. */
   reason_i18n: Record<string, string>;
 }

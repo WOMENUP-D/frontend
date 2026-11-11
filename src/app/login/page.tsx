@@ -271,7 +271,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value.trim())}
                 onKeyDown={(event) => event.key === "Enter" && void submit()}
-                placeholder="ism@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 inputMode="email"
                 autoComplete="email"
                 autoFocus={mode === "signin"}

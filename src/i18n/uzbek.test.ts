@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { hasOldDigraphs, looksUzbek, toNewAlphabet, toNewAlphabetIfUzbek } from "./uzbek";
+import { hasOldDigraphs, looksUzbek, mendScript, toNewAlphabet, toNewAlphabetIfUzbek } from "./uzbek";
 
 test("old digraphs become the reformed letters", () => {
   assert.equal(toNewAlphabet("Oʻz ishingizni boshlang"), "Öz işingizni boşlang");
@@ -44,4 +44,23 @@ test("free text is converted only when it is evidently Uzbek", () => {
   assert.equal(toNewAlphabetIfUzbek("Bu hafta bitta kursni tugating va shaxsiy reja tuzing"), "Bu hafta bitta kursni tugating va şaxsiy reja tuzing");
   assert.equal(looksUzbek("Oʻqish"), true);
   assert.equal(looksUzbek("Reading"), false);
+});
+
+test("G-14: script slips in model-written Uzbek are mended (mirrors uzbek.py)", () => {
+  // A Cyrillic letter inside a Latin word.
+  assert.equal(toNewAlphabet("dalil bölади"), "dalil böladi");
+  assert.equal(toNewAlphabet("raqamli köniкmalar"), "raqamli könikmalar");
+  // Turkish ü / ı and ñ are not Uzbek letters.
+  assert.equal(toNewAlphabet("böljgan üç yönaliş"), "böljgan uç yönaliş");
+  assert.equal(toNewAlphabet("boşlanğıç qiziqişiñiz"), "boşlanğiç qiziqişingiz");
+  // ʼ after o / g is the okina, not a glottal stop.
+  assert.equal(toNewAlphabet("koʼnikma va roʼyxat"), "könikma va röyxat");
+  // The new letter and the old mark together: the mark is a leftover.
+  assert.equal(toNewAlphabet("qöʼlda"), "qölda");
+  assert.equal(toNewAlphabet("böʻlim"), "bölim");
+  // Untouched: whole Cyrillic words, the glottal stop elsewhere, English.
+  assert.equal(toNewAlphabet("Курс Иванова"), "Курс Иванова");
+  assert.equal(toNewAlphabet("maʼlumot va taʼlim"), "maʼlumot va taʼlim");
+  assert.equal(toNewAlphabet("Business English"), "Business English");
+  assert.equal(mendScript("Привет"), "Привет");
 });

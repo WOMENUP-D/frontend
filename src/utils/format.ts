@@ -1,6 +1,7 @@
 /** Display helpers. Label maps live in the i18n catalogue, not here. */
 
 import type { MessageKey } from "@/i18n";
+import { currencyUnit, formatAmount } from "@/components/vacancies/format";
 
 export const dimensionKey = (v: string) => `dim.${v}` as MessageKey;
 export const categoryKey = (v: string) => `cat.${v}` as MessageKey;
@@ -48,12 +49,17 @@ export function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
-/** "12 000 000 so'm" — thousands separated, never scientific notation. */
+/** "12 000 000 söm" — thousands separated by spaces in every language, never
+ *  scientific notation, and the unit from the dictionary (`money.uzs`) so it
+ *  follows the alphabet: söm / сўм / сум / UZS. */
 export function money(amount: number, currency = "UZS", locale = "uz"): string {
-  const formatted = new Intl.NumberFormat("uz-UZ").format(amount);
-  if (currency !== "UZS") return `${formatted} ${currency}`;
-  const unit = locale === "ru" ? "сум" : locale === "en" ? "UZS" : "so'm";
-  return `${formatted} ${unit}`;
+  return `${formatAmount(amount)} ${currencyUnit(currency, locale)}`;
+}
+
+/** A range with the unit written once: "4 500 000 – 7 000 000 söm". */
+export function moneyRange(from: number, to: number | null, currency = "UZS", locale = "uz"): string {
+  if (to === null || to === undefined) return money(from, currency, locale);
+  return `${formatAmount(from)} – ${money(to, currency, locale)}`;
 }
 
 export function daysLeft(deadline: string | null): number | null {
@@ -62,28 +68,5 @@ export function daysLeft(deadline: string | null): number | null {
   return Math.ceil(diff / 86_400_000);
 }
 
-/**
- * Picks the right noun form for a count.
- *
- * Russian needs three: one результат, two-four результата, five результатов —
- * and the rule is not "last digit", because 11 to 14 take the many-form
- * whatever they end in. Uzbek inflects the verb rather than the noun after a
- * numeral, so one form covers every count; English needs two.
- *
- * Kept here rather than in the dictionary because it is arithmetic, not
- * translation: the three Russian words live in `messages.ts` like everything
- * else, and this only decides which of them is asked for.
- */
-export function pluralKey(base: string, count: number, locale: string): string {
-  if (locale === "ru") {
-    const mod100 = Math.abs(count) % 100;
-    const mod10 = mod100 % 10;
-    if (mod100 >= 11 && mod100 <= 14) return `${base}.many`;
-    if (mod10 === 1) return `${base}.one`;
-    if (mod10 >= 2 && mod10 <= 4) return `${base}.few`;
-    return `${base}.many`;
-  }
-  // uz, uz-Cyrl and en all resolve on a simple one/other split; the Uzbek
-  // entries carry the same word in both, which is correct for the language.
-  return count === 1 ? `${base}.one` : `${base}.many`;
-}
+/** Which plural form of a key family a count takes — see `@/i18n/core`. */
+export { pluralKey } from "@/i18n/core";

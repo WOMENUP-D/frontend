@@ -42,7 +42,7 @@ interface MonthGroup {
 }
 
 export default function DiaryPage() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const { data, loading, error, retry } = useMockData(() => diary);
 
   // Grouped in one pass rather than filtered per month: a diary that runs for
@@ -107,7 +107,7 @@ export default function DiaryPage() {
             <div className="lms-diary-mhead">
               <h2>{t(monthKey(group.month))} {group.year}</h2>
               <span>
-                {group.entries.length} {t("lms.diary.entries")} · {group.minutes} {t("lms.year.min")}
+                {group.entries.length} {tn("unit.entry", group.entries.length)} · {group.minutes} {t("unit.min")}
               </span>
             </div>
 
@@ -129,7 +129,7 @@ export default function DiaryPage() {
                         <span className="lms-diary-course" style={{ color: entry.tone }}>
                           {tx(entry.course)}
                         </span>
-                        <span className="lms-diary-mins">{entry.minutes} {t("lms.year.min")}</span>
+                        <span className="lms-diary-mins">{entry.minutes} {t("unit.min")}</span>
                       </div>
 
                       <p className="lms-diary-gained">{tx(entry.gained)}</p>

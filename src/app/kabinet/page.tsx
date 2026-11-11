@@ -174,12 +174,11 @@ function ProfileSummary({
   name: string;
   t: (key: MessageKey) => string;
 }) {
+  // The interface language, not the browser's (G-10/G-21).
+  const { fmtDate } = useI18n();
   const shortId = account?.id ? account.id.split("-")[0].toUpperCase() : "—";
   const joined = account?.created_at
-    ? new Date(account.created_at).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-      })
+    ? fmtDate(account.created_at, { year: "numeric", month: "long" })
     : null;
   /** Numeric runs are skipped: "dilnoza1998" should give D, not D1. */
   const initials =

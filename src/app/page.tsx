@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useI18n } from "@/i18n";
 import { Brand } from "@/components/Nav";
+import { SITE_CONTACTS } from "@/config/site";
 import { Sky } from "@/components/Sky";
 import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
@@ -106,17 +107,37 @@ export default function LandingPage() {
 
             <div className="footer-col">
               <span>{t("foot.contacts")}</span>
-              <span className="footer-line">{t("foot.phone")}</span>
-              <a href={`mailto:${t("foot.email")}`}>{t("foot.email")}</a>
+              {/* Contacts are business facts kept in config/site.ts (G-24);
+                  an unset one is hidden rather than printed as a template. */}
+              {SITE_CONTACTS.phone && (
+                <a className="footer-line" href={`tel:${SITE_CONTACTS.phone.replace(/[^+\d]/g, "")}`}>
+                  {SITE_CONTACTS.phone}
+                </a>
+              )}
+              {SITE_CONTACTS.email && <a href={`mailto:${SITE_CONTACTS.email}`}>{SITE_CONTACTS.email}</a>}
             </div>
 
-            <div className="footer-col">
-              <span>{t("foot.addressLabel")}</span>
-              <span className="footer-line">{t("foot.address")}</span>
-              <span className="footer-line">
-                {t("foot.socialLabel")}: {t("foot.soon")}
-              </span>
-            </div>
+            {(SITE_CONTACTS.address || SITE_CONTACTS.social.length > 0) && (
+              <div className="footer-col">
+                {SITE_CONTACTS.address && (
+                  <>
+                    <span>{t("foot.addressLabel")}</span>
+                    <span className="footer-line">{SITE_CONTACTS.address}</span>
+                  </>
+                )}
+                {SITE_CONTACTS.social.length > 0 && (
+                  <span className="footer-line">
+                    {t("foot.socialLabel")}:{" "}
+                    {SITE_CONTACTS.social.map((item, i) => (
+                      <span key={item.url}>
+                        {i > 0 && " · "}
+                        <a href={item.url} rel="noopener noreferrer" target="_blank">{item.label}</a>
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="footer-base">

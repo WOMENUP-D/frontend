@@ -66,7 +66,7 @@ function inline(text: string): ReactNode {
 }
 
 export default function LessonPage() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const params = useParams<{ slug: string; lesson: string }>();
   const courseSlug = params?.slug ?? "";
   const lessonSlug = params?.lesson ?? "";
@@ -192,7 +192,7 @@ export default function LessonPage() {
             <Badge>{t(lessonKindKey(lesson.kind))}</Badge>
             {lesson.duration_minutes ? (
               <Badge>
-                {duration(lesson.duration_minutes, t("lms.lesson.min"), t("common.hours"))}
+                {duration(lesson.duration_minutes, t("unit.min"), (h) => tn("unit.hour", h))}
               </Badge>
             ) : null}
             {done && <Badge tone="done">{t("lms.lesson.completed")}</Badge>}
@@ -380,7 +380,7 @@ function Step({
 function Progress({
   course, enrollment,
 }: { course: ProgramDetail; enrollment: Enrollment | null }) {
-  const { t } = useI18n();
+  const { tn, t } = useI18n();
   const counts = lessonCounts(course, enrollment);
   const percent = enrollment?.progress_percent ?? 0;
 
@@ -390,7 +390,7 @@ function Progress({
       <Bar percent={percent} done={counts.total > 0 && counts.done === counts.total} />
       <div className="lms-course-meta" style={{ marginTop: 10 }}>
         <span>
-          {counts.done} / {counts.total} {t("lms.course.lessons")}
+          {counts.done} / {counts.total} {tn("unit.lesson", counts.total)}
         </span>
         <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
       </div>

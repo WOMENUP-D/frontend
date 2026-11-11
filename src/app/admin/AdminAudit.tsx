@@ -18,7 +18,7 @@ import { useI18n } from "@/i18n";
 import { Loading } from "@/components/ui";
 
 export function AdminAudit() {
-  const { t } = useI18n();
+  const { t, intl } = useI18n();
   const [rows, setRows] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -54,7 +54,7 @@ export function AdminAudit() {
             {rows.map((row) => (
               <tr key={row.id}>
                 <td className="faint nowrap">
-                  {new Date(row.created_at).toLocaleString()}
+                  {new Date(row.created_at).toLocaleString(intl, { dateStyle: "short", timeStyle: "short" })}
                 </td>
                 <td>{row.actor_role ?? "—"}</td>
                 <td>

@@ -38,7 +38,7 @@ function shortMonth(name: string): string {
 }
 
 export function StudyYearView({ anchor }: { anchor: Date }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
 
   // Rebuilt only when the day turns over, not on every selection: the whole
   // year is generated here and the graph must not flicker under a click.
@@ -110,7 +110,7 @@ export function StudyYearView({ anchor }: { anchor: Date }) {
                           style={{ background: LEVEL_TONES[day.level] }}
                           onClick={() => setPicked(day.key)}
                           aria-pressed={day.key === selected.key}
-                          title={`${day.key} — ${day.level} ${t("lms.year.lessonsShort")}`}
+                          title={`${day.key} — ${day.level} ${tn("unit.lesson", day.level)}`}
                         />
                       ) : (
                         // Future days keep their slot so the rows stay aligned,
@@ -149,7 +149,7 @@ export function StudyYearView({ anchor }: { anchor: Date }) {
           </span>
           <span className="lms-year-day-meta">
             {selected.level > 0
-              ? `${selected.level} ${t("lms.year.lessonsShort")} · ${selected.minutes} ${t("lms.year.min")}`
+              ? `${selected.level} ${tn("unit.lesson", selected.level)} · ${selected.minutes} ${t("unit.min")}`
               : t("lms.year.nothing")}
           </span>
         </div>
@@ -163,7 +163,7 @@ export function StudyYearView({ anchor }: { anchor: Date }) {
                   <b>{tx(entry.title)}</b>
                   <i style={{ color: entry.tone }}>{tx(entry.course)}</i>
                 </span>
-                <span className="lms-year-mins">{entry.minutes} {t("lms.year.min")}</span>
+                <span className="lms-year-mins">{entry.minutes} {t("unit.min")}</span>
               </li>
             ))}
           </ul>

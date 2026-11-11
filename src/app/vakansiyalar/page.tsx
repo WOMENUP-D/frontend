@@ -33,6 +33,7 @@ import {
   employmentKey,
   experienceKey,
   fill,
+  formatAmount,
   pickKey,
   searchParamsFor,
   sortKey,
@@ -293,7 +294,7 @@ function VacanciesView() {
               )}
               {state.salaryFrom && (
                 <Pill
-                  label={`${t("vac.salaryFrom").split(" (")[0]}: ${Number(state.salaryFrom).toLocaleString("uz-UZ")}`}
+                  label={`${t("vac.salaryFrom").split(" (")[0]}: ${formatAmount(Number(state.salaryFrom))}`}
                   onRemove={() => change({ salaryFrom: null })}
                 />
               )}

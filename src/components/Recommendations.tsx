@@ -286,7 +286,7 @@ export function ForYou({
   opportunities: OpportunitySuggestion[];
   assessed: boolean;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const copy = useStepCopy();
 
   return (
@@ -308,7 +308,7 @@ export function ForYou({
                   <span className="foryou-meta">
                     <span>{t(categoryKey(program.category))}</span>
                     {program.duration_weeks ? (
-                      <span>{program.duration_weeks} {t("common.weeks")}</span>
+                      <span>{program.duration_weeks} {tn("unit.week", program.duration_weeks)}</span>
                     ) : null}
                   </span>
                   <span className="faint">{copy.reason(program)}</span>

@@ -17,7 +17,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useI18n } from "@/i18n";
+import { useI18n, formatDate } from "@/i18n";
 import { getAccessToken } from "@/services/api";
 import {
   portal,
@@ -168,7 +168,7 @@ function ApplicationItem({
   const listing = application.opportunity;
   const position = trackPosition(application.status);
   const date = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : locale === "ru" ? "ru-RU" : "uz-UZ") : "";
+    iso ? formatDate(locale, iso) : "";
 
   async function withdraw() {
     setBusy(true);

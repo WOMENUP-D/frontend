@@ -293,7 +293,7 @@ function ModuleBlock({
   enrollment: Enrollment | null;
   nextId?: string;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const done = module.lessons.filter((lesson) => isComplete(enrollment, lesson.id)).length;
   const minutes = module.lessons.reduce(
     (sum, lesson) => sum + (lesson.duration_minutes ?? 0),
@@ -306,10 +306,10 @@ function ModuleBlock({
         <h3 className="lms-goal-title">{tx(module.title_i18n)}</h3>
         <span className="lms-rec-stats">
           <span>
-            {done} / {module.lessons.length} {t("lms.course.lessons")}
+            {done} / {module.lessons.length} {tn("unit.lesson", module.lessons.length)}
           </span>
           {minutes > 0 && (
-            <span>{duration(minutes, t("lms.lesson.min"), t("common.hours"))}</span>
+            <span>{duration(minutes, t("unit.min"), (h) => tn("unit.hour", h))}</span>
           )}
         </span>
       </div>
@@ -326,7 +326,7 @@ function ModuleBlock({
             <span className="lms-rec-stats" style={{ marginLeft: "auto", flex: "none" }}>
               <span>{t(lessonKindKey(lesson.kind))}</span>
               {lesson.duration_minutes ? (
-                <span>{lesson.duration_minutes} {t("lms.lesson.min")}</span>
+                <span>{lesson.duration_minutes} {t("unit.min")}</span>
               ) : null}
             </span>
           </Link>
@@ -349,7 +349,7 @@ function Panel({
   outside: string | null;
   onEnrolled: (enrollment: Enrollment) => void;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -392,7 +392,7 @@ function Panel({
             <Ring percent={enrollment?.progress_percent ?? 0} size={104} />
             {counts.total > 0 && (
               <strong style={{ fontSize: "0.92rem" }}>
-                {counts.done} / {counts.total} {t("lms.course.lessons")}
+                {counts.done} / {counts.total} {tn("unit.lesson", counts.total)}
               </strong>
             )}
           </div>
@@ -402,7 +402,7 @@ function Panel({
         {left > 0 && (
           <p className="lms-course-by" style={{ textAlign: "center", margin: "0 0 16px" }}>
             {t("lms.course.timeLeft")}:{" "}
-            {duration(left, t("lms.lesson.min"), t("common.hours"))}
+            {duration(left, t("unit.min"), (h) => tn("unit.hour", h))}
           </p>
         )}
 
@@ -453,7 +453,7 @@ function Panel({
           {course.duration_weeks && (
             <div className="lms-fact">
               <dt>{t("lms.course.duration")}</dt>
-              <dd>{course.duration_weeks} {t("common.weeks")}</dd>
+              <dd>{course.duration_weeks} {tn("unit.week", course.duration_weeks)}</dd>
             </div>
           )}
           {course.has_certificate && (

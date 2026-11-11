@@ -7216,3 +7216,19 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
 .plan-make { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .plan-make-center { justify-content: center; }
 .plan-make .cat-view button { min-height: 40px; }
+
+/* ---- error pages (QA Phase 2, G-06) ----------------------------------
+   One loud thing — the status number in the display face, in plum — and a
+   quiet column under it: the plain-language title, one sentence, and the
+   places worth going instead. Left-aligned like the rest of the portal. */
+.err-page { min-height: 62vh; display: flex; align-items: center; padding: 56px 0 72px; }
+.err-wrap { max-width: 620px; }
+.err-code {
+  margin: 0 0 4px; font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(5rem, 18vw, 9rem); line-height: .9; letter-spacing: -.02em;
+  color: var(--primary); opacity: .9;
+}
+.err-title { margin: 0 0 12px; }
+.err-lead { margin: 0 0 24px; max-width: 52ch; color: var(--text); font-size: 1.05rem; line-height: 1.6; }
+.err-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.err-digest { margin-top: 20px; font-size: .85rem; }

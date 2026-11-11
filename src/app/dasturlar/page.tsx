@@ -41,7 +41,7 @@ function hostOf(url: string) {
 }
 
 export default function ProgramsPage() {
-  const { t, tx, locale } = useI18n();
+  const { tn, t, tx, locale } = useI18n();
   const [programs, setPrograms] = useState<Program[]>([]);
   /* How many the catalogue holds for this filter, and how many pages of them
      have been asked for. Before this the page showed the first fifty and said
@@ -57,6 +57,7 @@ export default function ProgramsPage() {
      came for. */
   const [skill, setSkill] = useState("");
   const [topics, setTopics] = useState<ProgramTopic[]>([]);
+  const categoryNames = new Set(CATEGORIES.filter(Boolean).map((c) => t(categoryKey(c)).toLowerCase()));
   /* The fine filters. Level and duration only ever match a course that states
      them — the imported courses state neither, so these narrow to our own. */
   const [level, setLevel] = useState("");
@@ -276,6 +277,9 @@ export default function ProgramsPage() {
         {topics.length > 0 && (
           <div className="cat-filters cat-scroll cat-topics" role="group" aria-label={t("pr.topics")}>
             {topics
+              // A topic that only repeats a category chip ("Tadbirkorlik") is
+              // the same filter twice; the category row already offers it (G-10).
+              .filter((topic) => topic.label === skill || !categoryNames.has((tx(topic.title_i18n) || topic.label).toLowerCase()))
               .filter((topic, index) => allTopics || index < TOPICS_SHOWN || topic.label === skill)
               .map((topic) => (
               <button
@@ -450,10 +454,10 @@ export default function ProgramsPage() {
                     )}
                     <div className="prog-figs">
                       {program.duration_weeks != null && (
-                        <span><b>{program.duration_weeks}</b> {t("common.weeks")}</span>
+                        <span><b>{program.duration_weeks}</b> {tn("unit.week", program.duration_weeks)}</span>
                       )}
                       {program.duration_hours != null && (
-                        <span><b>{program.duration_hours}</b> {t("common.hours")}</span>
+                        <span><b>{program.duration_hours}</b> {tn("unit.hour", program.duration_hours)}</span>
                       )}
                       {outcomes > 0 && (
                         <span><b>{outcomes}</b> {t(pluralKey("pr.outcome", outcomes, locale) as MessageKey)}</span>

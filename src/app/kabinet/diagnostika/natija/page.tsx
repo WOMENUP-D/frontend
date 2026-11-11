@@ -37,7 +37,7 @@ import {
 import { Bar, Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useStepCopy } from "@/components/Recommendations";
 import { levelKey } from "@/components/learning/ui";
-import { useI18n, type MessageKey } from "@/i18n";
+import { useI18n, type MessageKey, formatDate } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 import { hostOf } from "@/utils/url";
 
@@ -61,7 +61,7 @@ const PROFILE_QUESTION: Record<string, string> = {
 const PRIORITIES: RecommendationPriority[] = ["high", "medium", "additional"];
 
 export default function DiagnosticResultPage() {
-  const { t, tx, tu, locale } = useI18n();
+  const { tn, t, tx, tu, locale } = useI18n();
   const copy = useStepCopy();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [result, setResult] = useState<DiagnosticResult | null>(null);
@@ -132,7 +132,7 @@ export default function DiagnosticResultPage() {
   const scoreOf = (dimension: string) =>
     result.dimensions.find((d) => d.dimension === dimension)?.score ?? 0;
   const date = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(locale === "uz-Cyrl" ? "uz" : locale) : "";
+    iso ? formatDate(locale, iso) : "";
   const earlier = history.filter((item) => item.attempt_id !== result.attempt_id);
 
   /** Her answer on a profile question, in the bank's words. */
@@ -500,7 +500,7 @@ export default function DiagnosticResultPage() {
     const meta = [
       program.provider ?? outside,
       program.level ? t(levelKey(program.level)) : null,
-      program.duration_hours ? `${program.duration_hours} ${t("common.hours")}` : null,
+      program.duration_hours ? `${program.duration_hours} ${tn("unit.hour", program.duration_hours)}` : null,
     ].filter(Boolean);
 
     return (

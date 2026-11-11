@@ -50,7 +50,7 @@ import {
 import { dimensionKey } from "@/utils/format";
 
 export default function LearningPathPage() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const params = useParams<{ slug: string }>();
   const slug = params?.slug ?? "";
 
@@ -126,12 +126,12 @@ export default function LearningPathPage() {
           {path.level && <span>{t(levelKey(path.level))}</span>}
           {path.total_hours ? (
             <span>
-              {path.total_hours} {t("common.hours")}
+              {path.total_hours} {tn("unit.hour", path.total_hours)}
             </span>
           ) : null}
           {path.total_weeks ? (
             <span>
-              {path.total_weeks} {t("common.weeks")}
+              {path.total_weeks} {tn("unit.week", path.total_weeks)}
             </span>
           ) : null}
           {path.dimension && <span>{t(dimensionKey(path.dimension))}</span>}
@@ -201,7 +201,7 @@ function Step({
   slug: string;
   onEnrolled: (path: LearningPathDetail) => void;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const { program, status } = item;
@@ -279,7 +279,7 @@ function Step({
           <span className="lms-rec-stats" style={{ marginLeft: "auto" }}>
             {program.duration_hours ? (
               <span>
-                {program.duration_hours} {t("common.hours")}
+                {program.duration_hours} {tn("unit.hour", program.duration_hours)}
               </span>
             ) : null}
           </span>

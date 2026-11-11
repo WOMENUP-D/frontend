@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/i18n";
+import { htmlLang, translate } from "@/i18n/core";
+import { alternatesFor, currentPath, localeUrl, getServerLocale, siteUrl } from "@/i18n/server";
 import { Chrome } from "@/components/Chrome";
 import { Petals } from "@/components/Petals";
 import { Traffic } from "@/components/Traffic";
@@ -19,17 +21,35 @@ import { SessionGate } from "@/components/SessionGate";
  */
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "WomanUP — Ayol-qizlarni rivojlantiriş milliy dasturi",
-  description:
-    "Har bir ayol uçun individual rivojlaniş yöli: diagnostika, şaxsiy reja, kurslar va real imkoniyatlar.",
-};
+/**
+ * Site-wide metadata in the visitor's language (E-01): the title template
+ * every page fills, the default description, Open Graph defaults and the
+ * origin canonical links resolve against. Pages add their own title,
+ * description and hreflang links through `pageMetadata`.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const title = translate(locale, "meta.site.title");
+  const description = translate(locale, "meta.site.description");
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: { default: title, template: "%s — WomanUP" },
+    description,
+    applicationName: "WomanUP",
+    alternates: alternatesFor(await currentPath(), locale),
+    openGraph: { type: "website", siteName: "WomanUP", title, description, url: localeUrl(await currentPath(), locale) },
+    twitter: { card: "summary", title, description },
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // The language is decided here, on the server (G-11), so the first HTML is
+  // already in it and <html lang> matches what is on the page.
+  const locale = await getServerLocale();
   return (
-    <html lang="uz">
+    <html lang={htmlLang(locale)}>
       <body>
-        <I18nProvider>
+        <I18nProvider initialLocale={locale}>
           <AmbientSakura />
           <Petals />
           <SessionGate>

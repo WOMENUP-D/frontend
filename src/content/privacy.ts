@@ -1,28 +1,24 @@
 /**
  * The privacy policy, as content rather than as markup.
  *
- * Two things this file is built around.
+ * It is a legal document, so it is stored per language and never generated
+ * from one. The Russian text below is the original. The Uzbek (reformed Latin)
+ * and English texts in privacy.uz.ts / privacy.en.ts are faithful
+ * translations made for QA Phase 2 (G-05); until a lawyer confirms them the
+ * page marks them as translations and links the Russian original.
  *
- * It is a legal document, so it is stored per language and never generated from
- * one. The portal's primary locale is Uzbek and this text arrived in Russian
- * only; translating a policy is a legal act with consequences for what the
- * operator has actually undertaken to do, so `uz` and `en` stay empty until a
- * lawyer supplies them, and the page says plainly that it is showing the
- * Russian text meanwhile. A machine translation here would be a statement about
- * data handling that nobody signed off.
- *
- * And the blanks are left in, in square brackets. The document arrived with the
- * operator's legal name, address, contacts and effective date unfilled;
- * inventing any of them would be fabricating the identity of the party
- * accountable for the data. The page renders anything in brackets as a visible
- * marker, so an unfilled policy cannot quietly go to production looking
- * finished.
+ * Business facts — the effective date and the operator's name, address and
+ * contacts — are not written into any language: they come from
+ * `src/config/site.ts`, and an unset fact renders as a visibly marked blank.
  */
 
 export type Block =
   | { kind: "p"; text: string }
   | { kind: "ul"; items: string[] }
-  | { kind: "ol"; items: string[] };
+  | { kind: "ol"; items: string[] }
+  /** The operator's contact lines, filled from `src/config/site.ts` by the
+   *  page — business facts live in one place, not in three translations. */
+  | { kind: "contacts" };
 
 export interface Group {
   title: string;
@@ -39,17 +35,18 @@ export interface Section {
 }
 
 export interface PolicyDoc {
-  updated: string;
   lead: Block[];
   sections: Section[];
 }
+
+import { UZ } from "./privacy.uz";
+import { EN } from "./privacy.en";
 
 const p = (text: string): Block => ({ kind: "p", text });
 const ul = (...items: string[]): Block => ({ kind: "ul", items });
 const ol = (...items: string[]): Block => ({ kind: "ol", items });
 
 const RU: PolicyDoc = {
-  updated: "[указать дату]",
   lead: [
     p("Настоящая Политика конфиденциальности регулирует порядок сбора, использования, хранения, обработки и защиты персональных данных пользователей платформы WomanUP."),
     p("WomanUP — цифровая платформа и маркетплейс, предназначенный для поиска и выбора образовательных программ, курсов, мероприятий, стажировок, вакансий и других возможностей для профессионального и личностного развития."),
@@ -429,13 +426,7 @@ const RU: PolicyDoc = {
       title: "Контакты",
       blocks: [
         p("По вопросам обработки персональных данных, удаления аккаунта, изменения данных или реализации иных прав пользователь может обратиться в WomanUP:"),
-        ul(
-          "Наименование: [полное юридическое название организации]",
-          "Адрес: [юридический адрес]",
-          "Электронная почта: [email]",
-          "Телефон: [номер телефона]",
-          "Сайт: [адрес сайта WomanUP]",
-        ),
+        { kind: "contacts" },
       ],
     },
     {
@@ -451,8 +442,12 @@ const RU: PolicyDoc = {
   ],
 };
 
-/** Only the languages a lawyer has actually signed off appear here. */
-export const POLICY: Partial<Record<"uz" | "ru" | "en", PolicyDoc>> = { ru: RU };
+/** The Russian text is the original; uz and en are faithful translations
+ *  awaiting legal review (the page says so, and links the original). */
+export const POLICY: Record<"uz" | "ru" | "en", PolicyDoc> = { uz: UZ, ru: RU, en: EN };
+
+/** Languages whose text is a translation not yet confirmed by a lawyer. */
+export const POLICY_UNREVIEWED: ReadonlySet<"uz" | "ru" | "en"> = new Set(["uz", "en"]);
 
 /** The language the page falls back to while the others are missing. */
 export const POLICY_FALLBACK = "ru" as const;

@@ -111,7 +111,7 @@ export function CareerProgress() {
 /* -------------------------------------------- live rows from the API */
 
 export function ProgramShowcase() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const [items, setItems] = useState<Program[]>([]);
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export function ProgramShowcase() {
               <h3 className="tile-title">{tx(program.title_i18n)}</h3>
               <p className="muted small tile-lead">{tx(program.goal_i18n)}</p>
               <span className="faint">
-                {program.duration_hours} {t("ls.hours")}
+                {program.duration_hours} {tn("unit.hour", program.duration_hours)}
               </span>
               {/* The card ends in the action it is selling. A whole-card link
                   cannot hold a button, so the card is an article and the

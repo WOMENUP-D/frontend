@@ -25,7 +25,7 @@ import { levelKey } from "@/components/learning/ui";
 import { hostOf } from "@/utils/url";
 
 export default function ProgramPage() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
@@ -136,10 +136,10 @@ export default function ProgramPage() {
     stats.push([t("pd.moduleCount").replace("{n}", String(program.modules.length)), t("pd.modules")]);
   }
   if (program.duration_hours) {
-    stats.push([`${program.duration_hours} ${t("common.hours")}`, t("pr.duration")]);
+    stats.push([`${program.duration_hours} ${tn("unit.hour", program.duration_hours)}`, t("pr.duration")]);
   }
   if (program.duration_weeks) {
-    stats.push([`${program.duration_weeks} ${t("common.weeks")}`, t("pr.period")]);
+    stats.push([`${program.duration_weeks} ${tn("unit.week", program.duration_weeks)}`, t("pr.period")]);
   }
   if (program.level) stats.push([t(levelKey(program.level)), t("pd.level")]);
   if (!outside) {
@@ -258,7 +258,7 @@ export default function ProgramPage() {
                   <h2 className="pd-h2">{t("pd.modules")}</h2>
                   {totalMinutes > 0 && (
                     <span className="faint">
-                      {Math.round(totalMinutes / 60)} {t("common.hours")}
+                      {Math.round(totalMinutes / 60)} {tn("unit.hour", Math.round(totalMinutes / 60))}
                     </span>
                   )}
                 </div>
@@ -282,7 +282,7 @@ export default function ProgramPage() {
                           <strong className="pd-module-title">{tx(module.title_i18n)}</strong>
                           {module.duration_minutes && (
                             <span className="faint nowrap">
-                              {module.duration_minutes} {t("pd.minutes")}
+                              {module.duration_minutes} {t("unit.min")}
                             </span>
                           )}
                           {body && (
@@ -357,7 +357,7 @@ export default function ProgramPage() {
                   <p className="muted small tile-lead">{tx(item.goal_i18n)}</p>
                   {item.duration_hours ? (
                     <span className="faint">
-                      {item.duration_hours} {t("common.hours")}
+                      {item.duration_hours} {tn("unit.hour", item.duration_hours)}
                     </span>
                   ) : null}
                 </Link>

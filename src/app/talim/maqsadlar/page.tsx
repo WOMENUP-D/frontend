@@ -36,7 +36,7 @@ import {
 } from "@/components/learning/ui";
 
 export default function GoalsPage() {
-  const { t } = useI18n();
+  const { tn, t } = useI18n();
 
   const { data, loading, error, retry } = useMockData(() => ({
     items: goals,
@@ -83,7 +83,7 @@ export default function GoalsPage() {
           <SectionHead title={t("lms.goal.weekly")} />
           <div className="lms-weekly-bar">
             <strong>
-              {weekly.done} / {weekly.target} {t("common.hours")}
+              {weekly.done} / {weekly.target} {tn("unit.hour", weekly.target)}
             </strong>
             <div style={{ flex: 1 }}>
               <Bar

@@ -8,6 +8,7 @@
  */
 
 import type { MessageKey } from "@/i18n/messages";
+import { isLocale, translate } from "@/i18n/core";
 import type { VacancySalary } from "@/services/portal";
 
 /** `{name}` placeholders, the convention the whole message catalogue uses. */
@@ -26,12 +27,13 @@ export function formatAmount(value: number): string {
     .replace(/[\u00a0\u202f]/g, " ");
 }
 
-/** The unit a salary is written in: so'm / сум / UZS for the national
- *  currency, the code for anything else. */
+/** The unit a salary is written in: söm / сўм / сум / UZS for the national
+ *  currency (from `money.uzs`, so it follows the alphabet), the code for
+ *  anything else. */
 export function currencyUnit(currency: string | null, locale: string): string {
   const code = (currency ?? "UZS").toUpperCase();
   if (code !== "UZS") return code;
-  return locale === "ru" ? "сум" : locale === "en" ? "UZS" : "so'm";
+  return translate(isLocale(locale) ? locale : "uz", "money.uzs");
 }
 
 /** The salary line, as a message key and the amounts already formatted. The

@@ -12,7 +12,7 @@
  */
 
 import { useId, useState } from "react";
-import { useI18n, type MessageKey } from "@/i18n";
+import { useI18n, type MessageKey, formatDate } from "@/i18n";
 import { ApiError } from "@/services/api";
 import {
   portal,
@@ -93,7 +93,7 @@ function ApplicationRow({
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const date = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : locale === "ru" ? "ru-RU" : "uz-UZ") : "—";
+    iso ? formatDate(locale, iso) : "—";
 
   async function move() {
     if (!target) return;
