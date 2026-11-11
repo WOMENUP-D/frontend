@@ -98,6 +98,19 @@ export function I18nProvider({
   children: ReactNode;
   initialLocale?: Locale;
 }) {
+  /* The strings of the language the server chose (G-11) are in before
+     anything renders (QA H-02): Uzbek is bundled; Russian or English
+     suspends here until its chunk is in — on the server, so the first HTML
+     is already in that language, and during hydration, so it never flashes
+     Uzbek. Kept in this hook-free wrapper: `use()` between hooks made React
+     count a different number of hooks on the retry. Later switches load
+     their table first (see `setLocale`) and never suspend. */
+  const written = writtenOf(initialLocale);
+  if (!hasTable(written)) use(tablePromise(written));
+  return <LocaleState initialLocale={initialLocale}>{children}</LocaleState>;
+}
+
+function LocaleState({ children, initialLocale }: { children: ReactNode; initialLocale: Locale }) {
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const router = useRouter();
 
@@ -143,13 +156,6 @@ export function I18nProvider({
     [router],
   );
 
-  /* The current language's strings (QA H-02). Normally already in — every
-     switch above waits for them — but the locale the server chose (G-11)
-     arrives before its chunk: rendering suspends here until it is loaded, on
-     the server and during hydration alike, so a Russian page is Russian in
-     its first HTML and never flashes Uzbek. */
-  const written = writtenOf(locale);
-  if (!hasTable(written)) use(tablePromise(written));
 
   const value = useMemo<I18nValue>(() => {
     const t = (key: MessageKey, params?: Params) => fill(translate(locale, key), params);
