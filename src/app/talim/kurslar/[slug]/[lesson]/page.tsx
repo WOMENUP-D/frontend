@@ -43,6 +43,7 @@ import {
   duration,
   lessonKindKey,
 } from "@/components/learning/ui";
+import { getAccessToken } from "@/services/api";
 
 /** Notes live per course *and* per lesson: a thought about one module is not a
  *  thought about the next. Namespaced like the locale key so the portal owns
@@ -75,7 +76,9 @@ export default function LessonPage() {
     const course = await portal.programBySlug(courseSlug);
     const [lesson, mine] = await Promise.all([
       portal.lesson(course.id, lessonSlug),
-      portal.myEnrollments().catch(() => [] as EnrollmentDetail[]),
+      (getAccessToken()
+        ? portal.myEnrollments().catch(() => [] as EnrollmentDetail[])
+        : Promise.resolve([] as EnrollmentDetail[])),
     ]);
     return {
       course,

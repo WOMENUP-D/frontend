@@ -19,6 +19,7 @@ import { ApiError, getAccessToken } from "@/services/api";
 import { isTimeout, portal, type AssistantReply, type GuestAllowance } from "@/services/portal";
 import { HelpResources } from "@/components/HelpResources";
 import { MascotFigure } from "./Mascot";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 interface Turn {
   role: "user" | "assistant";
@@ -192,9 +193,9 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
         <p className={`wu-allowance${spent ? " is-spent" : ""}`}>
           {spent ? t("asst.guestSpent") : fill(t("asst.guestLeft"), { n: String(allowance.left ?? 0) })}
           {spent && (
-            <Link href="/login" className="btn btn-primary btn-sm" onClick={onClose}>
+            <SignInLink mode="signup" className="btn btn-primary btn-sm" onClick={onClose}>
               {t("asst.signUp")}
-            </Link>
+            </SignInLink>
           )}
         </p>
       )}

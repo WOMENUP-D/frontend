@@ -20,7 +20,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
-import { getAccessToken } from "@/services/api";
+import { ApiError, getAccessToken } from "@/services/api";
 import {
   portal,
   type Achievement,
@@ -52,6 +52,9 @@ export default function AchievementsPage() {
   useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
   const { data, loading, error, retry } = useApi(async () => {
+    // A visitor has no records to ask for: no request, straight to the
+    // sign-in invitation (C-18).
+    if (!getAccessToken()) throw new ApiError("signed out", 401);
     const [certificates, enrollments, activity, skills, record] = await Promise.all([
       portal.myCertificates(),
       portal.myEnrollments(),

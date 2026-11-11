@@ -1127,6 +1127,90 @@ body {
 .birth-part select { width: 100%; }
 .birth-part select[aria-invalid="true"] { border-color: var(--danger); }
 
+/* ---- QA Phase 2: auth & viewer state (fe-qa-auth) --------------------
+   Kept in one block so the other Phase 2 branches merge around it. */
+
+/* The session notice: under the header, centred, one line where it fits. */
+.au-session {
+  position: fixed; z-index: 150;
+  top: 76px; left: 50%; transform: translateX(-50%);
+  width: min(600px, calc(100vw - 32px));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px;
+  padding: 12px 12px 12px 16px;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border-strong, var(--border)); border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  font-size: .92rem; line-height: 1.45;
+}
+.au-session-text { flex: 1 1 260px; min-width: 0; }
+.au-session-actions { display: flex; align-items: center; gap: 6px; }
+.au-session-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 0; background: transparent; color: var(--text-dim);
+  font-size: 1.25rem; line-height: 1; cursor: pointer;
+}
+.au-session-close:hover { background: var(--surface-2); color: var(--ink); }
+.au-session-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Sign in | Sign up, as the card's own two tabs. */
+.au-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  padding: 4px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+}
+.au-tab {
+  border: 0; border-radius: 999px; padding: 9px 12px;
+  background: transparent; color: var(--text-dim);
+  font: inherit; font-weight: 600; font-size: .95rem; cursor: pointer;
+}
+.au-tab.is-on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+.au-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* A field's own error, directly under it. */
+.au-field-error { color: var(--danger); font-size: .86rem; line-height: 1.4; margin: 0; }
+.field .input[aria-invalid="true"], .field input[aria-invalid="true"] { border-color: var(--danger); }
+.auth-consent input[aria-invalid="true"] { outline: 2px solid var(--danger); outline-offset: 2px; }
+
+/* A quiet link-styled action beside a message: "Sign in with this email",
+   "Forgot your password?". */
+.au-inline-action, .au-forgot {
+  align-self: flex-start; padding: 0; border: 0; background: none;
+  font: inherit; font-size: .88rem; font-weight: 600;
+  color: var(--primary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.au-forgot { font-weight: 500; }
+.au-inline-action:focus-visible, .au-forgot:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* A finished step in the getting-started guide. */
+.ds-step.is-done .ds-step-n { background: var(--primary); color: var(--surface); }
+.ds-step.is-done .ds-step-title { color: var(--text-dim); }
+
+/* The cabinet's account block: two plain actions, the destructive one last. */
+/* The bottom margin keeps the last button clear of the companion pinned in the corner. */
+.au-account { border-top: 1px solid var(--border); padding-top: 20px; gap: 14px; margin-bottom: 72px; }
+.au-account-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; }
+.au-account-row p { margin: 0; max-width: 60ch; }
+.au-danger-link {
+  border: 1px solid color-mix(in srgb, var(--danger) 70%, transparent);
+  background: transparent; color: var(--danger);
+}
+.au-danger-link:hover { background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.au-confirm-field { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+
+/* A landing section whose request failed: said, with a retry, in place. */
+.au-section-error { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; }
+
+/* The call to action's place while the viewer is being asked. */
+.au-cta-wait { visibility: hidden; }
+
+/* The assistant's character count, right under the field. */
+.au-counter { font-size: .8rem; color: var(--text-faint); text-align: right; margin: 4px 2px 0; }
+.au-counter.is-over { color: var(--danger); font-weight: 600; }
+
+@media (max-width: 520px) {
+  .au-session { top: 68px; }
+}
+
 /* The squeeze is between 521px and 820px, where the two-column `.wel-row` is
    still in force and would put three selects into half the card. Below 520px
    `.wel-row` has already collapsed and the row has the full width again. */

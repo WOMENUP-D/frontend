@@ -31,6 +31,19 @@ import { RichText } from "@/components/text/RichText";
 import { HelpResources } from "@/components/HelpResources";
 import { stripLeadingNumber } from "@/components/text/markdown";
 import { historyFor, loadChats, ownerOf, saveChats, turnId } from "./chatStore";
+import { SignInLink } from "@/components/auth/SignInLink";
+
+/** The longest question the assistant endpoints take (schemas/assistant.py). */
+const MAX_MESSAGE = 1000;
+
+/** What a failed question means (E-03). Pure. */
+function askErrorKey(err: unknown, length: number): MessageKey {
+  const status = (err as { status?: number })?.status;
+  const detail = (err as { detail?: unknown })?.detail;
+  if (status === 429) return detail === "guest_limit_reached" ? "asst.guestSpent" : "au.asst.limit";
+  if (status === 422 && length > MAX_MESSAGE) return "au.asst.tooLong";
+  return "asst.err";
+}
 
 type Route = "auto" | "portal" | "education" | "health";
 type Tab = Route | "daily" | "coach";
@@ -188,6 +201,10 @@ export default function AssistantPage() {
 
   async function ask(question: string) {
     if (!question.trim() || busy) return;
+    if (question.length > MAX_MESSAGE) {
+      setError("au.asst.tooLong");
+      return;
+    }
 
     // The tab she asked from, captured now: if she switches tabs while the
     // answer is on its way, it still lands in the conversation it belongs to.
@@ -232,12 +249,15 @@ export default function AssistantPage() {
           .catch(() => patchTurn(asked, id, { detailPending: false }));
       }
     } catch (err) {
-      const status = (err as { status?: number }).status;
+      // A model call that ran past 45 s says so and offers to ask again
+      // (QA H-04); every other refusal says what it is (E-03): a visitor's
+      // spent trial, a signed-in hourly limit, a message over the length the
+      // API takes.
       if (isTimeout(err)) {
         setError("asst.errTimeout");
         setRetryable(question);
       } else {
-        setError(status === 429 ? "asst.guestSpent" : "asst.err");
+        setError(askErrorKey(err, question.length));
       }
     } finally {
       setBusy(false);
@@ -268,9 +288,9 @@ export default function AssistantPage() {
               : t("asst.guestLeft").replace("{n}", String(guestLeft ?? "3"))}
           </strong>
           <span className="small">{t("asst.guestHint")}</span>
-          <Link href="/login" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+          <SignInLink mode="signup" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
             {t("asst.signUp")}
-          </Link>
+          </SignInLink>
         </div>
       )}
 
@@ -288,25 +308,16 @@ export default function AssistantPage() {
         ))}
       </div>
 
-      {error && <ErrorNote message={t(error)} />}
-      {error && retryable && (
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          style={{ alignSelf: "flex-start" }}
-          onClick={() => void ask(retryable)}
-          disabled={busy}
-        >
-          {t("asst.retry")}
-        </button>
-      )}
+      {/* The daily card's failure is said here; a failed question is said
+          beside the field, where she is looking on a phone (E-03). */}
+      {error && tab === "daily" && <ErrorNote message={t(error)} />}
 
       {tab === "coach" && authed === false && (
         <div className="notice notice-warn stack" style={{ gap: 8 }}>
           <strong className="small">{t("coach.needsAccount")}</strong>
-          <Link href="/login" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
+          <SignInLink mode="signup" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
             {t("asst.signUp")}
-          </Link>
+          </SignInLink>
         </div>
       )}
 
@@ -383,6 +394,23 @@ export default function AssistantPage() {
             <div ref={endRef} />
           </div>
 
+          {error && (
+            <div role="alert">
+              <ErrorNote message={t(error).replace("{max}", String(MAX_MESSAGE))} />
+              {retryable && (
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  style={{ marginTop: 8 }}
+                  onClick={() => void ask(retryable)}
+                  disabled={busy}
+                >
+                  {t("asst.retry")}
+                </button>
+              )}
+            </div>
+          )}
+
           <form
             className="row"
             style={{ gap: 10 }}
@@ -397,13 +425,25 @@ export default function AssistantPage() {
               onChange={(event) => setInput(event.target.value)}
               placeholder={t("asst.placeholder")}
               aria-label={t("asst.placeholder")}
-              maxLength={1000}
               disabled={busy || guestLeft === 0}
+              maxLength={MAX_MESSAGE}
+              aria-describedby="asst-counter"
             />
             <button className="btn btn-primary" type="submit" disabled={busy || guestLeft === 0}>
               {t("asst.send")}
             </button>
           </form>
+          {/* Shown once it matters, so an empty field is not a number. */}
+          <p
+            id="asst-counter"
+            className={input.length >= MAX_MESSAGE ? "au-counter is-over" : "au-counter"}
+            aria-live="polite"
+            hidden={input.length < MAX_MESSAGE * 0.8}
+          >
+            {t("au.asst.counter")
+              .replace("{n}", String(input.length))
+              .replace("{max}", String(MAX_MESSAGE))}
+          </p>
         </>
       )}
 

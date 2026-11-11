@@ -24,6 +24,8 @@ import { getAccessToken } from "@/services/api";
 import { portal, type Notification, type Program } from "@/services/portal";
 import { Icon } from "@/components/ds";
 import { sharedProfile } from "./sharedProfile";
+import { SignInLink } from "@/components/auth/SignInLink";
+import { useSignedIn } from "@/components/auth/useViewer";
 
 interface NavItem {
   href: string;
@@ -279,6 +281,9 @@ export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/talim";
   const [open, setOpen] = useState(false);
   const learner = useLearner();
+  // A visitor gets the section without a profile card, an avatar or a bell
+  // that belong to nobody (C-18).
+  const signedIn = useSignedIn(() => Boolean(getAccessToken()));
 
   /* The trail, as far as the shell can know it without a second request: the
      section, not the course. The page below carries the course's own name as
@@ -286,9 +291,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const crumbs = useMemo<{ href?: string; label: string }[]>(() => {
     const [, section] = pathname.split("/").filter(Boolean);
     const root = { href: section ? "/talim" : undefined, label: t("lms.nav.dashboard") };
-    const key = section ? SECTION_LABEL[section] : undefined;
+    const named = section ? SECTION_LABEL[section] : undefined;
+    const key = !signedIn && named === "lms.nav.courses" ? "au.lms.guestCourses" : named;
     return key ? [root, { label: t(key) }] : [root];
-  }, [pathname, t]);
+  }, [pathname, t, signedIn]);
 
   // The drawer is a route-level thing: leaving the page should close it.
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -331,7 +337,7 @@ export function Shell({ children }: { children: ReactNode }) {
         aria-current={isActive(pathname, item.href) ? "page" : undefined}
       >
         <span className="lms-nav-ico" aria-hidden="true">{item.icon}</span>
-        {t(item.label)}
+        {t(!signedIn && item.label === "lms.nav.courses" ? "au.lms.guestCourses" : item.label)}
       </Link>
     ));
   }
@@ -368,14 +374,18 @@ export function Shell({ children }: { children: ReactNode }) {
 
         <div className="lms-side-spacer" />
 
-        <Link href="/talim/profil" className="lms-side-foot">
-          <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
-          <span style={{ minWidth: 0 }}>
-            <span className="lms-side-name">{learner.name || t("cab.user")}</span>
-            <br />
-            <span className="lms-side-role">{t("lms.nav.profile")}</span>
-          </span>
-        </Link>
+        {signedIn ? (
+          <Link href="/talim/profil" className="lms-side-foot">
+            <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
+            <span style={{ minWidth: 0 }}>
+              <span className="lms-side-name">{learner.name || t("cab.user")}</span>
+              <br />
+              <span className="lms-side-role">{t("lms.nav.profile")}</span>
+            </span>
+          </Link>
+        ) : (
+          <SignInLink className="lms-btn lms-btn-primary">{t("nav.signIn")}</SignInLink>
+        )}
       </aside>
 
       <div className="lms-main">
@@ -404,10 +414,14 @@ export function Shell({ children }: { children: ReactNode }) {
 
           <div className="lms-top-tools">
             <Search />
-            <Notifications />
-            <Link href="/talim/profil" aria-label={t("lms.nav.profile")}>
-              <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
-            </Link>
+            {signedIn && <Notifications />}
+            {signedIn ? (
+              <Link href="/talim/profil" aria-label={t("lms.nav.profile")}>
+                <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
+              </Link>
+            ) : (
+              <SignInLink className="lms-btn lms-btn-primary lms-btn-sm">{t("nav.signIn")}</SignInLink>
+            )}
           </div>
         </header>
 

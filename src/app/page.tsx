@@ -8,6 +8,7 @@ import { Sky } from "@/components/Sky";
 import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
 import { TryQuestion } from "@/components/TryQuestion";
+import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
 import { AiTeaser, ClosingCall, PathCards, Roadmap, Wellbeing } from "./Landing";
 import { CareerProgress, OpportunityShowcase, ProgramShowcase } from "./Showcase";
 
@@ -43,9 +44,9 @@ export default function LandingPage() {
             </h1>
             <p className="lead">{t("landing.lead")}</p>
             <div className="hero-actions">
-              <Link href="/login" className="btn btn-primary">
-                {t("landing.cta")}
-              </Link>
+              {/* Worded for who is looking: a visitor, a woman without a
+                  score, with one, with a plan (C-05). */}
+              <ViewerCta className="btn btn-primary" />
               <Link href="/dasturlar" className="btn btn-ghost">
                 {t("landing.ctaAlt")}
               </Link>
@@ -97,7 +98,7 @@ export default function LandingPage() {
               <Link href="/dasturlar">{t("nav.programs")}</Link>
               <Link href="/imkoniyatlar">{t("nav.opportunities")}</Link>
               <Link href="/yordamchi">{t("asst.nav")}</Link>
-              <Link href="/login">{t("nav.signIn")}</Link>
+              <AccountLink />
             </div>
 
             <div className="footer-col">

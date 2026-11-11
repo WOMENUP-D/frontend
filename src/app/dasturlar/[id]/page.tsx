@@ -22,7 +22,7 @@ import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey } from "@/utils/format";
 import { Loading } from "@/components/ui";
 import { levelKey } from "@/components/learning/ui";
-import { hostOf } from "@/utils/url";
+import { hostOf, loginHref } from "@/utils/url";
 
 export default function ProgramPage() {
   const { tn, t, tx } = useI18n();
@@ -87,7 +87,8 @@ export default function ProgramPage() {
   async function enrol() {
     if (!program) return;
     if (!signedIn) {
-      router.push("/login");
+      // Sign-in mode, and back to this programme afterwards (C-09).
+      router.push(loginHref("signin", `/dasturlar/${program.id}`));
       return;
     }
     setBusy(true);

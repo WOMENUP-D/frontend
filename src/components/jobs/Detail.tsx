@@ -40,6 +40,7 @@ import { OrgLine } from "@/components/org/Parts";
 import { useApi } from "@/components/learning/useApi";
 import { ErrorNote } from "@/components/ui";
 import { fill, ineligibleReason, statusKey } from "./format";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 /* ---- what this means for you ------------------------------------------ */
 
@@ -54,9 +55,9 @@ export function FitPanel({ detail }: { detail: OpportunityDetail }) {
           {t("job.fit.title")}
         </h2>
         <p className="jb-muted">{t("job.fit.guest")}</p>
-        <Link href="/login" className="btn btn-primary">
+        <SignInLink className="btn btn-primary">
           {t("car.signInCta")}
-        </Link>
+        </SignInLink>
       </section>
     );
   }
@@ -342,9 +343,9 @@ export function ApplyPanel({
     );
   } else if (!signedIn) {
     body = (
-      <Link href="/login" className="btn btn-primary jb-btn-lg">
+      <SignInLink className="btn btn-primary jb-btn-lg">
         {t(words.signIn)}
-      </Link>
+      </SignInLink>
     );
   } else if (detail.application && stage !== "done") {
     body = (

@@ -39,6 +39,7 @@ import {
   timeText,
   whenLine,
 } from "@/components/events/format";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 export default function EventPage() {
   const { t, tx, locale } = useI18n();
@@ -200,9 +201,9 @@ export default function EventPage() {
           {!signedIn ? (
             <p className="ev-muted">
               {t("ev.d.whyGuest")}{" "}
-              <Link href="/login" className="jb-inline-link">
+              <SignInLink className="jb-inline-link">
                 {t("car.signInCta")}
-              </Link>
+              </SignInLink>
             </p>
           ) : reasons.length ? (
             <ul className="ev-reasons">

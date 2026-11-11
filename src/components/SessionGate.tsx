@@ -13,6 +13,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { bootstrapSession } from "@/services/api";
+import { SessionNotice } from "./auth/SessionNotice";
 
 export function SessionGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -30,5 +31,11 @@ export function SessionGate({ children }: { children: ReactNode }) {
   }, []);
 
   if (!ready) return null;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {/* A session that died, or could not be resumed, is said out loud. */}
+      <SessionNotice />
+    </>
+  );
 }

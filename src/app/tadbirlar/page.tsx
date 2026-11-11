@@ -36,6 +36,7 @@ import { Timeline } from "@/components/events/Timeline";
 import { Calendar } from "@/components/events/Calendar";
 import { dayKey } from "@/components/events/format";
 import { Reveal } from "@/components/motion/Reveal";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 type View = "list" | "calendar";
 
@@ -181,9 +182,9 @@ function EventsView() {
       {authed === false && (
         <p className="ev-guest">
           {t("ev.guest")}{" "}
-          <Link href="/login" className="jb-inline-link">
+          <SignInLink className="jb-inline-link">
             {t("car.signInCta")}
-          </Link>
+          </SignInLink>
         </p>
       )}
 

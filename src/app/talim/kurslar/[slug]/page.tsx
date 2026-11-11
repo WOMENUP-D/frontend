@@ -54,6 +54,7 @@ import {
   lessonKindKey,
   levelKey,
 } from "@/components/learning/ui";
+import { getAccessToken } from "@/services/api";
 
 export default function CoursePage() {
   const { t, tx } = useI18n();
@@ -63,7 +64,9 @@ export default function CoursePage() {
   const { data, loading, error, retry } = useApi(async () => {
     const course = await portal.programBySlug(slug);
     // A visitor may read the card; only a signed-in woman has an enrollment.
-    const mine = await portal.myEnrollments().catch(() => [] as EnrollmentDetail[]);
+    const mine = await (getAccessToken()
+        ? portal.myEnrollments().catch(() => [] as EnrollmentDetail[])
+        : Promise.resolve([] as EnrollmentDetail[]));
     return {
       course,
       enrollment: (mine.find((item) => item.program_id === course.id) ?? null) as Enrollment | null,

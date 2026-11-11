@@ -77,7 +77,10 @@ export function useStepCopy() {
       switch (step.kind) {
         case "take_assessment":
           return "/kabinet/diagnostika";
+        // "Continue" always opens the learning player, the same place the
+        // week's "Continue" goes (C-27); starting one opens its card.
         case "continue_program":
+          return step.program?.slug ? `/talim/kurslar/${step.program.slug}` : (course ?? "/talim");
         case "start_program":
           return course ?? "/dasturlar";
         case "continue_path":

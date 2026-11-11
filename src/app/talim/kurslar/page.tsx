@@ -31,6 +31,7 @@ import {
   SkeletonCards,
   statusKey,
 } from "@/components/learning/ui";
+import { getAccessToken } from "@/services/api";
 
 type Filter = "all" | CourseStatus;
 
@@ -54,7 +55,9 @@ export default function CoursesPage() {
     // catalogue, so a missing session is not an error here.
     const [catalogue, mine] = await Promise.all([
       portal.programs("?size=60") as Promise<Page<Program>>,
-      portal.myEnrollments().catch(() => [] as EnrollmentDetail[]),
+      (getAccessToken()
+        ? portal.myEnrollments().catch(() => [] as EnrollmentDetail[])
+        : Promise.resolve([] as EnrollmentDetail[])),
     ]);
     const byProgram = new Map(mine.map((item) => [item.program_id, item]));
     const list = catalogue.items
@@ -71,7 +74,13 @@ export default function CoursesPage() {
     return { list, counts };
   });
 
-  const head = <PageHead title={t("lms.courses.title")} lead={t("lms.courses.lead")} />;
+  // A visitor has no courses of her own yet: "Courses", not "My courses" (C-18).
+  const head = (
+    <PageHead
+      title={t(getAccessToken() ? "lms.courses.title" : "au.lms.guestCourses")}
+      lead={t(getAccessToken() ? "lms.courses.lead" : "au.lms.guestLead")}
+    />
+  );
 
   if (error) {
     return (

@@ -13,10 +13,12 @@
  * that "fixes" a visible password changes it.
  */
 
-import { useState, type InputHTMLAttributes } from "react";
+import { useState, type ComponentPropsWithRef } from "react";
 import { useI18n } from "@/i18n";
 
-type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
+/** `ref` reaches the input itself (React 19 passes it as a prop), so a form
+ *  can focus the field that needs fixing. */
+type Props = Omit<ComponentPropsWithRef<"input">, "type">;
 
 export function PasswordInput({ className = "input input-lg", ...props }: Props) {
   const { t } = useI18n();
