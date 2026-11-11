@@ -7467,6 +7467,10 @@ body:has(.wu) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); 
 .help-line-label { font-size: .88rem; }
 .help-line-phone { font-family: var(--font-mono); font-weight: 600; color: var(--ink); white-space: nowrap; }
 
+/* A sentence-length badge ("Umumiy javob — profilingiz töldirilmagan")
+   wraps instead of pushing a 375 px page sideways. */
+.badge.badge-grey { max-width: 100%; white-space: normal; }
+
 /* H-01: placeholders that hold the space of what replaces them. */
 .coach-panel-pending { min-height: 390px; }
 @media (max-width: 600px) { .coach-panel-pending { min-height: 540px; } }
