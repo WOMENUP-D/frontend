@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  use,
   useCallback,
   useContext,
   useEffect,
@@ -9,7 +10,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { messages, type MessageKey } from "./messages";
+// Only the type: the strings come one language at a time from ./dictionary
+// (QA H-02), so the all-languages object never reaches the browser.
+import type { MessageKey } from "./messages";
+import { fallbackTable, loadTable, tableNow, tablePromise } from "./dictionary";
 import { toCyrillic } from "./translit";
 import { toNewAlphabet, toNewAlphabetIfUzbek } from "./uzbek";
 
@@ -64,6 +68,10 @@ interface I18nValue {
 
 const I18nContext = createContext<I18nValue | null>(null);
 
+function writtenOf(locale: Locale): "uz" | "ru" | "en" {
+  return locale === "uz-Cyrl" ? "uz" : locale;
+}
+
 function isLocale(value: string | null): value is Locale {
   return value === "uz" || value === "uz-Cyrl" || value === "ru" || value === "en";
 }
@@ -73,7 +81,13 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (isLocale(stored)) setLocaleState(stored);
+    if (!isLocale(stored)) return;
+    // Its table is fetched first and the switch made after, so the page never
+    // renders a half-translated frame.
+    loadTable(writtenOf(stored)).then(
+      () => setLocaleState(stored),
+      () => setLocaleState(stored),
+    );
   }, []);
 
   useEffect(() => {
@@ -81,18 +95,28 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
-    setLocaleState(next);
     window.localStorage.setItem(STORAGE_KEY, next);
+    // A failed chunk still switches: `t()` falls back to Uzbek per key.
+    loadTable(writtenOf(next)).then(
+      () => setLocaleState(next),
+      () => setLocaleState(next),
+    );
   }, []);
+
+  /* The current language's table. Normally already loaded — both paths above
+     wait for it — but a locale that arrives some other way (an initial state
+     from the server, say) suspends here until its chunk is in, rather than
+     rendering Uzbek and switching after. */
+  const writtenNow = writtenOf(locale);
+  const table = tableNow(writtenNow) ?? use(tablePromise(writtenNow));
 
   const value = useMemo<I18nValue>(() => {
     const cyrillic = locale === "uz-Cyrl";
     const written = cyrillic ? "uz" : locale;
 
     const t = (key: MessageKey): string => {
-      const entry = messages[key];
-      if (!entry) return key;
-      const text = entry[written as "uz" | "ru" | "en"] ?? entry.uz;
+      const text = table[key] ?? fallbackTable[key];
+      if (text === undefined) return key;
       return typeset(cyrillic ? toCyrillic(text) : text);
     };
 
@@ -120,7 +144,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     };
 
     return { locale, setLocale, t, tx, tu, apiLocale: written as "uz" | "ru" | "en" };
-  }, [locale, setLocale]);
+  }, [locale, setLocale, table]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+
 const isProduction = process.env.NODE_ENV === "production";
 
 // The Content Security Policy is set per request in `src/middleware.ts`, where
@@ -19,6 +21,22 @@ const nextConfig = {
   devIndicators: { position: "bottom-right" },
   poweredByHeader: false,
   reactStrictMode: true,
+
+  /**
+   * The UI dictionary is cut per language at build time (QA H-02): importing
+   * `src/i18n/messages.ts?locale=ru` yields only the Russian strings. See
+   * scripts/i18n-locale-loader.cjs and src/i18n/dictionary.ts. `enforce: "pre"`
+   * so the loader reads the TypeScript source before Next's own compiler.
+   */
+  webpack(config) {
+    config.module.rules.push({
+      test: /[\\/]src[\\/]i18n[\\/]messages\.ts$/,
+      resourceQuery: /locale=/,
+      enforce: "pre",
+      use: [{ loader: fileURLToPath(new URL("./scripts/i18n-locale-loader.cjs", import.meta.url)) }],
+    });
+    return config;
+  },
 
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
@@ -48,6 +66,10 @@ const nextConfig = {
       // menu and in the getting-started guide, so they lead to the catalogue.
       { source: "/kasb", destination: "/dasturlar", permanent: false },
       { source: "/kasb/:slug", destination: "/dasturlar", permanent: false },
+      // The navigator became one of the assistant's capabilities. A server
+      // 308 instead of a client-side replace: old links no longer pay for the
+      // whole bundle and a hydration before the second navigation (QA H-07).
+      { source: "/navigator", destination: "/yordamchi", permanent: true },
     ];
   },
 };

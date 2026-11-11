@@ -138,7 +138,7 @@ export default function CoursePage() {
     <>
       <Back />
 
-      <div className="lms-course-layout">
+      <div className="lms-course-layout lms-course-overview">
         <Contents course={course} enrollment={current} next={next} />
 
         <div style={{ minWidth: 0 }}>
@@ -160,11 +160,13 @@ export default function CoursePage() {
             </div>
           </header>
 
+          {/* A partner's course: the panel beside this already says where it
+              is taught and links there, so the contents section is not drawn
+              a second time with the same notice and button (QA E-17). */}
+          {!outside && (
           <section className="lms-sec">
             <SectionHead title={t("lms.course.contents")} />
-            {outside ? (
-              <OutsideNotice host={outside} href={course.external_url ?? ""} />
-            ) : lessons.length ? (
+            {lessons.length ? (
               <div style={{ display: "grid", gap: 14 }}>
                 {course.modules.map((module) => (
                   <ModuleBlock
@@ -180,6 +182,7 @@ export default function CoursePage() {
               <EmptyState title={t("lms.course.noLessons")} hint={t("lms.course.noLessonsHint")} />
             )}
           </section>
+          )}
         </div>
 
         <Panel
@@ -195,24 +198,6 @@ export default function CoursePage() {
 }
 
 /* ---- pieces ---------------------------------------------------------- */
-
-/** A course that is not ours. The lessons, the sign-up and the certificate
- *  live on the partner's site, so the page says so and sends her there in
- *  the same tab — a second tab left her wondering which window she was in. */
-function OutsideNotice({ host, href }: { host: string; href: string }) {
-  const { t } = useI18n();
-  return (
-    <EmptyState
-      title={t("lms.course.outside").replace("{host}", host)}
-      hint={t("lms.course.outsideHint")}
-      action={
-        <a className="lms-btn lms-btn-primary" href={href} rel="noopener noreferrer">
-          {t("lms.course.goOutside")}
-        </a>
-      }
-    />
-  );
-}
 
 function Back() {
   const { t } = useI18n();

@@ -12,6 +12,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { chromium } from "playwright";
+import { assertLocalStand, ready } from "./helpers.mjs";
 
 const WEB = process.env.WEB_URL ?? "http://localhost:3000";
 const API = process.env.API_URL ?? "http://localhost:8000/api/v1";
@@ -24,6 +25,8 @@ let reachable = true;
 let listing = null;
 
 before(async () => {
+  // Writes and reads accounts: never anything but a local stand (QA B-04).
+  assertLocalStand(WEB, API);
   try {
     const response = await fetch(`${API}/opportunities/discover?size=1`);
     reachable = response.ok && (await fetch(`${WEB}/imkoniyatlar`)).ok;
@@ -58,7 +61,7 @@ async function open(path, { width = 1280, lang = "uz", theme = "light", signedIn
   page.on("console", (message) => {
     if (message.type() === "error") errors.push(message.text());
   });
-  await page.goto(`${WEB}${path}`, { waitUntil: "networkidle" });
+  await ready(page, `${WEB}${path}`);
   await page.waitForSelector("main h1");
   return { page, context, errors };
 }

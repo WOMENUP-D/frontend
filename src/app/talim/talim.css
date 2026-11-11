@@ -2232,3 +2232,26 @@ html[data-theme="dark"] body[data-section="learning"] .sky-layer { opacity: 0.24
      a phone screen. */
   .lms-submit .lms-btn { width: 100%; }
 }
+
+/* ==== QA Phase 2 — area ui (E-07, F-03) ================================ */
+@media (max-width: 860px) {
+  /* E-07: a closed drawer is off-screen *and* out of the tab order and the
+     accessibility tree; visibility flips after the slide-out finishes. */
+  .lms-side { visibility: hidden; transition: transform 0.22s ease, visibility 0s linear 0.22s; }
+  .lms-open .lms-side { visibility: visible; transition: transform 0.22s ease, visibility 0s; }
+  /* F-03: on a phone the course page opens with its title, not with the
+     table of contents — the "Kurs tarkibi" section below lists the same
+     modules and lessons, so the side contents are not drawn twice. A
+     lesson page keeps its contents, after the lesson rather than before. */
+  .lms-course-overview > .lms-toc { display: none; }
+  .lms-course-layout > .lms-toc { order: 2; }
+}
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .lms-side, .lms-open .lms-side { transition: none; }
+}
+/* E-10: the learning section was meant to turn the branch *down*, but its
+   0.3 beat the portal's own 0.17 — so on a course page the limb crossed the
+   heading at almost twice the strength. Quieter than anywhere else here. */
+body[data-section="learning"] .sakura-behind > .sakura { opacity: 0.08; }
+html[data-theme="dark"] body[data-section="learning"] .sakura-behind > .sakura { opacity: 0.1; }
+/* ==== end area ui ======================================================= */

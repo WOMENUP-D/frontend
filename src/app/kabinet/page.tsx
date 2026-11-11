@@ -10,6 +10,7 @@ import {
   type DevelopmentScore,
   type Recommendations,
   type ScoreInsights,
+  type WeekRead,
 } from "@/services/portal";
 import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
 import { YourWeek } from "@/components/home/YourWeek";
@@ -276,6 +277,7 @@ export default function CabinetPage() {
      the profile row — the directions are the weakest score dimensions. */
   const [persona, setPersona] = useState<AssistantProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [week, setWeek] = useState<WeekRead | null>(null);
 
   /* Not through `soft` below: a failure here is shown and can be retried. An
      empty "next step" would read as "nothing to do", which is a different and
@@ -306,7 +308,7 @@ export default function CabinetPage() {
     }
 
     (async () => {
-      const [p, s, pl, en, lq, acc, per] = await Promise.all([
+      const [p, s, pl, en, lq, acc, per, wk] = await Promise.all([
         soft(() => portal.profile() as Promise<Profile>),
         soft(() => portal.scoreInsights()),
         soft(() => portal.activePlan() as Promise<Plan>),
@@ -314,13 +316,16 @@ export default function CabinetPage() {
         soft(() => portal.learningProfile()),
         soft(() => portal.me() as Promise<Account>),
         soft(() => portal.assistantProfile()),
+        // Fetched with the rest so "your week" lands in the same frame (QA H-01).
+        soft(() => portal.week()),
         loadRecommendations(),
       ]);
       setProfile(p); setScore(s); setPlan(pl); setEnrollments(en ?? []);
       setAssessed(Boolean(lq?.completed)); setAccount(acc); setPersona(per);
+      setWeek(wk);
       setLoading(false);
     })();
-  }, []);
+  }, [router]);
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (loading) return <main className="wrap page"><Loading rows={4} /></main>;
@@ -402,7 +407,7 @@ export default function CabinetPage() {
 
           {/* Her week first: the lesson she left off at, then the next event,
               task and listing — each a real record or not drawn at all. */}
-          <YourWeek />
+          <YourWeek initial={week} />
 
           {/* The invitation to sit the assessment, on the wide side of the page
               where it has room to be an invitation rather than a footnote. It
@@ -500,7 +505,7 @@ export default function CabinetPage() {
             <Link href="/imkoniyatlar" className="btn btn-outline btn-sm">
               {t("nav.opportunities")}
             </Link>
-            <Link href="/navigator" className="btn btn-outline btn-sm">
+            <Link href="/yordamchi" className="btn btn-outline btn-sm">
               {t("nav.navigator")}
             </Link>
           </div>

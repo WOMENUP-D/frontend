@@ -12,8 +12,11 @@
  *
  * Everything that moves is CSS, and all of it stops under
  * prefers-reduced-motion — the blossom still sits there and still opens the
- * chat. The speech bubble speaks rarely: once on arrival, then at most a few
- * times a session, never while the chat is open, and a tap on it closes it.
+ * chat. The speech bubble speaks once a session, and only after she has
+ * started scrolling — on a phone the first screen is the hero and its call to
+ * action, which a greeting must never sit on (QA F-01). It is never shown
+ * while the chat is open, and it goes away after a few seconds or on a tap.
+ * While she is typing in a form, the blossom steps aside on small screens.
  */
 
 import { usePathname } from "next/navigation";
@@ -36,12 +39,11 @@ const STAMENS: ReadonlyArray<[number, number]> = [
   [4.9, -13.6],
 ];
 
-const HINTS: MessageKey[] = ["wu.hint.help", "wu.hint.programs", "wu.hint.about", "wu.hint.score"];
 const SEEN_KEY = "womanup.mascot.seen";
 const BUBBLE_LIFE_MS = 6500;
-const FIRST_BUBBLE_MS = 2200;
-const BUBBLE_EVERY_MS = 150_000;
-const MAX_BUBBLES = 3;
+/** How far she has to scroll before the one greeting of the session. */
+const GREET_AFTER_SCROLL_PX = 240;
+const FIELD = "input, textarea, select, [contenteditable='true'], [role='dialog'] *";
 
 /** Screens where the companion stays away. */
 function hiddenOn(pathname: string | null): boolean {
@@ -185,7 +187,9 @@ export function Mascot() {
   const [arrived, setArrived] = useState(false);
   const [bubble, setBubble] = useState<MessageKey | null>(null);
   const [poke, setPoke] = useState(0);
-  const shown = useRef(0);
+  /* A field outside the companion has focus: on a phone she steps aside so she
+     is not over the select arrow or the keyboard's submit row. */
+  const [tucked, setTucked] = useState(false);
   const timers = useRef<number[]>([]);
 
   const clear = () => {
@@ -209,23 +213,35 @@ export function Mascot() {
     } catch {
       /* no storage: she is greeted once per page instead */
     }
-    if (!seen) {
-      timers.current.push(
-        window.setTimeout(() => {
-          shown.current += 1;
-          say("wu.hint.hello");
-        }, FIRST_BUBBLE_MS),
-      );
-    }
-    const interval = window.setInterval(() => {
-      if (document.hidden || shown.current >= MAX_BUBBLES) return;
-      shown.current += 1;
-      say(HINTS[Math.floor(Math.random() * HINTS.length)]);
-    }, BUBBLE_EVERY_MS);
-    timers.current.push(interval);
+    // One greeting per session, after the first real scroll: never over the
+    // hero, whose call to action is what the first screen is for.
+    let greeted = seen;
+    const onScroll = () => {
+      if (greeted || window.scrollY < GREET_AFTER_SCROLL_PX) return;
+      greeted = true;
+      window.removeEventListener("scroll", onScroll);
+      say("wu.hint.hello");
+    };
+    if (!seen) window.addEventListener("scroll", onScroll, { passive: true });
+
+    const isField = (node: EventTarget | null) =>
+      node instanceof Element && !node.closest(".wu") && node.matches(FIELD);
+    const onFocusIn = (event: FocusEvent) => {
+      if (isField(event.target)) {
+        setTucked(true);
+        setBubble(null);
+      }
+    };
+    const onFocusOut = () => {
+      window.setTimeout(() => setTucked(isField(document.activeElement)), 0);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
     return () => {
       clear();
-      window.clearInterval(interval);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
     };
     // The companion is mounted once; a route change only decides visibility.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -241,7 +257,11 @@ export function Mascot() {
   const side = "right";
 
   return (
-    <div className={`wu wu-${side}${arrived ? " is-here" : ""}${open ? " is-open" : ""}`}>
+    <div
+      className={`wu wu-${side}${arrived ? " is-here" : ""}${open ? " is-open" : ""}${
+        tucked && !open ? " is-tucked" : ""
+      }`}
+    >
       {open && <MascotChat onClose={() => setOpen(false)} />}
       {bubble && !open && (
         <button

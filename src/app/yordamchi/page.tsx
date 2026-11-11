@@ -21,11 +21,16 @@ import {
   type CoachContext,
   type CoachReply,
   type GuestAllowance,
+  isTimeout,
 } from "@/services/portal";
 import { ErrorNote } from "@/components/ui";
 import { CoachPanel, CoachReferences, suggestionText } from "@/components/Coach";
 import { useI18n, type MessageKey } from "@/i18n";
 import { toNewAlphabetIfUzbek } from "@/i18n/uzbek";
+import { RichText } from "@/components/text/RichText";
+import { HelpResources } from "@/components/HelpResources";
+import { stripLeadingNumber } from "@/components/text/markdown";
+import { historyFor, loadChats, ownerOf, saveChats, turnId } from "./chatStore";
 
 type Route = "auto" | "portal" | "education" | "health";
 type Tab = Route | "daily" | "coach";
@@ -55,6 +60,9 @@ const SUGGESTIONS: Record<Route, ReadonlyArray<MessageKey>> = {
 };
 
 interface Turn {
+  /** Stable id: a late card request finds its turn by id, not by an index
+   *  read from a stale closure (QA E-16). */
+  id: string;
   role: "user" | "assistant";
   text: string;
   reply?: AssistantReply;
@@ -69,13 +77,34 @@ export default function AssistantPage() {
   const { t, locale } = useI18n();
   const language = locale === "uz-Cyrl" ? "uz" : locale;
 
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  /* Known at the first render: the page is only drawn after SessionGate has
+     resumed the session, so the token is already in memory. Waiting for an
+     effect drew the page empty for a frame and then dropped the Coach panel
+     in above the chat (QA H-01). */
+  const [authed, setAuthed] = useState<boolean | null>(() =>
+    typeof window === "undefined" ? null : Boolean(getAccessToken()),
+  );
   /* A signed-in woman opens on the Coach: it is the only surface that already
      knows her, and the first thing she should see is a true statement about
      herself rather than an empty box. A guest is moved to the open door below,
      because there is nothing to coach without a record. */
-  const [tab, setTab] = useState<Tab>("coach");
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [tab, setTab] = useState<Tab>(() =>
+    typeof window !== "undefined" && !getAccessToken() ? "auto" : "coach",
+  );
+  /* One conversation per tab (QA E-16): the health tab must not show career
+     moves. Kept in sessionStorage so a reload does not lose them (QA B-15). */
+  const [chats, setChats] = useState<Partial<Record<Tab, Turn[]>>>({});
+  const [owner, setOwner] = useState<string | null>(null);
+  const turns = chats[tab] ?? [];
+  const appendTo = useCallback((target: Tab, turn: Turn) => {
+    setChats((prev) => ({ ...prev, [target]: [...(prev[target] ?? []), turn] }));
+  }, []);
+  const patchTurn = useCallback((target: Tab, id: string, patch: Partial<Turn>) => {
+    setChats((prev) => ({
+      ...prev,
+      [target]: (prev[target] ?? []).map((turn) => (turn.id === id ? { ...turn, ...patch } : turn)),
+    }));
+  }, []);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
     /* The key, not the sentence. Translating at the moment the request fails
@@ -84,6 +113,9 @@ export default function AssistantPage() {
      on a Russian page. Kept as a key, it is translated on every render and
      follows the language switch. */
   const [error, setError] = useState<MessageKey | null>(null);
+  /* The question a timed-out request was for, so "Ask again" can resend it
+     (QA H-04). */
+  const [retryable, setRetryable] = useState<string | null>(null);
   const [profile, setProfile] = useState<AssistantProfile | null>(null);
   const [allowance, setAllowance] = useState<GuestAllowance | null>(null);
   const [daily, setDaily] = useState<AssistantReply | null>(null);
@@ -104,8 +136,12 @@ export default function AssistantPage() {
   }, []);
 
   useEffect(() => {
-    const signedIn = Boolean(getAccessToken());
+    const token = getAccessToken();
+    const signedIn = Boolean(token);
     setAuthed(signedIn);
+    const who = ownerOf(token);
+    setOwner(who);
+    setChats(loadChats<Turn>(who));
     // A page elsewhere can hand over a question — "what else do I need for
     // this career?" — through `?ask=`. It is only put in the box: nothing is
     // sent to the Coach until she presses send herself.
@@ -123,8 +159,13 @@ export default function AssistantPage() {
   }, [refreshProfile]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [turns]);
+    if (owner) saveChats(owner, chats as Record<string, Turn[]>);
+  }, [owner, chats]);
+
+  const turnCount = turns.length;
+  useEffect(() => {
+    if (turnCount) endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [turnCount, tab]);
 
   useEffect(() => {
     if (tab !== "daily" || daily || !authed) return;
@@ -148,23 +189,28 @@ export default function AssistantPage() {
   async function ask(question: string) {
     if (!question.trim() || busy) return;
 
-    setTurns((prev) => [...prev, { role: "user", text: question }]);
+    // The tab she asked from, captured now: if she switches tabs while the
+    // answer is on its way, it still lands in the conversation it belongs to.
+    const asked = tab;
+    const history = historyFor(chats[asked] ?? []);
+    appendTo(asked, { id: turnId(), role: "user", text: question });
     setInput("");
     setBusy(true);
     setError(null);
+    setRetryable(null);
 
     try {
-      if (tab === "coach") {
-        const reply = await portal.coachAsk(question, language, about);
-        setTurns((prev) => [...prev, { role: "assistant", text: reply.message, coach: reply }]);
+      if (asked === "coach") {
+        const reply = await portal.coachAsk(question, language, about, history);
+        appendTo(asked, { id: turnId(), role: "assistant", text: reply.message, coach: reply });
         // Answering may have moved her on — a course enrolled in, a path
         // started — so the panel is re-read rather than left stale.
         portal.coachContext(language).then(setCoach).catch(() => {});
         return;
       }
 
-      const route: Route = tab === "daily" ? "auto" : tab;
-      const reply = await portal.assistantAsk(question, language, route);
+      const route: Route = asked === "daily" ? "auto" : asked;
+      const reply = await portal.assistantAsk(question, language, route, history);
       if (reply.guest_questions_left !== null) {
         setAllowance({
           unlimited: false,
@@ -176,31 +222,23 @@ export default function AssistantPage() {
       // Cards only exist for education answers that actually call for them.
       const wantsDetail =
         reply.route === "education" && reply.kind !== "general" && !reply.escalated;
-      const index = turns.length + 1;
-      setTurns((prev) => [
-        ...prev,
-        { role: "assistant", text: reply.answer, reply, detailPending: wantsDetail },
-      ]);
+      const id = turnId();
+      appendTo(asked, { id, role: "assistant", text: reply.answer, reply, detailPending: wantsDetail });
 
       if (wantsDetail) {
         portal
           .assistantDetail(question, reply.answer, reply.kind, language)
-          .then((detail) =>
-            setTurns((prev) =>
-              prev.map((turn, i) =>
-                i === index ? { ...turn, detail, detailPending: false } : turn,
-              ),
-            ),
-          )
-          .catch(() =>
-            setTurns((prev) =>
-              prev.map((turn, i) => (i === index ? { ...turn, detailPending: false } : turn)),
-            ),
-          );
+          .then((detail) => patchTurn(asked, id, { detail, detailPending: false }))
+          .catch(() => patchTurn(asked, id, { detailPending: false }));
       }
     } catch (err) {
       const status = (err as { status?: number }).status;
-      setError(status === 429 ? "asst.guestSpent" : "asst.err");
+      if (isTimeout(err)) {
+        setError("asst.errTimeout");
+        setRetryable(question);
+      } else {
+        setError(status === 429 ? "asst.guestSpent" : "asst.err");
+      }
     } finally {
       setBusy(false);
     }
@@ -251,6 +289,17 @@ export default function AssistantPage() {
       </div>
 
       {error && <ErrorNote message={t(error)} />}
+      {error && retryable && (
+        <button
+          type="button"
+          className="btn btn-outline btn-sm"
+          style={{ alignSelf: "flex-start" }}
+          onClick={() => void ask(retryable)}
+          disabled={busy}
+        >
+          {t("asst.retry")}
+        </button>
+      )}
 
       {tab === "coach" && authed === false && (
         <div className="notice notice-warn stack" style={{ gap: 8 }}>
@@ -267,14 +316,16 @@ export default function AssistantPage() {
         ) : coachFailed ? (
           <ErrorNote message={t("coach.err")} />
         ) : (
-          <div className="card"><p className="muted small">{t("common.loading")}</p></div>
+          /* Holds roughly the panel's own height, so the chat below does not
+             jump down when it arrives (QA H-01). */
+          <div className="card coach-panel-pending"><p className="muted small">{t("common.loading")}</p></div>
         )
       )}
 
       {tab === "daily" ? (
         <div className="card stack">
           {daily ? (
-            <p style={{ fontFamily: "'Source Serif 4', Georgia, serif", fontSize: "1.2rem" }}>
+            <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.2rem" }}>
               {toNewAlphabetIfUzbek(daily.answer)}
             </p>
           ) : (
@@ -320,11 +371,11 @@ export default function AssistantPage() {
               </div>
             )}
 
-            {turns.map((turn, i) =>
+            {turns.map((turn) =>
               turn.role === "user" ? (
-                <p key={i} className="bubble-user">{turn.text}</p>
+                <p key={turn.id} className="bubble-user">{turn.text}</p>
               ) : (
-                <AssistantTurn key={i} turn={turn} />
+                <AssistantTurn key={turn.id} turn={turn} />
               ),
             )}
 
@@ -345,6 +396,8 @@ export default function AssistantPage() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder={t("asst.placeholder")}
+              aria-label={t("asst.placeholder")}
+              maxLength={1000}
               disabled={busy || guestLeft === 0}
             />
             <button className="btn btn-primary" type="submit" disabled={busy || guestLeft === 0}>
@@ -393,6 +446,9 @@ function KnowsPanel({ profile }: { profile: AssistantProfile }) {
 function AssistantTurn({ turn }: { turn: Turn }) {
   const { t } = useI18n();
   const detail = turn.detail;
+  const programs = [...(turn.reply?.programs ?? []), ...(detail?.programs ?? [])].filter(
+    (program, index, all) => all.findIndex((other) => other.id === program.id) === index,
+  );
 
   // A coaching answer has its own shape: prose, then the real records it
   // points at. Nothing here is a card the model composed — every reference was
@@ -409,12 +465,13 @@ function AssistantTurn({ turn }: { turn: Turn }) {
           {!turn.coach.generated && !turn.coach.escalated && (
             <span className="faint small">{t("coach.offline")}</span>
           )}
-          <p style={{ whiteSpace: "pre-wrap" }}>{toNewAlphabetIfUzbek(turn.text)}</p>
+          <RichText text={toNewAlphabetIfUzbek(turn.text)} />
           {turn.coach.unsupported && (
             <p className="faint small">{t("coach.unsupported")}</p>
           )}
           <CoachReferences references={turn.coach.references} />
         </div>
+        <HelpResources resources={turn.coach.resources} />
       </div>
     );
   }
@@ -425,7 +482,9 @@ function AssistantTurn({ turn }: { turn: Turn }) {
         {turn.reply && !turn.reply.personalised && (
           <span className="badge badge-grey">{t("asst.generic")}</span>
         )}
-        <p style={{ whiteSpace: "pre-wrap" }}>{toNewAlphabetIfUzbek(turn.text)}</p>
+        {/* Said, not hidden: without the model the answer is simpler (QA B-18). */}
+        {turn.reply?.degraded && <span className="faint small">{t("asst.degraded")}</span>}
+        <RichText text={toNewAlphabetIfUzbek(turn.text)} />
 
         {!!turn.reply?.sources.length && (
           <div className="stack" style={{ gap: 6 }}>
@@ -457,6 +516,8 @@ function AssistantTurn({ turn }: { turn: Turn }) {
           </div>
         )}
       </div>
+
+      <HelpResources resources={turn.reply?.resources} />
 
       {turn.detailPending && <p className="muted small">{t("asst.detailLoading")}</p>}
 
@@ -501,7 +562,7 @@ function AssistantTurn({ turn }: { turn: Turn }) {
                 {String(index + 1).padStart(2, "0")}
               </span>
               <div>
-                <strong className="small">{step.title}</strong>
+                <strong className="small">{stripLeadingNumber(step.title)}</strong>
                 {step.detail && <p className="muted small">{step.detail}</p>}
               </div>
             </div>
@@ -509,12 +570,14 @@ function AssistantTurn({ turn }: { turn: Turn }) {
         </div>
       )}
 
-      {!!detail?.programs.length && (
+      {/* Courses from the first reply as well as from the card pass, once
+          each (QA B-09): an answer that names courses links them at once. */}
+      {programs.length > 0 && (
         <div className="stack" style={{ gap: 6 }}>
           <span className="eyebrow">{t("asst.courses")}</span>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-            {detail.programs.map((program) => (
-              <Link key={program.id} href="/dasturlar" className="chip">
+            {programs.map((program) => (
+              <Link key={program.id} href={`/dasturlar/${program.id}`} className="chip">
                 {program.title}
               </Link>
             ))}

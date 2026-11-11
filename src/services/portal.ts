@@ -982,6 +982,8 @@ export interface CoachReply {
   generated: boolean;
   next_step: CoachReference | null;
   references: CoachReference[];
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
 }
 
 /* ---- learning paths --------------------------------------------------
@@ -1762,12 +1764,28 @@ export interface NavigatorAnswer {
   escalation_reason: string | null;
   suggested_actions: string[];
   trace_id: string;
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
 }
 
 export interface Page<T> { items: T[]; total: number; page: number; size: number }
 
 
 // ---- AI Assistant ---------------------------------------------------------
+
+/** A model call that has not answered in 45 s is not going to (QA H-04): the
+ *  request is abandoned and the page says so, with a way to ask again. The
+ *  error is a DOMException named "TimeoutError" — see `isTimeout`. */
+export const AI_TIMEOUT_MS = 45_000;
+function aiSignal(): AbortSignal | undefined {
+  return typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+    ? AbortSignal.timeout(AI_TIMEOUT_MS)
+    : undefined;
+}
+export function isTimeout(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name;
+  return name === "TimeoutError" || name === "AbortError";
+}
 
 export interface ProfessionCard {
   title: string;
@@ -2331,6 +2349,11 @@ export interface AssistantReply {
   next_actions: string[];
   programs: ProgramRef[];
   guest_questions_left: number | null;
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
+  /** True when the model was unavailable and a simpler answer was built
+   *  without it (QA B-18/B-09). Optional: older servers omit it. */
+  degraded?: boolean;
 }
 
 export interface AssistantProfile {
@@ -2457,7 +2480,7 @@ export const portal = {
 
   nextStep: () => api.get<NextStepCard>("/ai/next-step"),
   askNavigator: (message: string) =>
-    api.post<NavigatorAnswer>("/ai/navigator", { message }),
+    api.post<NavigatorAnswer>("/ai/navigator", { message }, { signal: aiSignal() }),
 
   programs: (query = "") => api.get<Page<Program>>(`/programs${query}`),
   programTopics: (query = "") => api.get<ProgramTopic[]>(`/programs/topics${query}`),
@@ -2647,17 +2670,24 @@ export const portal = {
 
   dashboard: (filters: AdminFilters = {}) => api.get(`/admin/dashboard${queryOf(filters)}`),
 
-  assistantAsk: (message: string, language: string, route = "auto") =>
-    api.post<AssistantReply>("/assistant/ask", { message, language, route }, {
+  /** `history` — the tab's earlier turns (QA B-15); the server keeps the last
+   *  eight and runs the safety filter on `message` before anything else. */
+  assistantAsk: (
+    message: string,
+    language: string,
+    route = "auto",
+    history: { role: "user" | "assistant"; content: string }[] = [],
+  ) =>
+    api.post<AssistantReply>("/assistant/ask", { message, language, route, history }, {
       headers: { "X-Guest-Id": guestId() },
+      signal: aiSignal(),
     }),
   assistantDetail: (message: string, answer: string, kind: string, language: string) =>
-    api.post<AssistantReply>("/assistant/education/detail", {
-      message,
-      answer,
-      kind,
-      language,
-    }),
+    api.post<AssistantReply>(
+      "/assistant/education/detail",
+      { message, answer, kind, language },
+      { signal: aiSignal() },
+    ),
   assistantDaily: (language: string) =>
     api.get<AssistantReply>(`/assistant/daily?language=${encodeURIComponent(language)}`),
   assistantProfile: () => api.get<AssistantProfile>("/assistant/profile"),
@@ -2720,12 +2750,18 @@ export const portal = {
   coachContext: (language: string) =>
     api.get<CoachContext>(`/assistant/coach?language=${encodeURIComponent(language)}`),
   /** Ask the Coach. Grounded server-side in the same records. */
-  coachAsk: (message: string, language: string, opportunityId?: string | null) =>
+  coachAsk: (
+    message: string,
+    language: string,
+    opportunityId?: string | null,
+    history: { role: "user" | "assistant"; content: string }[] = [],
+  ) =>
     api.post<CoachReply>("/assistant/coach", {
       message,
       language,
+      history,
       ...(opportunityId ? { opportunity_id: opportunityId } : {}),
-    }),
+    }, { signal: aiSignal() }),
   assistantGuestAllowance: () =>
     api.get<GuestAllowance>("/assistant/guest-allowance", {
       headers: { "X-Guest-Id": guestId() },

@@ -2880,6 +2880,14 @@ export const messages = {
   "wu.hint.score":    { uz: "Development Score nima ekanini aytib beraymi?", ru: "Рассказать, что такое Development Score?", en: "Shall I explain the Development Score?" },
   "wu.err.limit":     { uz: "Juda köp savol ketma-ket. Bir daqiqadan söng qayta urinib köring.", ru: "Слишком много вопросов подряд. Попробуйте через минуту.", en: "Too many questions in a row. Try again in a minute." },
   "wu.dismiss":       { uz: "Tuşunarli", ru: "Понятно", en: "Got it" },
+
+  // ---- QA Phase 2 — area ui (E-12 skip link, F-05 short search hint) ------
+  "a11y.skip":          { uz: "Asosiy qismga ötiş", ru: "Перейти к содержимому", en: "Skip to content" },
+  "help.resources.title":{ uz: "Yordam kerak bölsa, qönğiroq qiliş mumkin", ru: "Если нужна помощь, можно позвонить", en: "If you need help, you can call" },
+  "asst.degraded":      { uz: "Çeklangan rejim: AI hozir işlamayapti, şuning uçun javob soddaroq.", ru: "Ограниченный режим: ИИ сейчас недоступен, поэтому ответ проще.", en: "Limited mode: the AI is unavailable right now, so this answer is simpler." },
+  "asst.errTimeout":    { uz: "Javob juda uzoq kutilmoqda. Birozdan söng qayta urinib köring.", ru: "Ответ задерживается. Попробуйте ещё раз чуть позже.", en: "The answer is taking too long. Try again in a moment." },
+  "asst.retry":         { uz: "Qayta söraş", ru: "Спросить ещё раз", en: "Ask again" },
+  "vac.searchHintShort":{ uz: "Lavozim yoki kompaniya", ru: "Должность или компания", en: "Job or company" },
 } as const satisfies Record<string, Written>;
 
 export type MessageKey = keyof typeof messages;

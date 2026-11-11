@@ -42,7 +42,7 @@ export function ScoreRing({ value, size = 148 }: { value: number; size?: number 
       <text
         x="50%" y="47%" textAnchor="middle" dominantBaseline="middle"
         fontSize={size * 0.28} fontWeight="700" fill="var(--ink)"
-        fontFamily="'Source Serif 4', Georgia, serif"
+        style={{ fontFamily: "var(--font-serif)" }}
       >
         {Math.round(value)}
       </text>

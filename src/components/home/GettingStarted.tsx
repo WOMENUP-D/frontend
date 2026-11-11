@@ -35,7 +35,12 @@ function writeHidden(hidden: boolean): void {
 
 export function GettingStarted({ isNew }: { isNew: boolean }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState<boolean | null>(null);
+  /* Read at the first render, not in an effect: the cabinet mounts this only
+     in the browser, after its data is in, and a block appearing one frame
+     later above everything else pushed the whole page down (QA H-01). */
+  const [open, setOpen] = useState<boolean | null>(() =>
+    typeof window === "undefined" ? null : isNew && !readHidden(),
+  );
 
   useEffect(() => setOpen(isNew && !readHidden()), [isNew]);
 

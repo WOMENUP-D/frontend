@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { fontVariables } from "./fonts";
 import { I18nProvider } from "@/i18n";
 import { Chrome } from "@/components/Chrome";
-import { Petals } from "@/components/Petals";
 import { Traffic } from "@/components/Traffic";
 import { AmbientSakura } from "@/components/AmbientSakura";
-import { Mascot } from "@/components/mascot/Mascot";
+import { DeferredMascot, DeferredPetals } from "@/components/Deferred";
+import { SkipLink } from "@/components/SkipLink";
 import { LivingUI } from "@/components/motion/Living";
 import { SessionGate } from "@/components/SessionGate";
 
@@ -25,18 +26,28 @@ export const metadata: Metadata = {
     "Har bir ayol uçun individual rivojlaniş yöli: diagnostika, şaxsiy reja, kurslar va real imkoniyatlar.",
 };
 
+/* PWA (QA B-20): the manifest, favicon.ico, icon.svg and apple-icon.png are
+   file conventions in this folder; Next links them itself. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf9f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#17131c" },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz">
+    <html lang="uz" className={fontVariables}>
       <body>
         <I18nProvider>
+          <SkipLink />
           <AmbientSakura />
-          <Petals />
+          <DeferredPetals />
           <SessionGate>
             <Traffic />
             <Chrome />
             {children}
-            <Mascot />
+            <DeferredMascot />
           </SessionGate>
           <LivingUI />
         </I18nProvider>

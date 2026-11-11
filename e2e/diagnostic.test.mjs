@@ -12,6 +12,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { chromium } from "playwright";
+import { assertLocalStand, ready } from "./helpers.mjs";
 
 const WEB = process.env.WEB_URL ?? "http://localhost:3000";
 const TOKEN = process.env.E2E_TOKEN ?? "";
@@ -22,6 +23,8 @@ let browser;
 let reachable = true;
 
 before(async () => {
+  // Writes and reads accounts: never anything but a local stand (QA B-04).
+  assertLocalStand(WEB);
   try {
     reachable = Boolean(TOKEN) && (await fetch(`${WEB}/kabinet/diagnostika`)).ok;
   } catch {
@@ -45,7 +48,7 @@ async function open(path, { width = 1280, lang = "uz" } = {}) {
     [TOKEN, lang],
   );
   const page = await context.newPage();
-  await page.goto(`${WEB}${path}`, { waitUntil: "networkidle" });
+  await ready(page, `${WEB}${path}`);
   return { page, context };
 }
 
