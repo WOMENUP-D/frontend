@@ -47,6 +47,8 @@ const PROTECTED = new Set([
   "scholarship", "partnership", "membership", "championship", "mentorship",
   "speech", "school", "schools", "choose", "technology", "technologies", "tech", "match",
   "kitchen", "sketch", "switch", "watch", "schedule", "scheme", "psychology", "christmas", "sheet", "sheets", "headhunter", "punch", "brunch",
+  // Partner-catalogue titles; kept in step with backend uzbek.py.
+  "michigan", "bash", "show", "technical",
 ]);
 const WORD = /[A-Za-zÖöĞğŞşÇç][A-Za-z0-9ÖöĞğŞşÇçʻʼ‘’'-]*/g;
 const VERBATIM =

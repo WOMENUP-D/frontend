@@ -64,3 +64,10 @@ test("G-14: script slips in model-written Uzbek are mended (mirrors uzbek.py)", 
   assert.equal(toNewAlphabet("Business English"), "Business English");
   assert.equal(mendScript("Привет"), "Привет");
 });
+
+test("partner-catalogue English words stay as written (in step with uzbek.py)", () => {
+  assert.equal(toNewAlphabet("University of Michigan"), "University of Michigan");
+  assert.equal(toNewAlphabet("Bash scripting"), "Bash scripting");
+  assert.equal(toNewAlphabet("Talk show"), "Talk show");
+  assert.equal(toNewAlphabet("Technical writing"), "Technical writing");
+});

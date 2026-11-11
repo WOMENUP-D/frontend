@@ -2347,7 +2347,7 @@ export const messages = {
   "ds.how":            { uz: "Qanday işlaydi?", ru: "Как это работает?", en: "How does it work?" },
   // ---- diagnostic v2 ------------------------------------------------------
   "dg.title":        { uz: "Rivojlaniş diagnostikasi", ru: "Диагностика развития", en: "Development check-in" },
-  "dg.intro":        { uz: "Avval siz haqingizda: vaziyat, maqsad va qiziqişlar — şunga qarab keyingi savollar moslaşadi. Keyin 8 yönaliş böyiça bittadan savol. Taxminan 3–4 daqiqa.", ru: "Сначала о вас: ситуация, цель и интересы — от этого зависят дальнейшие вопросы. Затем по одному вопросу на каждое из 8 направлений. Около 3–4 минут.", en: "First about you: your situation, goal and interests — the next questions follow from them. Then one question for each of the 8 areas. About 3–4 minutes." },
+  "dg.intro":        { uz: "Avval siz haqingizda: vaziyat, maqsad va qiziqişlar — keyingi savollar şunga moslaşadi. Hammasi bölib 35 ta savol, taxminan 6–8 daqiqa.", ru: "Сначала о вас: ситуация, цель и интересы — от этого зависят дальнейшие вопросы. Всего 35 вопросов, около 6–8 минут.", en: "First about you: your situation, goal and interests — the next questions follow from them. 35 questions in all, about 6–8 minutes." },
   "dg.part.profile": { uz: "Siz haqingizda", ru: "О вас", en: "About you" },
   "dg.part.score":   { uz: "Development Score", ru: "Development Score", en: "Development Score" },
   "dg.sec.about":        { uz: "Vaziyat", ru: "Ситуация", en: "Situation" },
