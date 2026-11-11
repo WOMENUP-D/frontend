@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_LOCALE, isLocale } from "@/i18n/locales";
-import { htmlLang, translate } from "@/i18n/core";
+import { htmlLang, translate, writtenOf } from "@/i18n/core";
+// Registers the Uzbek strings and loads another language on demand (QA H-02).
+import { loadTable } from "@/i18n/dictionary";
 import "./globals.css";
 
 /** When the root layout itself fails there is no provider to ask, so the
@@ -17,6 +19,11 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
     const value = match ? decodeURIComponent(match[1]) : null;
     if (isLocale(value)) locale = value;
   }
+  // Uzbek is bundled; another language is fetched and the page re-rendered.
+  const [, setLoaded] = useState(false);
+  useEffect(() => {
+    loadTable(writtenOf(locale)).then(() => setLoaded(true), () => {});
+  }, [locale]);
   const t = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   return (
     <html lang={htmlLang(locale)}>

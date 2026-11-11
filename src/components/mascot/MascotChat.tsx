@@ -16,13 +16,16 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { fill } from "@/components/jobs/format";
 import { ApiError, getAccessToken } from "@/services/api";
-import { portal, type AssistantReply, type GuestAllowance } from "@/services/portal";
+import { isTimeout, portal, type AssistantReply, type GuestAllowance } from "@/services/portal";
+import { HelpResources } from "@/components/HelpResources";
 import { MascotFigure } from "./Mascot";
 
 interface Turn {
   role: "user" | "assistant";
   text: string;
   source?: string | null;
+  /** Help lines from the safety filter (QA I-15). */
+  resources?: unknown;
 }
 
 const HISTORY_KEY = "womanup.mascot.chat";
@@ -106,12 +109,23 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
       }
       const answered: Turn[] = [
         ...next,
-        { role: "assistant", text: reply.answer, source: reply.sources?.[0]?.document_title ?? null },
+        {
+          role: "assistant",
+          text: reply.answer,
+          source: reply.sources?.[0]?.document_title ?? null,
+          resources: reply.resources,
+        },
       ];
       setTurns(answered);
       writeHistory(answered);
     } catch (err) {
-      setError(err instanceof ApiError && err.status === 429 ? "wu.err.limit" : "asst.err");
+      setError(
+        err instanceof ApiError && err.status === 429
+          ? "wu.err.limit"
+          : isTimeout(err)
+            ? "asst.errTimeout"
+            : "asst.err",
+      );
     } finally {
       setBusy(false);
       inputRef.current?.focus();
@@ -146,6 +160,7 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
           <div key={index} className={`wu-msg wu-msg-${turn.role}`}>
             <p>{turn.role === "assistant" ? tu(turn.text) : turn.text}</p>
             {turn.source && <span className="wu-msg-source">{t("asst.sources")}: {tu(turn.source)}</span>}
+            {turn.role === "assistant" && <HelpResources resources={turn.resources} />}
           </div>
         ))}
         {busy && (

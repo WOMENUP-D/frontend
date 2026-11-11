@@ -350,18 +350,46 @@ export default function ProgramPage() {
               </Link>
             </div>
             <div className="showcase-grid">
-              {related.map((item) => (
-                <Link key={item.id} href={`/dasturlar/${item.id}`} className="tile">
-                  <span className="badge">{t(categoryKey(item.category) as MessageKey)}</span>
-                  <h3 className="tile-title">{tx(item.title_i18n)}</h3>
-                  <p className="muted small tile-lead">{tx(item.goal_i18n)}</p>
-                  {item.duration_hours ? (
-                    <span className="faint">
-                      {item.duration_hours} {tn("unit.hour", item.duration_hours)}
+              {/* One card for every programme, ours or a partner's (QA E-09):
+                  the category as the catalogue writes it, the goal when there
+                  is one, and the same foot — provider, hours, language and a
+                  "partner course" mark — whichever of those exist. */}
+              {related.map((item) => {
+                const goal = tx(item.goal_i18n);
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/dasturlar/${item.id}`}
+                    className="tile tile-related"
+                    data-cat={item.category}
+                  >
+                    <span className="prog-cat">{t(categoryKey(item.category) as MessageKey)}</span>
+                    <h3 className="tile-title">{tx(item.title_i18n)}</h3>
+                    {goal ? (
+                      <p className="muted small tile-lead">{goal}</p>
+                    ) : item.provider ? (
+                      <p className="muted small tile-lead">
+                        {t("pd.provider")}: {item.provider}
+                      </p>
+                    ) : (
+                      <span className="tile-lead" aria-hidden="true" />
+                    )}
+                    <span className="tile-related-foot">
+                      {item.duration_hours ? (
+                        <span className="prog-fmt">
+                          {item.duration_hours} {tn("unit.hour", item.duration_hours)}
+                        </span>
+                      ) : null}
+                      {item.language && ["uz", "ru", "en"].includes(item.language) ? (
+                        <span className="prog-fmt">{t(`pr.lang.${item.language}` as MessageKey)}</span>
+                      ) : null}
+                      {item.external_url ? (
+                        <span className="prog-fmt">{t("lms.course.outsideTitle")} ↗</span>
+                      ) : null}
                     </span>
-                  ) : null}
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

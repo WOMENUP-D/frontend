@@ -18,11 +18,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { getAccessToken } from "@/services/api";
 import { portal, type Notification, type Program } from "@/services/portal";
 import { Icon } from "@/components/ds";
+import { sharedProfile } from "./sharedProfile";
 
 interface NavItem {
   href: string;
@@ -47,12 +48,13 @@ const MAIN: NavItem[] = [
   { href: "/yordamchi", label: "lms.nav.assistant", icon: "◈" },
 ];
 
-/* Settings and Help point at the portal pages that genuinely own those jobs —
-   the cabinet holds the account, the portal assistant answers questions. A
-   link to a page that does not exist is worse than no link. */
+/* The portal has no separate settings page or FAQ yet. The link to the
+   cabinet — where her account lives — is named for what it opens, and the
+   "Help" entry that opened the same assistant as the AI entry above is gone
+   (QA E-05). A label promising a page that is not behind it is worse than no
+   link. */
 const SECONDARY: NavItem[] = [
-  { href: "/kabinet", label: "lms.nav.settings", icon: "⚙" },
-  { href: "/yordamchi", label: "lms.nav.help", icon: "?" },
+  { href: "/kabinet", label: "nav.cabinet", icon: "⚙" },
 ];
 
 /* Crumbs still name the unadvertised sections: a woman who has one of those
@@ -74,14 +76,15 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Her name and initials, for the rail and the avatar. Read once per mount. */
+/** Her name and initials, for the rail and the avatar. Read once per mount,
+ *  through `sharedProfile` so the page below asking for the same record does
+ *  not send a second request (QA H-06). */
 function useLearner(): { name: string; initials: string } {
   const [name, setName] = useState("");
 
   useEffect(() => {
     if (!getAccessToken()) return;
-    portal
-      .profile()
+    sharedProfile()
       .then((profile) => setName((profile as { full_name: string | null }).full_name ?? ""))
       .catch(() => setName(""));
   }, []);
@@ -300,13 +303,24 @@ export function Shell({ children }: { children: ReactNode }) {
     return () => { delete document.body.dataset.section; };
   }, []);
 
+  /* Escape and the scrim close the drawer and hand focus back to the burger
+     that opened it (QA E-07); while closed on a phone the drawer is
+     `visibility: hidden` in talim.css, so its links are out of the tab order. */
+  const burger = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => {
+    setOpen((was) => {
+      if (was) requestAnimationFrame(() => burger.current?.focus());
+      return false;
+    });
+  }, []);
+
   useEffect(() => {
     function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     }
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, []);
+  }, [close]);
 
   function renderNav(items: NavItem[]) {
     return items.map((item) => (
@@ -329,7 +343,8 @@ export function Shell({ children }: { children: ReactNode }) {
           type="button"
           className="lms-scrim"
           aria-label={t("lms.nav.close")}
-          onClick={() => setOpen(false)}
+          tabIndex={-1}
+          onClick={close}
         />
       )}
 
@@ -367,6 +382,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <header className="lms-top">
           <button
             type="button"
+            ref={burger}
             className="lms-icon-btn lms-burger"
             aria-label={open ? t("lms.nav.close") : t("lms.nav.open")}
             aria-expanded={open}

@@ -7,7 +7,7 @@
  */
 
 import { useI18n, type MessageKey } from "@/i18n";
-import { messages } from "@/i18n/messages";
+import { hasMessage } from "@/i18n/dictionary";
 import { fill } from "@/components/jobs/format";
 import { portal } from "@/services/portal";
 import { DimensionRow, Loading } from "@/components/ui";
@@ -19,7 +19,7 @@ import { regionKey } from "@/utils/format";
 export function AdminUserCard({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { t, tx, locale } = useI18n();
   const state = useLoaded(() => portal.rosterCard(userId), `card:${userId}`);
-  const label = (key: string) => (key in messages ? t(key as MessageKey) : key.replace(/_/g, " "));
+  const label = (key: string) => (hasMessage(key) ? t(key as MessageKey) : key.replace(/_/g, " "));
 
   return (
     <section className="rs-card rs-card-wide ros-card" aria-live="polite">

@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
-import { messages } from "@/i18n/messages";
+import { hasMessage } from "@/i18n/dictionary";
 import { ApiError } from "@/services/api";
 import {
   portal,
@@ -123,7 +123,7 @@ function Body<T extends { scope: ResultsScope }>({
 function useLabel() {
   const { t } = useI18n();
   return (key: string, fallback?: string): string =>
-    key in messages ? t(key as MessageKey) : (fallback ?? key.replace(/_/g, " "));
+    hasMessage(key) ? t(key as MessageKey) : (fallback ?? key.replace(/_/g, " "));
 }
 
 const dash = (key: string) => key.replace("-", "–");

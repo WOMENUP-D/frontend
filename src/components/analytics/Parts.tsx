@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
-import { messages } from "@/i18n/messages";
+import { hasMessage } from "@/i18n/dictionary";
 import { fill } from "@/components/jobs/format";
 import { ApiError } from "@/services/api";
 import type { Cohort, Figure, LiveNow, Ratio, ResultsRate, Stage } from "@/services/portal";
@@ -115,7 +115,7 @@ export function useName() {
   const { t } = useI18n();
   return (prefix: "an.m" | "an.ev" | "an.def", key: string, fallback?: string): string => {
     const full = `${prefix}.${key}`;
-    return full in messages ? t(full as MessageKey) : (fallback ?? key.replace(/_/g, " "));
+    return hasMessage(full) ? t(full as MessageKey) : (fallback ?? key.replace(/_/g, " "));
   };
 }
 

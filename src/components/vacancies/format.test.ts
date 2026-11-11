@@ -4,6 +4,8 @@
  * address round-trips: what a link says is what the server is asked.
  */
 
+// translate() reads registered tables; tests register every language (QA H-02).
+import "@/i18n/catalog";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {

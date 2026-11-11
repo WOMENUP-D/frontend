@@ -8,7 +8,7 @@
  * by the same rules.
  */
 
-import { messages, type MessageKey } from "./messages";
+import type { MessageKey } from "./messages";
 import { toCyrillic } from "./translit";
 import { toNewAlphabet, toNewAlphabetIfUzbek } from "./uzbek";
 
@@ -72,11 +72,31 @@ export function fill(text: string, params?: Record<string, string | number>): st
   );
 }
 
-/** UI string by key, in the locale's script. */
+/**
+ * The dictionary, one table per written language (QA H-02).
+ *
+ * This module never imports `messages.ts` itself — doing so would put every
+ * language into every browser bundle. Tables are registered instead: in the
+ * browser (and in server-rendered client components) by `dictionary.ts`, which
+ * bundles Uzbek and fetches Russian or English on demand; in server code by
+ * `catalog.ts`, which `server.ts` imports and which registers all three.
+ */
+type Table = Readonly<Record<string, string>>;
+const tables: Partial<Record<WrittenLocale, Table>> = {};
+
+export function registerTable(language: WrittenLocale, table: Table): void {
+  tables[language] = table;
+}
+
+export function hasTable(language: WrittenLocale): boolean {
+  return tables[language] !== undefined;
+}
+
+/** UI string by key, in the locale's script. A language whose table is not
+ *  loaded yet falls back to Uzbek per key, then to the key itself. */
 export function translate(locale: Locale, key: MessageKey): string {
-  const entry = messages[key] as { uz: string; ru: string; en: string } | undefined;
-  if (!entry) return key;
-  const text = entry[writtenOf(locale)] ?? entry.uz;
+  const text = tables[writtenOf(locale)]?.[key] ?? tables.uz?.[key];
+  if (text === undefined) return key;
   return typeset(locale === "uz-Cyrl" ? toCyrillic(text) : text);
 }
 

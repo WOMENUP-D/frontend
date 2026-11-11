@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  use,
   useCallback,
   useContext,
   useEffect,
@@ -10,7 +11,10 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+// Only the type: the strings come one language at a time from ./dictionary
+// (QA H-02), so the all-languages object never reaches the browser.
 import type { MessageKey } from "./messages";
+import { loadTable, tablePromise } from "./dictionary";
 import {
   DEFAULT_LOCALE,
   LOCALE_COOKIE,
@@ -26,6 +30,7 @@ import {
   writtenOf,
   type I18nField,
   type Locale,
+  hasTable,
 } from "./core";
 
 export { LOCALES, typeset, htmlLang, intlLocale, formatDate } from "./core";
@@ -102,8 +107,13 @@ export function I18nProvider({
       const stored = storage()?.getItem(LOCALE_COOKIE) ?? null;
       if (isLocale(stored) && stored !== initialLocale) {
         writeCookie(stored);
-        setLocaleState(stored);
-        router.refresh();
+        // Its strings are fetched first and the switch made after, so the
+        // page never shows a half-translated frame (QA H-02).
+        const adopt = () => {
+          setLocaleState(stored);
+          router.refresh();
+        };
+        loadTable(writtenOf(stored)).then(adopt, adopt);
         return;
       }
       writeCookie(initialLocale);
@@ -119,14 +129,27 @@ export function I18nProvider({
 
   const setLocale = useCallback(
     (next: Locale) => {
-      setLocaleState(next);
       writeCookie(next);
       storage()?.setItem(LOCALE_COOKIE, next);
-      // Server-rendered parts — the page title and description — follow.
-      router.refresh();
+      // The language's strings load first (QA H-02); a failed chunk still
+      // switches, and `t()` falls back to Uzbek per key.
+      const apply = () => {
+        setLocaleState(next);
+        // Server-rendered parts — the page title and description — follow.
+        router.refresh();
+      };
+      loadTable(writtenOf(next)).then(apply, apply);
     },
     [router],
   );
+
+  /* The current language's strings (QA H-02). Normally already in — every
+     switch above waits for them — but the locale the server chose (G-11)
+     arrives before its chunk: rendering suspends here until it is loaded, on
+     the server and during hydration alike, so a Russian page is Russian in
+     its first HTML and never flashes Uzbek. */
+  const written = writtenOf(locale);
+  if (!hasTable(written)) use(tablePromise(written));
 
   const value = useMemo<I18nValue>(() => {
     const t = (key: MessageKey, params?: Params) => fill(translate(locale, key), params);

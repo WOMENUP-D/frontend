@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { fontVariables } from "./fonts";
 import { I18nProvider } from "@/i18n";
 import { htmlLang, translate } from "@/i18n/core";
 import { alternatesFor, currentPath, localeUrl, getServerLocale, siteUrl } from "@/i18n/server";
 import { Chrome } from "@/components/Chrome";
-import { Petals } from "@/components/Petals";
 import { Traffic } from "@/components/Traffic";
 import { AmbientSakura } from "@/components/AmbientSakura";
-import { Mascot } from "@/components/mascot/Mascot";
+import { DeferredMascot, DeferredPetals } from "@/components/Deferred";
+import { SkipLink } from "@/components/SkipLink";
 import { LivingUI } from "@/components/motion/Living";
 import { SessionGate } from "@/components/SessionGate";
 
@@ -42,21 +43,31 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+/* PWA (QA B-20): the manifest, favicon.ico, icon.svg and apple-icon.png are
+   file conventions in this folder; Next links them itself. */
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbf9f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#17131c" },
+  ],
+};
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // The language is decided here, on the server (G-11), so the first HTML is
   // already in it and <html lang> matches what is on the page.
   const locale = await getServerLocale();
   return (
-    <html lang={htmlLang(locale)}>
+    <html lang={htmlLang(locale)} className={fontVariables}>
       <body>
         <I18nProvider initialLocale={locale}>
+          <SkipLink />
           <AmbientSakura />
-          <Petals />
+          <DeferredPetals />
           <SessionGate>
             <Traffic />
             <Chrome />
             {children}
-            <Mascot />
+            <DeferredMascot />
           </SessionGate>
           <LivingUI />
         </I18nProvider>

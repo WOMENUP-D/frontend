@@ -68,9 +68,14 @@ function send(endpoint: string, body: unknown): void {
       credentials: "include",
       body: JSON.stringify(body),
       keepalive: true,
-    }).catch(() => {
-      /* analytics is never worth an error in front of a user */
-    });
+    })
+      // The body is read off and dropped: a response nobody consumes left the
+      // request "unfinished" for the browser's tooling, and with it the
+      // e2e suites' load detection (QA B-04).
+      .then((response) => response.body?.cancel())
+      .catch(() => {
+        /* analytics is never worth an error in front of a user */
+      });
   } catch {
     /* and never a thrown one either */
   }

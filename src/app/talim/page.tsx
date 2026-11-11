@@ -31,6 +31,7 @@ import {
 import { getAccessToken } from "@/services/api";
 import { useApi } from "@/components/learning/useApi";
 import { nextLessonOf, viewsOf } from "@/components/learning/course";
+import { sharedProfile } from "@/components/learning/sharedProfile";
 import {
   CourseCard,
   EmptyState,
@@ -322,8 +323,8 @@ function Head({ greeting }: { greeting: MessageKey | null }) {
 
   // Her own name, from her own profile — not a constant in the source.
   useEffect(() => {
-    portal
-      .profile()
+    // Shared with the shell's request for the same record (QA H-06).
+    sharedProfile()
       .then((profile) => {
         const full = (profile as { full_name: string | null }).full_name ?? "";
         setName(full.split(" ")[0] ?? "");

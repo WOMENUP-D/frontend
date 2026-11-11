@@ -7,6 +7,8 @@
  */
 
 import { cookies, headers } from "next/headers";
+// All three languages for server-side translate() (QA H-02).
+import "./catalog";
 import type { Metadata } from "next";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_PARAM, LOCALES, htmlLang, isLocale, translate, type Locale } from "./core";
 import type { MessageKey } from "./messages";

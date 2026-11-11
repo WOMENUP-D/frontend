@@ -6,6 +6,7 @@
  * catalogue is in the reformed alphabet with no stray ASCII apostrophes (G-18).
  */
 
+import "./catalog";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { messages, type MessageKey } from "./messages";

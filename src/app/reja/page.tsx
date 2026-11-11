@@ -270,13 +270,18 @@ export default function PlanPage() {
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (loading) {
     return (
-      <main className="wrap page stack" style={{ gap: 14 }}>
-        {building && (
-          <div className="stack" style={{ gap: 6 }}>
-            <h1>{t("plan.title")}</h1>
-            <p className="muted">{t("plan.autoBuilding")}</p>
-          </div>
-        )}
+      /* The heading is drawn from the first frame, the way the loaded page
+         draws it, and the "building" line keeps its place whether or not it
+         is showing — it used to appear above the skeleton a moment later and
+         push it down (QA H-01). */
+      <main className="wrap page stack" style={{ gap: 14, maxWidth: 760, margin: "0 auto" }}>
+        <div>
+          <span className="eyebrow">{t("nav.cabinet")}</span>
+          <h1>{t("plan.title")}</h1>
+          <p className="muted" style={{ visibility: building ? "visible" : "hidden" }}>
+            {t("plan.autoBuilding")}
+          </p>
+        </div>
         <Loading rows={4} />
       </main>
     );

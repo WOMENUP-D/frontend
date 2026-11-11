@@ -14,7 +14,6 @@ never used a dashboard — the career path is the first page built from them.
 
 | Piece | What it is for |
 |---|---|
-| `Journey`, `JourneyStep` | A short, real sequence drawn down one line. Each stage says its state in words beside a marker whose *shape* differs (check, blossom, open circle, dashed circle); detail opens in place from a real button with `aria-expanded`. Not for things that are not a sequence. |
 | `NextStepCard` | The one thing to do now, with one large button. One per screen. |
 | `SkillChip` | A skill and, in words, whether she has it: `have` (evidence), `claimed` (her own word), `need`. |
 | `Hint` | "What's this?" beside a word that needs explaining. Opens in place — never on hover, never covering what it explains. |

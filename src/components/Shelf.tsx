@@ -70,10 +70,11 @@ export function Shelf({ programs }: { programs: Program[] }) {
         {programs.map((program) => {
           const picked = program.id === openId;
           return (
+            /* The list item is a layout-free wrapper so the toggle inside can
+               keep its button role — and with it `aria-expanded`. */
+            <div key={program.id} role="listitem" style={{ display: "contents" }}>
             <button
-              key={program.id}
               type="button"
-              role="listitem"
               data-cat={program.category}
               className={picked ? "spine is-open" : "spine"}
               style={{ width: spineWidth(program.duration_hours) }}
@@ -90,6 +91,7 @@ export function Shelf({ programs }: { programs: Program[] }) {
                 <span className="spine-hours">{program.duration_hours}</span>
               )}
             </button>
+            </div>
           );
         })}
       </div>
