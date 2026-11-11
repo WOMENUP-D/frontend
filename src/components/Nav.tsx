@@ -11,6 +11,7 @@ import {
   ORG_ROLES,
   PANEL_ROLES,
 } from "@/services/api";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 import { logout } from "@/services/auth";
 import { LOCALES, useI18n, type MessageKey } from "@/i18n";
 import { LangSwitch } from "./LangSwitch";
@@ -114,6 +115,8 @@ export function Nav() {
   const [staff, setStaff] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
   const pills = useRef<HTMLDivElement>(null);
+  // QA B-19: no menu item for a job board the server has not connected.
+  const vacanciesShown = useVacancyBoardShown();
 
   // The token lives in memory, so this can only run after mount — and it is
   // re-read whenever the token changes, so a session that dies in the
@@ -165,7 +168,11 @@ export function Nav() {
 
   const links = staff
     ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
-    : LINKS.filter((link) => authed || link.guest);
+    : LINKS.filter(
+        (link) =>
+          (authed || link.guest) &&
+          (vacanciesShown || link.href !== "/vakansiyalar"),
+      );
 
   const [leaving, setLeaving] = useState(false);
   async function signOut() {

@@ -69,6 +69,25 @@ function looksWrongLanguage(plan: Plan, reading: string): boolean {
   return reading === "ru" ? !isCyrillic : isCyrillic;
 }
 
+/** QA I-05: plan generation spends the hourly AI allowance; a 429 says so in
+ *  her language instead of "take the assessment first". */
+function makeError(cause: unknown): MessageKey {
+  return cause instanceof ApiError && cause.status === 429 ? "plan.errLimit" : "plan.errMake";
+}
+
+/** QA I-05 / D-17: after she discards a proposal, a later visit does not
+ *  silently spend another model call on a new one — she asks for it. */
+const DISCARDED_KEY = "womanup.planDiscarded";
+function discardedBefore(): boolean {
+  try { return localStorage.getItem(DISCARDED_KEY) === "1"; } catch { return false; }
+}
+function rememberDiscard(on: boolean): void {
+  try {
+    if (on) localStorage.setItem(DISCARDED_KEY, "1");
+    else localStorage.removeItem(DISCARDED_KEY);
+  } catch { /* private mode */ }
+}
+
 type Horizon = "1m" | "3m";
 const HORIZONS: ReadonlyArray<Horizon> = ["1m", "3m"];
 const DEFAULT_HORIZON: Horizon = "3m";
@@ -143,6 +162,13 @@ export default function PlanPage() {
      on a Russian page. Kept as a key, it is translated on every render and
      follows the language switch. */
   const [error, setError] = useState<MessageKey | null>(null);
+  /* QA C-12: no diagnostic yet. The plan is built "from your assessment", so
+     without one the page says so and links to it — no model call, no 30 s
+     wait ending in an error. */
+  const [noDiagnostic, setNoDiagnostic] = useState(false);
+  /* QA I-05: a horizon picked on a draft is confirmed before the model is
+     called — a tap on "1 month" used to regenerate at once. */
+  const [pendingHorizon, setPendingHorizon] = useState<Horizon | null>(null);
 
   /**
    * The roadmap draws itself. Finishing the assessment used to leave her on an
@@ -177,6 +203,18 @@ export default function PlanPage() {
             if (cancelled) return;
             if (pending) { setDraft(pending); return; }
 
+            // QA C-12: ask for the assessment before asking the model.
+            const assessed = await portal
+              .diagnosticResult()
+              .then(() => true)
+              .catch((cause: unknown) =>
+                cause instanceof ApiError && cause.status === 404 ? false : true,
+              );
+            if (cancelled) return;
+            if (!assessed && !isPlanGenerating()) { setNoDiagnostic(true); return; }
+            // QA I-05: she discarded the last proposal — wait to be asked.
+            if (discardedBefore() && !isPlanGenerating()) return;
+
             setBuilding(true);
             // The assessment may already have one in flight. The plan row only
             // appears once the model answers, so an empty list here does not
@@ -190,8 +228,8 @@ export default function PlanPage() {
             clearPlanGenerating();
             const made = await portal.generatePlan(DEFAULT_HORIZON, localeRef.current);
             if (!cancelled) setDraft(made);
-          } catch {
-            if (!cancelled) setError("plan.errMake");
+          } catch (cause) {
+            if (!cancelled) setError(makeError(cause));
           }
         }
       } finally {
@@ -201,45 +239,11 @@ export default function PlanPage() {
     return () => { cancelled = true; };
   }, []);
 
-  /**
-   * A proposal follows the language she is reading in.
-   *
-   * The plan is written by the model in one language and stored as plain
-   * text, so switching the site to Russian used to leave a Uzbek roadmap on
-   * the screen. Regenerating is the honest fix rather than translating in the
-   * browser: the roadmap names programmes and deadlines, and a machine
-   * translation of those in the client would drift from the catalogue.
-   *
-   * Only ever a DRAFT. An accepted plan is hers — rebuilding it because she
-   * changed the interface language would throw away something she agreed to,
-   * so an active plan keeps its language and the "rebuild" button stays the
-   * way to change it deliberately.
-   *
-   * Both guards are refs so that neither retriggers the effect. `rebuilding`
-   * stops a second call while the first is in flight; `attempted` stops the
-   * loop that would otherwise follow if the model came back in the wrong
-   * language anyway — one try per locale, then the plan is left as it is
-   * rather than regenerated forever.
-   */
-  const rebuilding = useRef(false);
-  const attempted = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!draft || busy || rebuilding.current) return;
-    if (!looksWrongLanguage(draft, apiLocale)) return;
-    if (attempted.current.has(apiLocale)) return;
-
-    attempted.current.add(apiLocale);
-    rebuilding.current = true;
-    setBusy(true);
-    portal
-      .generatePlan(asHorizon(draft.horizon), apiLocale)
-      .then(setDraft)
-      .catch(() => setError("plan.errMake"))
-      .finally(() => {
-        rebuilding.current = false;
-        setBusy(false);
-      });
-  }, [draft, apiLocale, busy]);
+  /* QA I-05: a proposal in another language used to be rebuilt by the model
+     automatically on every visit after a language switch. Generation now
+     spends her hourly AI allowance, so a draft is treated like an accepted
+     plan here: the page offers the rebuild (see "plan.otherLang" below) and
+     waits to be asked. */
 
   // The toggle follows whatever is on screen: a draft or plan written for one
   // month opens with "1 month" selected, so "build" rebuilds what she sees.
@@ -248,12 +252,23 @@ export default function PlanPage() {
     if (current) setHorizon(asHorizon(current.horizon));
   }, [draft, plan]);
 
+  /** QA D-17: a replaced proposal is deleted, so old drafts do not pile up
+   *  and cannot be accepted later through the API. */
+  function discard(old: Plan | null, kept: Plan | null) {
+    if (old && !old.is_active && !old.accepted_at && old.id !== kept?.id) {
+      portal.deletePlan(old.id).catch(() => undefined);
+    }
+  }
+
   async function generate(chosen: Horizon = horizon) {
     setBusy(true); setError(null);
     try {
-      setDraft(await portal.generatePlan(chosen, apiLocale));
-    } catch {
-      setError("plan.errMake");
+      const made = await portal.generatePlan(chosen, apiLocale);
+      discard(draft, made);
+      setDraft(made);
+      setPendingHorizon(null);
+    } catch (cause) {
+      setError(makeError(cause));
     } finally { setBusy(false); }
   }
 
@@ -263,6 +278,7 @@ export default function PlanPage() {
     try {
       const accepted = await portal.acceptPlan(draft.id);
       setPlan(accepted); setDraft(null);
+      rememberDiscard(false);
     } catch { setError("plan.errAccept"); }
     finally { setBusy(false); }
   }
@@ -307,8 +323,27 @@ export default function PlanPage() {
       </div>
 
       {error && <ErrorNote message={t(error)} />}
+      {/* QA C-12: the failure message says "take the assessment first" — so
+          it links there instead of offering only the same button again. */}
+      {error === "plan.errMake" && (
+        <Link className="btn btn-outline btn-sm" href="/kabinet/diagnostika" style={{ alignSelf: "start" }}>
+          {t("plan.toDiagnostic")}
+        </Link>
+      )}
 
-      {!shown && (
+      {!shown && noDiagnostic && (
+        <Empty
+          title={t("plan.needsDiagnostic")}
+          hint={t("plan.needsDiagnosticHint")}
+          action={
+            <Link className="btn btn-primary" href="/kabinet/diagnostika">
+              {t("plan.toDiagnostic")}
+            </Link>
+          }
+        />
+      )}
+
+      {!shown && !noDiagnostic && (
         <Empty
           title={t("plan.none")}
           hint={t("plan.noneHint")}
@@ -339,11 +374,28 @@ export default function PlanPage() {
                 value={horizon}
                 onChange={(next) => {
                   setHorizon(next);
-                  if (next !== asHorizon(draft.horizon)) void generate(next);
+                  setPendingHorizon(next !== asHorizon(draft.horizon) ? next : null);
                 }}
                 disabled={busy}
               />
               {busy && <span className="faint small">{t("plan.building")}</span>}
+            </div>
+          )}
+          {draft && pendingHorizon && !busy && (
+            <div className="notice">
+              {t(pendingHorizon === "1m" ? "plan.confirmRebuild1m" : "plan.confirmRebuild3m")}{" "}
+              <span className="row" style={{ gap: 8, display: "inline-flex", flexWrap: "wrap" }}>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => generate(pendingHorizon)}>
+                  {t("plan.rebuildConfirm")}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => { setPendingHorizon(null); setHorizon(asHorizon(draft.horizon)); }}
+                >
+                  {t("plan.keepCurrent")}
+                </button>
+              </span>
             </div>
           )}
 
@@ -352,7 +404,7 @@ export default function PlanPage() {
               one she agreed to, and rebuilding it on a language switch would
               throw away something she chose. So the page says what it can do
               and waits to be asked. */}
-          {!draft && looksWrongLanguage(shown, apiLocale) && (
+          {looksWrongLanguage(shown, apiLocale) && (
             <div className="notice">
               {t("plan.otherLang")}{" "}
               <button
@@ -411,8 +463,10 @@ export default function PlanPage() {
                     // A course hosted elsewhere opens on its own site, in a new
                     // tab, so the roadmap stays where she left it.
                     item.program_url ? (
+                      // QA D-19: target was missing — the ↗ promised a new tab.
                       <a
                         href={item.program_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="ed-title-link"
                       >
@@ -451,6 +505,10 @@ export default function PlanPage() {
                     !draft && (
                       done ? (
                         <span className="badge badge-green">✓ {t("plan.isDone")}</span>
+                      ) : item.status === "skipped" ? (
+                        // QA D-16: a step she removed when accepting is not
+                        // "awaiting" — and it no longer counts toward progress.
+                        <span className="badge badge-grey">{t("plan.skipped")}</span>
                       ) : item.program_id ? (
                         // A step that is a course is closed by the course: the
                         // platform ticks the last module, sees the enrollment
@@ -461,6 +519,7 @@ export default function PlanPage() {
                         item.program_url ? (
                           <a
                             href={item.program_url}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-outline btn-sm"
                           >
@@ -492,8 +551,27 @@ export default function PlanPage() {
               <button className="btn btn-primary" onClick={accept} disabled={busy}>
                 {t(busy ? "plan.accepting" : "plan.accept")}
               </button>
-              <button className="btn btn-outline" onClick={() => setDraft(null)}>
-                {t("common.cancel")}
+              {/* QA D-17: cancelling discards the proposal on the server too
+                  — it used to vanish only until the next reload. */}
+              <button
+                className="btn btn-outline"
+                onClick={async () => {
+                  const old = draft;
+                  setBusy(true);
+                  try {
+                    await portal.deletePlan(old.id);
+                    setDraft(null);
+                    setPendingHorizon(null);
+                    rememberDiscard(true);
+                  } catch {
+                    setError("plan.errDiscard");
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+                disabled={busy}
+              >
+                {t("plan.discard")}
               </button>
               <button className="btn btn-ghost btn-sm" onClick={() => generate()} disabled={busy}>
                 {t("plan.another")}

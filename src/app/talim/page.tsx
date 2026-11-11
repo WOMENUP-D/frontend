@@ -30,7 +30,7 @@ import {
 } from "@/services/portal";
 import { ApiError, getAccessToken } from "@/services/api";
 import { useApi } from "@/components/learning/useApi";
-import { nextLessonOf, viewsOf } from "@/components/learning/course";
+import { isOpen, nextLessonOf, resumeOf, viewsOf } from "@/components/learning/course";
 import { sharedProfile } from "@/components/learning/sharedProfile";
 import {
   CourseCard,
@@ -82,8 +82,12 @@ export default function LearningDashboard() {
     // The course she was last working on decides the hero. Its lessons are not
     // in the enrollment list, so the one course she is resuming is fetched in
     // full — and only that one.
-    const resume =
-      enrollments.find((item) => item.status === "in_progress" && item.program) ?? null;
+    // QA C-14: a fresh enrollment is stored as "enrolled", not "in_progress",
+    // and it is still the course she is taking — so the hero takes any course
+    // she has not finished, the one she is furthest into first. Courses taught
+    // on a partner's site have no lessons here to resume, so the hero prefers
+    // the platform's own (their cards still open the partner site).
+    const resume = resumeOf(enrollments);
     const detail: ProgramDetail | null = resume?.program
       ? await portal.programBySlug(resume.program.slug).catch(() => null)
       : null;
@@ -93,7 +97,15 @@ export default function LearningDashboard() {
     };
   });
 
-  const head = <Head greeting={greeting} signedIn={authed ?? Boolean(getAccessToken())} />;
+  // QA C-14: "you are doing well" only to someone who has started something;
+  // a visitor is greeted as one (C-18).
+  const head = (
+    <Head
+      greeting={greeting}
+      signedIn={authed ?? Boolean(getAccessToken())}
+      started={Boolean(data && data.enrollments.length > 0)}
+    />
+  );
 
   if (authed === false) {
     return (
@@ -132,7 +144,10 @@ export default function LearningDashboard() {
     data;
   const views = viewsOf(enrollments);
   const completed = enrollments.filter((item) => item.status === "completed").length;
-  const inProgress = enrollments.filter((item) => item.status === "in_progress").length;
+  // Courses taught here that she has not finished; a partner's course is not
+  // tracked here, so it is not "in progress" on this page (QA B-13).
+  const inProgress = enrollments.filter((item) => isOpen(item) && !item.program?.external_url).length;
+  const elsewhere = enrollments.filter((item) => isOpen(item) && item.program?.external_url).length;
   const learned = (skills?.skills ?? []).filter((item) => item.status !== "self_reported");
   const suggestion = recommendations?.programs[0] ?? null;
 
@@ -143,6 +158,18 @@ export default function LearningDashboard() {
       {/* ---- the one thing to press --------------------------------- */}
       {resume && detail ? (
         <Resume enrollment={resume} detail={detail} />
+      ) : !resume && elsewhere > 0 ? (
+        /* QA C-14: she is taking courses, just none taught here — never tell
+           her nothing has started. */
+        <EmptyState
+          title={t("lms.continue.elsewhere")}
+          hint={t("lms.continue.elsewhereHint")}
+          action={
+            <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+              {t("lms.courses.title")}
+            </Link>
+          }
+        />
       ) : (
         <EmptyState
           title={t("lms.continue.empty")}
@@ -320,7 +347,15 @@ export default function LearningDashboard() {
 
 /* ---- pieces ---------------------------------------------------------- */
 
-function Head({ greeting, signedIn }: { greeting: MessageKey | null; signedIn: boolean }) {
+function Head({
+  greeting,
+  signedIn,
+  started,
+}: {
+  greeting: MessageKey | null;
+  signedIn: boolean;
+  started: boolean;
+}) {
   const { t } = useI18n();
   const [name, setName] = useState("");
 
@@ -354,7 +389,7 @@ function Head({ greeting, signedIn }: { greeting: MessageKey | null; signedIn: b
         {greeting ? `${t(greeting)}${name ? `, ${name}` : ""}` : name}{" "}
         <span aria-hidden="true">👋</span>
       </h1>
-      <p className="lms-lead">{t("lms.greet.sub")}</p>
+      <p className="lms-lead">{t(started ? "lms.greet.sub" : "lms.greet.subNew")}</p>
     </header>
   );
 }

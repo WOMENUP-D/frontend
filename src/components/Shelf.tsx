@@ -112,7 +112,7 @@ export function Shelf({ programs }: { programs: Program[] }) {
             {open.duration_hours != null && (
               <span><b>{open.duration_hours}</b> {tn("unit.hour", open.duration_hours)}</span>
             )}
-            <span className="shelf-open-fmt">{t(formatKey(open.format))}</span>
+            {open.format && <span className="shelf-open-fmt">{t(formatKey(open.format))}</span>}
             {open.has_certificate && (
               <span className="shelf-open-cert">{t("pr.certificate")}</span>
             )}

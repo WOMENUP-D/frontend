@@ -163,11 +163,15 @@ export default function AssistantPage() {
     if (signedIn && handed) setInput(handed.slice(0, 500));
     const listing = params.get("about");
     if (signedIn && listing && /^[0-9a-f-]{36}$/i.test(listing)) setAbout(listing);
+    // QA D-23: a page can open a given tab — the diagnostic's support card
+    // links straight to "health". Only a known tab; the Coach needs an account.
+    const wanted = TABS.find(([key]) => key === params.get("tab"))?.[0];
     if (signedIn) {
+      if (wanted) setTab(wanted);
       void refreshProfile();
       return;
     }
-    setTab("auto");
+    setTab(wanted && wanted !== "coach" ? wanted : "auto");
     portal.assistantGuestAllowance().then(setAllowance).catch(() => {});
   }, [refreshProfile]);
 
@@ -617,6 +621,7 @@ function AssistantTurn({ turn }: { turn: Turn }) {
           <span className="eyebrow">{t("asst.courses")}</span>
           <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
             {programs.map((program) => (
+              // QA B-27: the chip opens the course it names, not the catalogue.
               <Link key={program.id} href={`/dasturlar/${program.id}`} className="chip">
                 {program.title}
               </Link>

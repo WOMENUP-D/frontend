@@ -249,10 +249,14 @@ export function OpportunityShowcase() {
               <Link href="/imkoniyatlar" className="stat-pill stat-pill-hot stat-pill-link">
                 {t("ls.opTotal")} <strong><CountUp value={stats.total} /></strong>
               </Link>
+              {/* QA B-23: the region count is a statistic, not a filter — no
+                  single region facet matches "7 regions", so it is not a link
+                  (a pill that opens the same unfiltered list as the total
+                  promised a filter it did not apply). */}
               {stats.regions > 0 && (
-                <Link href="/imkoniyatlar" className="stat-pill stat-pill-link">
+                <span className="stat-pill">
                   {t("ls.opRegions")} <strong><CountUp value={stats.regions} /></strong>
-                </Link>
+                </span>
               )}
               {/* Each count opens the rows it counted — a pill that reads as a
                   chip and does nothing when pressed is a broken control. */}
@@ -282,7 +286,8 @@ export function OpportunityShowcase() {
                 )
               : null;
             return (
-              <Link key={item.id} href="/imkoniyatlar" className="tile tile-op">
+              // QA B-11: each card opens its own opportunity, not the list.
+              <Link key={item.id} href={`/imkoniyatlar/${item.id}`} className="tile tile-op">
                 <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
                   <span className="badge">{t(sourceKey(item.source))}</span>
                   <span className="badge badge-grey">{t(typeKey(item.type))}</span>

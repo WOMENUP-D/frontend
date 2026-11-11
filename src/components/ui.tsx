@@ -81,7 +81,9 @@ export function DimensionRow({
   const figures = (
     <span className="small muted">
       {Math.round(current)}
-      {target ? ` → ${Math.round(target)}` : ""}
+      {/* QA D-13: a target at or below where she already is ("75 → 33") is a
+          stale target, not a goal — shown only while it is still ahead. */}
+      {target && target > current ? ` → ${Math.round(target)}` : ""}
       {delta > 0 && <span style={{ color: "var(--success)" }}> +{Math.round(delta)}</span>}
     </span>
   );

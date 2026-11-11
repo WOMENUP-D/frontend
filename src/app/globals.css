@@ -7316,7 +7316,8 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
 .err-links { display: flex; flex-wrap: wrap; gap: 10px; }
 .err-digest { margin-top: 20px; font-size: .85rem; }
 
-/* ====================================================================
+/* =============================================================
+
    QA Phase 2 — area ui (fe-qa-ui). Additions only; nothing above is
    reformatted. IDs: E-12 focus + skip link, E-14 rich text, F-01 the
    companion, F-02 phone menu, F-04 touch targets, F-05 catalogue/vacancy
@@ -7470,3 +7471,12 @@ body:has(.wu) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); 
 .coach-panel-pending { min-height: 390px; }
 @media (max-width: 600px) { .coach-panel-pending { min-height: 540px; } }
 /* ==== end area ui ==================================================== */
+/* ==== QA phase 2 — area "learn" (fe-qa-learn) =====================
+   Category hues for the two categories that had none: ethics_culture (a
+   chip since B-25) and digital_skills (new in the backend, G-04). Same
+   desaturated family as the block above. */
+[data-cat="ethics_culture"]                           { --cat: #7a6a52; }
+[data-cat="digital_skills"]                           { --cat: #5a5a86; }
+[data-theme="dark"] [data-cat="ethics_culture"]       { --cat: #c8b593; }
+[data-theme="dark"] [data-cat="digital_skills"]       { --cat: #a9a9dc; }
+/* ==== end QA phase 2 — learn ===================================== */

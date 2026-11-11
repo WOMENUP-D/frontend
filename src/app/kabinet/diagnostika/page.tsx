@@ -29,6 +29,7 @@ import { portal, type DiagnosticQuestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { shownQuestions } from "@/components/diagnostic/branching";
+import { partProgress } from "@/components/diagnostic/progress";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
@@ -295,7 +296,13 @@ export default function DiagnosticPage() {
   }
 
   const name = `q-${question.id}`;
-  const progress = t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total));
+  // QA D-11: progress per part — see components/diagnostic/progress.ts.
+  const at = partProgress(shown, index);
+  const progress = at.total !== null
+    ? t("dg.progress").replace("{n}", String(at.n)).replace("{total}", String(at.total))
+    : t("dg.progressOpen").replace("{n}", String(at.n));
+  const partLabel = t("dg.partOf").replace("{n}", String(at.part)).replace("{total}", String(at.parts));
+  const filled = at.percent;
   const typed = text ? (chosen[0] ?? "") : "";
 
   return (
@@ -316,7 +323,7 @@ export default function DiagnosticPage() {
 
         <div className="dg-where">
           <span className="dg-section">
-            <span className="dg-part">{part}</span>
+            <span className="dg-part">{partLabel} · {part}</span>
             {section}
           </span>
           <span className="faint dg-count">{progress}</span>
@@ -326,10 +333,10 @@ export default function DiagnosticPage() {
           role="progressbar"
           aria-label={progress}
           aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={index + 1}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(filled)}
         >
-          <span style={{ width: `${((index + 1) / total) * 100}%` }} />
+          <span style={{ width: `${filled}%` }} />
         </div>
 
         <fieldset
@@ -414,9 +421,15 @@ export default function DiagnosticPage() {
           >
             {last
               ? (saving ? t("dg.saving") : t("dg.finish"))
-              : (has ? t("dg.next") : t("dg.skip"))}
+              : (has || !question.optional ? t("dg.next") : t("dg.skip"))}
           </button>
         </div>
+        {/* QA D-12: the main button reads "Next" on a required question; it
+            stays disabled until she answers, and says why. "Skip" is only
+            offered where skipping is allowed. */}
+        {!canGo && !saving && (
+          <p className="faint small dg-need" aria-live="polite">{t("dg.chooseFirst")}</p>
+        )}
       </div>
     </main>
   );

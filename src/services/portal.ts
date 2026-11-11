@@ -43,6 +43,8 @@ export type NextStepKind =
   | "add_project"
   | "explore_opportunities"
   | "build_cv"
+  // QA D-05 (be-qa-cat): she said she has a CV, the portal holds none.
+  | "add_cv_to_profile"
   | "explore_skills";
 
 export type RecommendationReason =
@@ -351,6 +353,9 @@ export interface DiagnosticPriority {
 
 export interface DiagnosticResult {
   attempt_id: string;
+  /** QA D-23 (be-qa-safety): she answered that she often cannot cope. Shows a
+   *  gentle support card; never changes a score. Absent on older servers. */
+  support_suggested?: boolean;
   version: number;
   completed_at: string | null;
   is_baseline: boolean;
@@ -513,7 +518,8 @@ export interface Program {
   title_i18n: Record<string, string>;
   goal_i18n: Record<string, string>;
   category: string;
-  format: string;
+  /** QA G-16: null when a partner platform does not state it. */
+  format: string | null;
   /** How demanding the course is. Null when nobody has classified it. */
   level: ProficiencyLevel | null;
   duration_hours: number | null;
@@ -527,6 +533,9 @@ export interface Program {
   /** Set when the course belongs to somebody else and lives on their site. */
   external_url?: string | null;
   source?: string | null;
+  /** QA G-16: sent by the list endpoint too; stands in for an empty goal. */
+  description_i18n?: Record<string, string>;
+  cover_url?: string | null;
 }
 
 /* ---- practical tasks --------------------------------------------------
@@ -2475,6 +2484,8 @@ export const portal = {
    *  why plans came back in Uzbek on the Russian pages. */
   generatePlan: (horizon = "3m", language?: string) =>
     api.post<Plan>("/plans/generate", { horizon, language }),
+  /** QA D-17: "Cancel" on a draft discards it, so it does not come back. */
+  deletePlan: (planId: string) => api.delete<{ detail: string }>(`/plans/${planId}`),
   acceptPlan: (planId: string) =>
     api.post<Plan>(`/plans/${planId}/accept`, { accepted: true, removed_item_ids: [] }),
   updatePlanItem: (itemId: string, status: string) =>
@@ -2539,6 +2550,12 @@ export const portal = {
     ),
   /** The goals she set for herself, as the cabinet stores them. */
   goals: () => api.get<Goal[]>("/users/me/goals"),
+  // QA B-05: the goals screen reads and writes her real goals.
+  createGoal: (body: { title: string; horizon: string; target_date?: string | null; description?: string | null }) =>
+    api.post<Goal>("/users/me/goals", body),
+  updateGoal: (id: string, body: { achieved?: boolean; title?: string; target_date?: string | null }) =>
+    api.patch<Goal>(`/users/me/goals/${id}`, body),
+  deleteGoal: (id: string) => api.delete<{ detail: string }>(`/users/me/goals/${id}`),
   notifications: () => api.get<Notification[]>("/notifications"),
   markNotificationsRead: () => api.post<{ detail: string }>("/notifications/read-all"),
 

@@ -333,9 +333,18 @@ function VacanciesView() {
                       : "vac.error",
                 )}
               />
-              <button type="button" className="btn btn-outline" onClick={() => load(1)}>
-                {t("lms.err.retry")}
-              </button>
+              {/* QA B-19: "not connected" is not a hiccup — retrying cannot
+                  change it, so the honest next step is the portal's own
+                  opportunities, not a retry button. */}
+              {failed === "unconfigured" ? (
+                <Link className="btn btn-outline" href="/imkoniyatlar">
+                  {t("vac.toOpportunities")}
+                </Link>
+              ) : (
+                <button type="button" className="btn btn-outline" onClick={() => load(1)}>
+                  {t("lms.err.retry")}
+                </button>
+              )}
             </div>
           ) : items.length === 0 ? (
             <section className="jb-empty" aria-labelledby="vc-empty-h">

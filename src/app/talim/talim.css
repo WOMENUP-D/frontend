@@ -2255,3 +2255,25 @@ html[data-theme="dark"] body[data-section="learning"] .sky-layer { opacity: 0.24
 body[data-section="learning"] .sakura-behind > .sakura { opacity: 0.08; }
 html[data-theme="dark"] body[data-section="learning"] .sakura-behind > .sakura { opacity: 0.1; }
 /* ==== end area ui ======================================================= */
+
+/* ==================================================================
+   QA phase 2 — area "learn" (fe-qa-learn).
+   Goals form (B-05): the goal she is setting reads widest; horizon and
+   date sit beside it on a desktop and stack on a phone.
+   ================================================================== */
+.lms-goal-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+.lms-goal-form .lms-form-error { grid-column: 1 / -1; }
+.lms-goal-form .lms-input,
+.lms-goal-form .lms-btn { height: 48px; }
+.lms-sec-error { margin-bottom: 18px; }
+@media (max-width: 720px) {
+  .lms-goal-form { grid-template-columns: minmax(0, 1fr); }
+  .lms-goal-form .lms-btn { width: 100%; }
+  .lms-goal-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* ==== end QA phase 2 — learn ==================================== */
