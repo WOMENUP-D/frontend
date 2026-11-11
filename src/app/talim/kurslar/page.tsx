@@ -20,25 +20,30 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useI18n } from "@/i18n";
-import { portal, type EnrollmentDetail, type Page, type Program } from "@/services/portal";
+import { portal, type Program } from "@/services/portal";
 import { useApi } from "@/components/learning/useApi";
 import { viewOf, type CourseStatus } from "@/components/learning/course";
 import {
   CourseCard,
   EmptyState,
   ErrorState,
+  NeedsAccount,
   PageHead,
   SkeletonCards,
   statusKey,
 } from "@/components/learning/ui";
 
-type Filter = "all" | CourseStatus;
+type Filter = "all" | "in_progress" | "completed";
 
-const FILTERS: Filter[] = ["all", "in_progress", "completed", "not_started"];
+/* QA B-12: this page is "my courses" — what she enrolled in, started or
+   finished. It used to merge her enrollments into the first 60 catalogue rows,
+   so an empty account read "All 60 / Not started 60" and a course outside
+   those 60 vanished. The list is now her enrollments only; the catalogue is a
+   link below it, not rows dressed as hers. */
+const FILTERS: Filter[] = ["all", "in_progress", "completed"];
 
-/* Sort order, not the catalogue's own: what is half-finished is what she came
-   back for, and a course already completed is the least urgent thing on the
-   page. Within a group the catalogue order stands. */
+/* What is half-finished is what she came back for; a course already completed
+   is the least urgent thing on the page. */
 const RANK: Record<CourseStatus, number> = {
   in_progress: 0,
   not_started: 1,
@@ -49,29 +54,31 @@ export default function CoursesPage() {
   const { t } = useI18n();
   const [filter, setFilter] = useState<Filter>("all");
 
-  const { data, loading, error, retry } = useApi(async () => {
-    // Her enrollments decide what each card says; a visitor simply sees the
-    // catalogue, so a missing session is not an error here.
-    const [catalogue, mine] = await Promise.all([
-      portal.programs("?size=60") as Promise<Page<Program>>,
-      portal.myEnrollments().catch(() => [] as EnrollmentDetail[]),
-    ]);
-    const byProgram = new Map(mine.map((item) => [item.program_id, item]));
-    const list = catalogue.items
-      .map((program) => viewOf(program, byProgram.get(program.id) ?? null))
+  const { data, loading, error, unauthorised, retry } = useApi(async () => {
+    const mine = await portal.myEnrollments();
+    const list = mine
+      .filter((item) => item.program !== null && item.status !== "dropped")
+      .map((item) => viewOf(item.program as Program, item))
       .sort((a, b) => RANK[a.status] - RANK[b.status]);
 
-    const counts: Record<Filter, number> = {
-      all: list.length,
-      in_progress: 0,
-      completed: 0,
-      not_started: 0,
-    };
-    for (const view of list) counts[view.status] += 1;
+    const counts: Record<Filter, number> = { all: list.length, in_progress: 0, completed: 0 };
+    for (const view of list) {
+      if (view.status === "completed") counts.completed += 1;
+      else counts.in_progress += 1;
+    }
     return { list, counts };
   });
 
   const head = <PageHead title={t("lms.courses.title")} lead={t("lms.courses.lead")} />;
+
+  if (unauthorised) {
+    return (
+      <>
+        {head}
+        <NeedsAccount />
+      </>
+    );
+  }
 
   if (error) {
     return (
@@ -92,7 +99,11 @@ export default function CoursesPage() {
   }
 
   const visible =
-    filter === "all" ? data.list : data.list.filter((view) => view.status === filter);
+    filter === "all"
+      ? data.list
+      : data.list.filter((view) =>
+          filter === "completed" ? view.status === "completed" : view.status !== "completed",
+        );
 
   return (
     <>
@@ -146,6 +157,14 @@ export default function CoursesPage() {
           />
         )}
       </section>
+
+      {data.list.length > 0 && (
+        <section className="lms-sec">
+          <Link className="lms-btn lms-btn-quiet" href="/dasturlar">
+            {t("lms.courses.explore")}
+          </Link>
+        </section>
+      )}
     </>
   );
 }

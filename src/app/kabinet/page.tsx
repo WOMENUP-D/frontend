@@ -275,6 +275,8 @@ export default function CabinetPage() {
   /* Age and the development directions live on the assistant persona, not on
      the profile row — the directions are the weakest score dimensions. */
   const [persona, setPersona] = useState<AssistantProfile | null>(null);
+  // QA D-20: the latest diagnostic score, to name it beside today's score.
+  const [diagnosed, setDiagnosed] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   /* Not through `soft` below: a failure here is shown and can be retried. An
@@ -306,7 +308,7 @@ export default function CabinetPage() {
     }
 
     (async () => {
-      const [p, s, pl, en, lq, acc, per] = await Promise.all([
+      const [p, s, pl, en, lq, acc, per, , hist] = await Promise.all([
         soft(() => portal.profile() as Promise<Profile>),
         soft(() => portal.scoreInsights()),
         soft(() => portal.activePlan() as Promise<Plan>),
@@ -315,7 +317,13 @@ export default function CabinetPage() {
         soft(() => portal.me() as Promise<Account>),
         soft(() => portal.assistantProfile()),
         loadRecommendations(),
+        soft(() => portal.diagnosticHistory()),
       ]);
+      // The newest scored diagnostic, for the "today vs. diagnostic" note.
+      const latest = (hist ?? [])
+        .filter((item) => item.overall !== null && item.completed_at)
+        .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))[0];
+      setDiagnosed(latest ? Number(latest.overall) : null);
       setProfile(p); setScore(s); setPlan(pl); setEnrollments(en ?? []);
       setAssessed(Boolean(lq?.completed)); setAccount(acc); setPersona(per);
       setLoading(false);
@@ -360,6 +368,16 @@ export default function CabinetPage() {
               <div className="row" style={{ justifyContent: "center" }}>
                 <ScoreRing value={score.composite} size={158} />
               </div>
+              {/* QA D-20: the ring is today's score — it moves with finished
+                  courses — while the result page shows the diagnostic's own
+                  number. When they differ, both are named. */}
+              {diagnosed !== null && Math.round(diagnosed) !== Math.round(score.composite) && (
+                <p className="faint small center">
+                  {t("cab.scoreNow")
+                    .replace("{now}", String(Math.round(score.composite)))
+                    .replace("{then}", String(Math.round(diagnosed)))}
+                </p>
+              )}
               <div className="spread">
                 <span className="eyebrow">{t("cab.score")}</span>
                 {/* The score is retaken on its own diagnostic. The learning
@@ -382,8 +400,11 @@ export default function CabinetPage() {
                   {t("cab.weakest")}{" "}
                   <strong>
                     {score.weakest_dimensions.map((d) => t(dimensionKey(d))).join(", ")}
-                  </strong>{" "}
-                  {t("cab.weakestTail")}
+                  </strong>
+                  {/* QA D-14: the tail "the plan starts from exactly these" was
+                      false — the plan follows the diagnostic's priorities,
+                      which weigh her goals too. The lowest scores are stated
+                      as what they are. */}
                 </p>
               )}
             </div>

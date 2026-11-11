@@ -42,6 +42,8 @@ const MAIN: NavItem[] = [
   { href: "/talim/yollar", label: "lms.nav.paths", icon: "⌁" },
   { href: "/talim/amaliyot", label: "lms.nav.practice", icon: "✎" },
   { href: "/talim/yutuqlar", label: "lms.nav.achievements", icon: "✦" },
+  // QA J-03: the calendar now reads her plan's real deadlines.
+  { href: "/talim/kalendar", label: "lms.nav.calendar", icon: "◷" },
   // The portal's AI Coach, which answers from her records — not a second,
   // learning-only assistant.
   { href: "/yordamchi", label: "lms.nav.assistant", icon: "◈" },

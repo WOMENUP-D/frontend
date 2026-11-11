@@ -162,7 +162,8 @@ export function CourseCard({ view }: { view: CourseView }) {
   const { program, status, percent, art, href, outside } = view;
 
   const actionKey: MessageKey =
-    status === "completed" ? "lms.course.review"
+    outside ? "lms.course.goOutside"
+      : status === "completed" ? "lms.course.review"
       : status === "not_started" ? "lms.course.start"
         : "lms.course.continue";
 
@@ -182,7 +183,9 @@ export function CourseCard({ view }: { view: CourseView }) {
         </div>
       </div>
 
-      <Bar percent={percent} done={status === "completed"} />
+      {/* QA B-13: a partner's course is taught and tracked on its own site —
+          a 0 % bar here would be a reading of nothing. */}
+      {!outside && <Bar percent={percent} done={status === "completed"} />}
 
       <div className="lms-course-meta">
         <span>
@@ -190,11 +193,16 @@ export function CourseCard({ view }: { view: CourseView }) {
           {program.duration_weeks ? ` · ${program.duration_weeks} ${t("common.weeks")}` : ""}
           {outside ? ` · ${outside}` : ""}
         </span>
-        <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
+        {!outside && <strong style={{ color: "var(--ink)" }}>{percent}%</strong>}
       </div>
 
       <div className="lms-course-foot">
-        <StatusBadge status={status} />
+        {outside ? <Badge>{t("lms.course.partnerSite")}</Badge> : <StatusBadge status={status} />}
+        {/* QA G-09: most partner courses are taught in Russian — the card
+            says which language a course is in before she opens it. */}
+        {program.language && (
+          <Badge>{t(`pr.lang.${program.language}` as MessageKey)}</Badge>
+        )}
         {outside ? (
           <a
             className="lms-btn lms-btn-quiet lms-btn-sm"

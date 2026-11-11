@@ -36,6 +36,7 @@ import {
 } from "@/services/portal";
 import { Bar, Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useStepCopy } from "@/components/Recommendations";
+import { alignSteps } from "@/components/diagnostic/steps";
 import { levelKey } from "@/components/learning/ui";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
@@ -59,6 +60,9 @@ const PROFILE_QUESTION: Record<string, string> = {
 };
 
 const PRIORITIES: RecommendationPriority[] = ["high", "medium", "additional"];
+
+/** Where "good foundation" starts — the lowest score called a strength. */
+const STRONG_FROM = 50;
 
 export default function DiagnosticResultPage() {
   const { t, tx, tu, locale } = useI18n();
@@ -135,6 +139,18 @@ export default function DiagnosticResultPage() {
     iso ? new Date(iso).toLocaleDateString(locale === "uz-Cyrl" ? "uz" : locale) : "";
   const earlier = history.filter((item) => item.attempt_id !== result.attempt_id);
 
+  /* QA D-03: a strength is a direction that has actually reached a good
+     foundation (50+). With low or equal scores the top two were zeros, and
+     "your strengths: 0, 0" is not encouragement. */
+  const strengths = result.strongest.filter((dimension) => scoreOf(dimension) >= STRONG_FROM);
+
+  /* QA D-06: the course steps come from the same list as "courses for your
+     goal" above. The two used to be chosen by different engines, so the page
+     recommended one set of courses and then told her to start a different
+     one. Non-course steps (CV, a learning path, a task) are kept as the
+     server ranked them; a course step names the top recommended course. */
+  const steps = alignSteps(result.next_steps, courses?.courses ?? []);
+
   /** Her answer on a profile question, in the bank's words. */
   const answerLabel = (field: string, value: string): string => {
     const question = byCode.get(PROFILE_QUESTION[field]);
@@ -169,6 +185,9 @@ export default function DiagnosticResultPage() {
             <span className="dr-stage">{levelLabel(result.level)}</span>
           </div>
           <p className="dr-lead">{t(`dr.lead.${result.level}` as MessageKey)}</p>
+          {/* QA D-20: this number is the diagnostic's; the cabinet ring is
+              today's score and moves with finished courses. */}
+          <p className="faint small">{t("dr.pointNote")}</p>
 
           <div className="dr-ruler" aria-hidden="true">
             <span className="dr-ruler-pin" style={{ left: `${result.overall}%` }} />
@@ -189,6 +208,24 @@ export default function DiagnosticResultPage() {
             </div>
           </div>
         </section>
+
+        {/* QA D-23: she said she often cannot cope. A quiet offer of support,
+            not an alarm — nothing about her score changes, and the field is
+            simply absent on a server that does not send it. */}
+        {result.support_suggested === true && (
+          <section className="card stack dr-support" aria-labelledby="dr-support">
+            <h2 id="dr-support" className="dr-h2" style={{ margin: 0 }}>{t("dr.support.title")}</h2>
+            <p className="muted">{t("dr.support.lead")}</p>
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+              <Link href="/yordamchi?tab=health" className="btn btn-outline btn-sm">
+                {t("dr.support.assistant")}
+              </Link>
+              <a href="tel:1146" className="btn btn-ghost btn-sm">
+                {t("dr.support.call")}
+              </a>
+            </div>
+          </section>
+        )}
 
         {/* ---- who she said she is ---------------------------------------- */}
         {result.profile && <About profile={result.profile} label={answerLabel} />}
@@ -225,7 +262,10 @@ export default function DiagnosticResultPage() {
           <section aria-labelledby="dr-strong">
             <h2 id="dr-strong" className="dr-h2">{t("dr.strongest")}</h2>
             <ul className="dr-list">
-              {result.strongest.map((dimension) => (
+              {strengths.length === 0 && (
+                <li className="dr-item muted small">{t("dr.strongEmpty")}</li>
+              )}
+              {strengths.map((dimension) => (
                 <li key={dimension} className="dr-item">
                   <span className="dr-item-head">
                     <span>{t(dimensionKey(dimension))}</span>
@@ -286,11 +326,11 @@ export default function DiagnosticResultPage() {
         {/* ---- next steps ------------------------------------------------- */}
         <section aria-labelledby="dr-steps">
           <h2 id="dr-steps" className="dr-h2">{t("dr.steps")}</h2>
-          {result.next_steps.length === 0 ? (
+          {steps.length === 0 ? (
             <p className="muted">{t("dr.noSteps")}</p>
           ) : (
             <ol className="dr-steps">
-              {result.next_steps.map((step, index) => (
+              {steps.map((step, index) => (
                 <li key={`${step.kind}-${step.program?.id ?? step.path?.slug ?? index}`} className="dr-step">
                   <span className="dr-step-title">{copy.title(step)}</span>
                   {step.dimension && (

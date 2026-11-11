@@ -459,7 +459,10 @@ function Panel({
           {course.has_certificate && (
             <div className="lms-fact">
               <dt>{t("pd.certificate")}</dt>
-              <dd>{t("common.yes")}</dd>
+              {/* QA B-06: the certificate now needs a passed final
+                  assessment and real time on the course, not just every
+                  lesson ticked — the page says so instead of a bare "yes". */}
+              <dd>{t("lms.course.certRule")}</dd>
             </div>
           )}
         </dl>

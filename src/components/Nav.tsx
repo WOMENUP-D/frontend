@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 import { getAccessToken, getRoles, isStaff, ORG_ROLES, PANEL_ROLES } from "@/services/api";
 import { logout } from "@/services/auth";
 import { useI18n, type MessageKey } from "@/i18n";
@@ -97,6 +98,8 @@ export function Nav() {
   const [staff, setStaff] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
   const pills = useRef<HTMLDivElement>(null);
+  // QA B-19: no menu item for a job board the server has not connected.
+  const vacanciesShown = useVacancyBoardShown();
 
   // Token lives in localStorage, so this can only run after mount.
   useEffect(() => {
@@ -143,7 +146,11 @@ export function Nav() {
           <div className="nav-pills">
             {(staff
               ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
-              : LINKS.filter((link) => authed || link.guest)
+              : LINKS.filter(
+                  (link) =>
+                    (authed || link.guest) &&
+                    (vacanciesShown || link.href !== "/vakansiyalar"),
+                )
             ).map((link) => (
               <Link
                 key={link.href}

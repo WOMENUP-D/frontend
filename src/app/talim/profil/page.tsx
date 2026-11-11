@@ -215,7 +215,7 @@ export default function ProfilePage() {
                 title={t("lms.goals.empty")}
                 hint={t("lms.goals.emptyHint")}
                 action={
-                  <Link className="lms-btn lms-btn-primary" href="/kabinet">
+                  <Link className="lms-btn lms-btn-primary" href="/talim/maqsadlar">
                     {t("lms.goals.add")}
                   </Link>
                 }

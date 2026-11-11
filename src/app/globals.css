@@ -7216,3 +7216,13 @@ html[data-motion="on"] [data-reveal="stagger"].is-in > :nth-child(n + 9) { anima
 .plan-make { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .plan-make-center { justify-content: center; }
 .plan-make .cat-view button { min-height: 40px; }
+
+/* ==== QA phase 2 — area "learn" (fe-qa-learn) =====================
+   Category hues for the two categories that had none: ethics_culture (a
+   chip since B-25) and digital_skills (new in the backend, G-04). Same
+   desaturated family as the block above. */
+[data-cat="ethics_culture"]                           { --cat: #7a6a52; }
+[data-cat="digital_skills"]                           { --cat: #5a5a86; }
+[data-theme="dark"] [data-cat="ethics_culture"]       { --cat: #c8b593; }
+[data-theme="dark"] [data-cat="digital_skills"]       { --cat: #a9a9dc; }
+/* ==== end QA phase 2 — learn ===================================== */

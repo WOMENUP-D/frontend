@@ -91,6 +91,7 @@ export function useStepCopy() {
         case "plan_item":
           return course ?? "/reja";
         case "build_cv":
+        case "add_cv_to_profile":
           return "/kabinet#career";
         case "explore_skills":
           return "/kabinet#skills";
