@@ -9,3 +9,5 @@
 !src/**
 !public/
 !public/**
+# Build-time webpack loader for the per-locale dictionaries (next.config.mjs)
+!scripts/i18n-locale-loader.cjs
