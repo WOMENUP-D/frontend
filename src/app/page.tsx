@@ -9,8 +9,8 @@ import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
 import { TryQuestion } from "@/components/TryQuestion";
 import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
-import { AiTeaser, ClosingCall, PathCards, Roadmap, Wellbeing } from "./Landing";
-import { CareerProgress, OpportunityShowcase, ProgramShowcase } from "./Showcase";
+import { AiTeaser, ClosingCall, PathCards, Roadmap } from "./Landing";
+import { OpportunityShowcase, ProgramShowcase } from "./Showcase";
 
 export default function LandingPage() {
   const { t } = useI18n();
@@ -57,7 +57,7 @@ export default function LandingPage() {
 
       {/* What the portal is, in the order a visitor meets it: who helps her,
           which way she can go, what the route looks like, what she can start
-          today, what progress will feel like, and what it leads to. */}
+          today, and what it leads to. */}
       {/* Partner promotions, directly under the hero — the position a reader
           expects one and the only one that does not cut a section in half. */}
       <section className="section section-promo">
@@ -71,13 +71,11 @@ export default function LandingPage() {
       <TryQuestion />
       <Roadmap />
       <ProgramShowcase />
-      <CareerProgress />
       <section className="section section-promo">
         <div className="wrap">
           <PromoSlot slot="home-mid" />
         </div>
       </section>
-      <Wellbeing />
       <OpportunityShowcase />
       {/* No <Pricing /> here yet. The tiers are designed and the section is
           ready in ./Landing, but a paid plan on a national programme portal is

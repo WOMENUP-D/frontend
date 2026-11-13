@@ -17,7 +17,7 @@ import { pointInBox } from "./math";
  * the last tap landed. Under reduced motion the light stays centred and still.
  */
 const HOSTS =
-  ".tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile, .dash-next";
+  ".tile, .face-card, .prog-card, .ev-card, .jb-card, .cp-card, .wk-tile";
 
 export function LivingUI() {
   useEffect(() => {
