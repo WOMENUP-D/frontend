@@ -67,6 +67,9 @@ jobs:
       - run: python3 .ci/test_promote.py
       - run: npm run lint
       - run: npm run typecheck
+      # Unit tests: i18n completeness, transliteration, the alphabet, session
+      # storage, URL guard, the dictionary split… (QA B-21)
+      - run: npm test
       - run: npm run build
         env:
           NEXT_PUBLIC_API_URL: /api/v1

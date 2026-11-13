@@ -33,6 +33,7 @@ import {
   employmentKey,
   experienceKey,
   fill,
+  formatAmount,
   pickKey,
   searchParamsFor,
   sortKey,
@@ -41,6 +42,7 @@ import {
   type VacancyFilterState,
 } from "@/components/vacancies/format";
 import { regionKey } from "@/utils/format";
+import { useMedia } from "@/utils/useMedia";
 
 const PAGE = 20;
 const PICKS = ["no_experience", "internship", "remote", "part_time", "junior"] as const;
@@ -56,6 +58,8 @@ function VacanciesView() {
   const state = useMemo(() => stateFromParams(new URLSearchParams(query.toString())), [query]);
 
   const [text, setText] = useState(state.q);
+  // The full hint was cut to "…yoki kalit" on a 360 px phone (QA F-05).
+  const narrow = useMedia("(max-width: 400px)");
   const [meta, setMeta] = useState<VacancyMeta | null>(null);
   const [data, setData] = useState<VacancyPage | null>(null);
   const [items, setItems] = useState<Vacancy[]>([]);
@@ -192,7 +196,7 @@ function VacanciesView() {
             id="vc-q"
             type="search"
             className="jb-search-input"
-            placeholder={t("vac.searchHint")}
+            placeholder={t(narrow ? "vac.searchHintShort" : "vac.searchHint")}
             value={text}
             onChange={(event) => setText(event.target.value)}
             autoComplete="off"
@@ -293,7 +297,7 @@ function VacanciesView() {
               )}
               {state.salaryFrom && (
                 <Pill
-                  label={`${t("vac.salaryFrom").split(" (")[0]}: ${Number(state.salaryFrom).toLocaleString("uz-UZ")}`}
+                  label={`${t("vac.salaryFrom").split(" (")[0]}: ${formatAmount(Number(state.salaryFrom))}`}
                   onRemove={() => change({ salaryFrom: null })}
                 />
               )}
@@ -329,9 +333,18 @@ function VacanciesView() {
                       : "vac.error",
                 )}
               />
-              <button type="button" className="btn btn-outline" onClick={() => load(1)}>
-                {t("lms.err.retry")}
-              </button>
+              {/* QA B-19: "not connected" is not a hiccup — retrying cannot
+                  change it, so the honest next step is the portal's own
+                  opportunities, not a retry button. */}
+              {failed === "unconfigured" ? (
+                <Link className="btn btn-outline" href="/imkoniyatlar">
+                  {t("vac.toOpportunities")}
+                </Link>
+              ) : (
+                <button type="button" className="btn btn-outline" onClick={() => load(1)}>
+                  {t("lms.err.retry")}
+                </button>
+              )}
             </div>
           ) : items.length === 0 ? (
             <section className="jb-empty" aria-labelledby="vc-empty-h">

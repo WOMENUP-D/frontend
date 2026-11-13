@@ -18,11 +18,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { getAccessToken } from "@/services/api";
 import { portal, type Notification, type Program } from "@/services/portal";
 import { Icon } from "@/components/ds";
+import { sharedProfile } from "./sharedProfile";
+import { SignInLink } from "@/components/auth/SignInLink";
+import { useSignedIn } from "@/components/auth/useViewer";
 
 interface NavItem {
   href: string;
@@ -42,17 +45,20 @@ const MAIN: NavItem[] = [
   { href: "/talim/yollar", label: "lms.nav.paths", icon: "⌁" },
   { href: "/talim/amaliyot", label: "lms.nav.practice", icon: "✎" },
   { href: "/talim/yutuqlar", label: "lms.nav.achievements", icon: "✦" },
+  // QA J-03: the calendar now reads her plan's real deadlines.
+  { href: "/talim/kalendar", label: "lms.nav.calendar", icon: "◷" },
   // The portal's AI Coach, which answers from her records — not a second,
   // learning-only assistant.
   { href: "/yordamchi", label: "lms.nav.assistant", icon: "◈" },
 ];
 
-/* Settings and Help point at the portal pages that genuinely own those jobs —
-   the cabinet holds the account, the portal assistant answers questions. A
-   link to a page that does not exist is worse than no link. */
+/* The portal has no separate settings page or FAQ yet. The link to the
+   cabinet — where her account lives — is named for what it opens, and the
+   "Help" entry that opened the same assistant as the AI entry above is gone
+   (QA E-05). A label promising a page that is not behind it is worse than no
+   link. */
 const SECONDARY: NavItem[] = [
-  { href: "/kabinet", label: "lms.nav.settings", icon: "⚙" },
-  { href: "/yordamchi", label: "lms.nav.help", icon: "?" },
+  { href: "/kabinet", label: "nav.cabinet", icon: "⚙" },
 ];
 
 /* Crumbs still name the unadvertised sections: a woman who has one of those
@@ -74,14 +80,15 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Her name and initials, for the rail and the avatar. Read once per mount. */
+/** Her name and initials, for the rail and the avatar. Read once per mount,
+ *  through `sharedProfile` so the page below asking for the same record does
+ *  not send a second request (QA H-06). */
 function useLearner(): { name: string; initials: string } {
   const [name, setName] = useState("");
 
   useEffect(() => {
     if (!getAccessToken()) return;
-    portal
-      .profile()
+    sharedProfile()
       .then((profile) => setName((profile as { full_name: string | null }).full_name ?? ""))
       .catch(() => setName(""));
   }, []);
@@ -276,6 +283,9 @@ export function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/talim";
   const [open, setOpen] = useState(false);
   const learner = useLearner();
+  // A visitor gets the section without a profile card, an avatar or a bell
+  // that belong to nobody (C-18).
+  const signedIn = useSignedIn(() => Boolean(getAccessToken()));
 
   /* The trail, as far as the shell can know it without a second request: the
      section, not the course. The page below carries the course's own name as
@@ -283,9 +293,10 @@ export function Shell({ children }: { children: ReactNode }) {
   const crumbs = useMemo<{ href?: string; label: string }[]>(() => {
     const [, section] = pathname.split("/").filter(Boolean);
     const root = { href: section ? "/talim" : undefined, label: t("lms.nav.dashboard") };
-    const key = section ? SECTION_LABEL[section] : undefined;
+    const named = section ? SECTION_LABEL[section] : undefined;
+    const key = !signedIn && named === "lms.nav.courses" ? "au.lms.guestCourses" : named;
     return key ? [root, { label: t(key) }] : [root];
-  }, [pathname, t]);
+  }, [pathname, t, signedIn]);
 
   // The drawer is a route-level thing: leaving the page should close it.
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -300,13 +311,24 @@ export function Shell({ children }: { children: ReactNode }) {
     return () => { delete document.body.dataset.section; };
   }, []);
 
+  /* Escape and the scrim close the drawer and hand focus back to the burger
+     that opened it (QA E-07); while closed on a phone the drawer is
+     `visibility: hidden` in talim.css, so its links are out of the tab order. */
+  const burger = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => {
+    setOpen((was) => {
+      if (was) requestAnimationFrame(() => burger.current?.focus());
+      return false;
+    });
+  }, []);
+
   useEffect(() => {
     function escape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     }
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
-  }, []);
+  }, [close]);
 
   function renderNav(items: NavItem[]) {
     return items.map((item) => (
@@ -317,7 +339,7 @@ export function Shell({ children }: { children: ReactNode }) {
         aria-current={isActive(pathname, item.href) ? "page" : undefined}
       >
         <span className="lms-nav-ico" aria-hidden="true">{item.icon}</span>
-        {t(item.label)}
+        {t(!signedIn && item.label === "lms.nav.courses" ? "au.lms.guestCourses" : item.label)}
       </Link>
     ));
   }
@@ -329,7 +351,8 @@ export function Shell({ children }: { children: ReactNode }) {
           type="button"
           className="lms-scrim"
           aria-label={t("lms.nav.close")}
-          onClick={() => setOpen(false)}
+          tabIndex={-1}
+          onClick={close}
         />
       )}
 
@@ -353,20 +376,25 @@ export function Shell({ children }: { children: ReactNode }) {
 
         <div className="lms-side-spacer" />
 
-        <Link href="/talim/profil" className="lms-side-foot">
-          <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
-          <span style={{ minWidth: 0 }}>
-            <span className="lms-side-name">{learner.name || t("cab.user")}</span>
-            <br />
-            <span className="lms-side-role">{t("lms.nav.profile")}</span>
-          </span>
-        </Link>
+        {signedIn ? (
+          <Link href="/talim/profil" className="lms-side-foot">
+            <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
+            <span style={{ minWidth: 0 }}>
+              <span className="lms-side-name">{learner.name || t("cab.user")}</span>
+              <br />
+              <span className="lms-side-role">{t("lms.nav.profile")}</span>
+            </span>
+          </Link>
+        ) : (
+          <SignInLink className="lms-btn lms-btn-primary">{t("nav.signIn")}</SignInLink>
+        )}
       </aside>
 
       <div className="lms-main">
         <header className="lms-top">
           <button
             type="button"
+            ref={burger}
             className="lms-icon-btn lms-burger"
             aria-label={open ? t("lms.nav.close") : t("lms.nav.open")}
             aria-expanded={open}
@@ -388,10 +416,14 @@ export function Shell({ children }: { children: ReactNode }) {
 
           <div className="lms-top-tools">
             <Search />
-            <Notifications />
-            <Link href="/talim/profil" aria-label={t("lms.nav.profile")}>
-              <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
-            </Link>
+            {signedIn && <Notifications />}
+            {signedIn ? (
+              <Link href="/talim/profil" aria-label={t("lms.nav.profile")}>
+                <span className="lms-avatar" aria-hidden="true">{learner.initials}</span>
+              </Link>
+            ) : (
+              <SignInLink className="lms-btn lms-btn-primary lms-btn-sm">{t("nav.signIn")}</SignInLink>
+            )}
           </div>
         </header>
 

@@ -15,7 +15,7 @@
  */
 
 import { useId, useState } from "react";
-import { useI18n, type MessageKey } from "@/i18n";
+import { useI18n, type MessageKey, formatDate } from "@/i18n";
 import { ApiError } from "@/services/api";
 import {
   portal,
@@ -232,7 +232,7 @@ export function Invitations({
 }) {
   const { t, tx, locale } = useI18n();
   const date = (iso: string) =>
-    new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : locale === "ru" ? "ru-RU" : "uz-UZ");
+    formatDate(locale, iso);
   const title = (listingId: string | null) => {
     const listing = listings.find((item) => item.id === listingId);
     return listing ? tx(listing.title_i18n) : t("ws.noListing");

@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { getAccessToken, getRoles, isStaff, ORG_ROLES, PANEL_ROLES } from "@/services/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  getAccessToken,
+  getRoles,
+  isStaff,
+  onTokenChange,
+  ORG_ROLES,
+  PANEL_ROLES,
+} from "@/services/api";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 import { logout } from "@/services/auth";
-import { useI18n, type MessageKey } from "@/i18n";
+import { LOCALES, useI18n, type MessageKey } from "@/i18n";
 import { LangSwitch } from "./LangSwitch";
 import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "./ThemeToggle";
@@ -92,22 +100,59 @@ function isActive(pathname: string, href: string): boolean {
 export function Nav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [authed, setAuthed] = useState(false);
+  /* Phones (≤ 600 px): the destinations, the language and "Sign out" fold
+     into one menu instead of a sideways strip where half the sections sat
+     out of sight behind a fade (QA F-02). The header is then a single row. */
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const menuPanel = useRef<HTMLDivElement>(null);
+  const closeMenu = useCallback((refocus: boolean) => {
+    setMenuOpen(false);
+    if (refocus) requestAnimationFrame(() => menuButton.current?.focus());
+  }, []);
   const [staff, setStaff] = useState(false);
   const [roles, setRoles] = useState<string[]>([]);
   const pills = useRef<HTMLDivElement>(null);
+  // QA B-19: no menu item for a job board the server has not connected.
+  const vacanciesShown = useVacancyBoardShown();
 
-  // Token lives in localStorage, so this can only run after mount.
+  // The token lives in memory, so this can only run after mount — and it is
+  // re-read whenever the token changes, so a session that dies in the
+  // background stops showing "Sign out" (C-25).
   useEffect(() => {
-    const token = Boolean(getAccessToken());
-    setAuthed(token);
-    // A coordinator has no cabinet, no diagnostic and no plan of her own, so
-    // the learner navigation is dead weight in her header — it was showing her
-    // six links she has no reason to open.
-    setStaff(Boolean(token) && isStaff());
-    setRoles(token ? getRoles() : []);
+    const read = () => {
+      const token = Boolean(getAccessToken());
+      setAuthed(token);
+      // A coordinator has no cabinet, no diagnostic and no plan of her own, so
+      // the learner navigation is dead weight in her header — it was showing
+      // her six links she has no reason to open.
+      setStaff(Boolean(token) && isStaff());
+      setRoles(token ? getRoles() : []);
+    };
+    setMenuOpen(false);
+    read();
+    return onTokenChange(read);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMenu(true);
+    }
+    function onPointer(event: PointerEvent) {
+      const target = event.target as Node;
+      if (menuPanel.current?.contains(target) || menuButton.current?.contains(target)) return;
+      closeMenu(false);
+    }
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [menuOpen, closeMenu]);
 
   /* On a phone the pills are a sideways strip, and the one for the page she
      is on could sit out of sight — so she could not see where she was. Bring
@@ -121,30 +166,47 @@ export function Nav() {
     strip.scrollLeft += box.left - frame.left - (frame.width - box.width) / 2;
   }, [pathname, authed, staff]);
 
-  function signOut() {
+  const links = staff
+    ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
+    : LINKS.filter(
+        (link) =>
+          (authed || link.guest) &&
+          (vacanciesShown || link.href !== "/vakansiyalar"),
+      );
+
+  const [leaving, setLeaving] = useState(false);
+  async function signOut() {
     // One sign-out path: it drops the tokens and anything a provider left
-    // behind, so nothing survives into the next person's session.
-    logout();
-    setAuthed(false);
-    setStaff(false);
-    router.push(staff ? "/admin/login" : "/");
+    // behind, so nothing survives into the next person's session. Awaited, so
+    // the server has revoked the session before the next page can ask for one.
+    setLeaving(true);
+    const toPanelDoor = staff;
+    try {
+      await logout();
+    } finally {
+      setLeaving(false);
+      setAuthed(false);
+      setStaff(false);
+      router.push(toPanelDoor ? "/admin/login" : "/");
+    }
   }
+
+  // The sign-in page is where "Get started" leads; on it, the button went
+  // nowhere (C-23).
+  const onAuthPage = pathname === "/login" || pathname.startsWith("/parol-tiklash");
 
   return (
     <nav className="nav">
       <div className="nav-inner">
         {/* Named for a screen reader: on a phone the wordmark is hidden and
             the blossom alone is decoration. */}
-        <Link href="/" aria-label="WomanUP">
+        <Link href="/" aria-label="WomanUP" className="nav-home">
           <Brand />
         </Link>
 
         <div className="nav-links" ref={pills}>
           <div className="nav-pills">
-            {(staff
-              ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
-              : LINKS.filter((link) => authed || link.guest)
-            ).map((link) => (
+            {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -158,21 +220,61 @@ export function Nav() {
         </div>
 
         <div className="header-tools">
-          <LangSwitch />
+          <span className="nav-wide-only"><LangSwitch /></span>
           <ThemeToggle />
           {authed && !staff && <NotificationBell />}
           {authed ? (
-            <button className="nav-plain" onClick={signOut}>
+            <button className="nav-plain nav-wide-only" onClick={() => void signOut()} disabled={leaving}>
               {t("nav.signOut")}
             </button>
-          ) : (
+          ) : onAuthPage ? null : (
             /* One door, not two. Both of these went to /login, which already
                offers signing in and opening an account side by side — so the
                header was asking her to choose between two words for the same
                screen before she had any reason to care about the difference. */
-            <Link href="/login" className="btn btn-contrast btn-sm btn-pill">
+            <Link href="/login?mode=signup" className="btn btn-contrast btn-sm btn-pill">
               {t("nav.getStarted")}
             </Link>
+          )}
+          <button
+            ref={menuButton}
+            type="button"
+            className="nav-menu-btn"
+            aria-expanded={menuOpen}
+            aria-controls="nav-menu"
+            aria-label={t(menuOpen ? "lms.nav.close" : "lms.nav.open")}
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            <span aria-hidden="true" className="nav-menu-ico">{menuOpen ? "✕" : "☰"}</span>
+            {/* The language is in the menu on a phone, so its code is on the
+                button: a visitor who does not read Uzbek sees where to go. */}
+            <span aria-hidden="true" className="nav-menu-lang">
+              {LOCALES.find((item) => item.code === locale)?.short}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div id="nav-menu" ref={menuPanel} className="nav-menu" hidden={!menuOpen}>
+        <div className="nav-menu-links">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`nav-menu-link ${isActive(pathname, link.href) ? "active" : ""}`}
+              aria-current={isActive(pathname, link.href) ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t(link.key)}
+            </Link>
+          ))}
+        </div>
+        <div className="nav-menu-foot">
+          <LangSwitch />
+          {authed && (
+            <button type="button" className="nav-plain" onClick={() => void signOut()} disabled={leaving}>
+              {t("nav.signOut")}
+            </button>
           )}
         </div>
       </div>

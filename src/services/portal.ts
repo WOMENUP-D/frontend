@@ -43,6 +43,8 @@ export type NextStepKind =
   | "add_project"
   | "explore_opportunities"
   | "build_cv"
+  // QA D-05 (be-qa-cat): she said she has a CV, the portal holds none.
+  | "add_cv_to_profile"
   | "explore_skills";
 
 export type RecommendationReason =
@@ -351,6 +353,9 @@ export interface DiagnosticPriority {
 
 export interface DiagnosticResult {
   attempt_id: string;
+  /** QA D-23 (be-qa-safety): she answered that she often cannot cope. Shows a
+   *  gentle support card; never changes a score. Absent on older servers. */
+  support_suggested?: boolean;
   version: number;
   completed_at: string | null;
   is_baseline: boolean;
@@ -513,7 +518,8 @@ export interface Program {
   title_i18n: Record<string, string>;
   goal_i18n: Record<string, string>;
   category: string;
-  format: string;
+  /** QA G-16: null when a partner platform does not state it. */
+  format: string | null;
   /** How demanding the course is. Null when nobody has classified it. */
   level: ProficiencyLevel | null;
   duration_hours: number | null;
@@ -527,6 +533,9 @@ export interface Program {
   /** Set when the course belongs to somebody else and lives on their site. */
   external_url?: string | null;
   source?: string | null;
+  /** QA G-16: sent by the list endpoint too; stands in for an empty goal. */
+  description_i18n?: Record<string, string>;
+  cover_url?: string | null;
 }
 
 /* ---- practical tasks --------------------------------------------------
@@ -982,6 +991,8 @@ export interface CoachReply {
   generated: boolean;
   next_step: CoachReference | null;
   references: CoachReference[];
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
 }
 
 /* ---- learning paths --------------------------------------------------
@@ -1342,8 +1353,10 @@ export interface SuggestedCourse {
     has_certificate: boolean;
     skills_taught: string[];
   };
-  /** The listing's own requirement words this course teaches. */
-  covers: string[];
+  /** What of the listing's requirements this course teaches: the listing's
+   *  own words (shown as written), or taxonomy skills with their names in
+   *  every language, which render in the interface language (G-10). */
+  covers: Array<string | SkillRef>;
   /** One sentence per language when the model chose; empty when the rules did. */
   reason_i18n: Record<string, string>;
 }
@@ -1762,12 +1775,28 @@ export interface NavigatorAnswer {
   escalation_reason: string | null;
   suggested_actions: string[];
   trace_id: string;
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
 }
 
 export interface Page<T> { items: T[]; total: number; page: number; size: number }
 
 
 // ---- AI Assistant ---------------------------------------------------------
+
+/** A model call that has not answered in 45 s is not going to (QA H-04): the
+ *  request is abandoned and the page says so, with a way to ask again. The
+ *  error is a DOMException named "TimeoutError" — see `isTimeout`. */
+export const AI_TIMEOUT_MS = 45_000;
+function aiSignal(): AbortSignal | undefined {
+  return typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+    ? AbortSignal.timeout(AI_TIMEOUT_MS)
+    : undefined;
+}
+export function isTimeout(error: unknown): boolean {
+  const name = (error as { name?: string } | null)?.name;
+  return name === "TimeoutError" || name === "AbortError";
+}
 
 export interface ProfessionCard {
   title: string;
@@ -2331,6 +2360,11 @@ export interface AssistantReply {
   next_actions: string[];
   programs: ProgramRef[];
   guest_questions_left: number | null;
+  /** Help lines attached by the safety filter (QA I-15). Optional. */
+  resources?: { id: string; phone: string; tel: string; label: string }[];
+  /** True when the model was unavailable and a simpler answer was built
+   *  without it (QA B-18/B-09). Optional: older servers omit it. */
+  degraded?: boolean;
 }
 
 export interface AssistantProfile {
@@ -2450,6 +2484,8 @@ export const portal = {
    *  why plans came back in Uzbek on the Russian pages. */
   generatePlan: (horizon = "3m", language?: string) =>
     api.post<Plan>("/plans/generate", { horizon, language }),
+  /** QA D-17: "Cancel" on a draft discards it, so it does not come back. */
+  deletePlan: (planId: string) => api.delete<{ detail: string }>(`/plans/${planId}`),
   acceptPlan: (planId: string) =>
     api.post<Plan>(`/plans/${planId}/accept`, { accepted: true, removed_item_ids: [] }),
   updatePlanItem: (itemId: string, status: string) =>
@@ -2457,7 +2493,7 @@ export const portal = {
 
   nextStep: () => api.get<NextStepCard>("/ai/next-step"),
   askNavigator: (message: string) =>
-    api.post<NavigatorAnswer>("/ai/navigator", { message }),
+    api.post<NavigatorAnswer>("/ai/navigator", { message }, { signal: aiSignal() }),
 
   programs: (query = "") => api.get<Page<Program>>(`/programs${query}`),
   programTopics: (query = "") => api.get<ProgramTopic[]>(`/programs/topics${query}`),
@@ -2514,6 +2550,12 @@ export const portal = {
     ),
   /** The goals she set for herself, as the cabinet stores them. */
   goals: () => api.get<Goal[]>("/users/me/goals"),
+  // QA B-05: the goals screen reads and writes her real goals.
+  createGoal: (body: { title: string; horizon: string; target_date?: string | null; description?: string | null }) =>
+    api.post<Goal>("/users/me/goals", body),
+  updateGoal: (id: string, body: { achieved?: boolean; title?: string; target_date?: string | null }) =>
+    api.patch<Goal>(`/users/me/goals/${id}`, body),
+  deleteGoal: (id: string) => api.delete<{ detail: string }>(`/users/me/goals/${id}`),
   notifications: () => api.get<Notification[]>("/notifications"),
   markNotificationsRead: () => api.post<{ detail: string }>("/notifications/read-all"),
 
@@ -2647,17 +2689,24 @@ export const portal = {
 
   dashboard: (filters: AdminFilters = {}) => api.get(`/admin/dashboard${queryOf(filters)}`),
 
-  assistantAsk: (message: string, language: string, route = "auto") =>
-    api.post<AssistantReply>("/assistant/ask", { message, language, route }, {
+  /** `history` — the tab's earlier turns (QA B-15); the server keeps the last
+   *  eight and runs the safety filter on `message` before anything else. */
+  assistantAsk: (
+    message: string,
+    language: string,
+    route = "auto",
+    history: { role: "user" | "assistant"; content: string }[] = [],
+  ) =>
+    api.post<AssistantReply>("/assistant/ask", { message, language, route, history }, {
       headers: { "X-Guest-Id": guestId() },
+      signal: aiSignal(),
     }),
   assistantDetail: (message: string, answer: string, kind: string, language: string) =>
-    api.post<AssistantReply>("/assistant/education/detail", {
-      message,
-      answer,
-      kind,
-      language,
-    }),
+    api.post<AssistantReply>(
+      "/assistant/education/detail",
+      { message, answer, kind, language },
+      { signal: aiSignal() },
+    ),
   assistantDaily: (language: string) =>
     api.get<AssistantReply>(`/assistant/daily?language=${encodeURIComponent(language)}`),
   assistantProfile: () => api.get<AssistantProfile>("/assistant/profile"),
@@ -2720,12 +2769,18 @@ export const portal = {
   coachContext: (language: string) =>
     api.get<CoachContext>(`/assistant/coach?language=${encodeURIComponent(language)}`),
   /** Ask the Coach. Grounded server-side in the same records. */
-  coachAsk: (message: string, language: string, opportunityId?: string | null) =>
+  coachAsk: (
+    message: string,
+    language: string,
+    opportunityId?: string | null,
+    history: { role: "user" | "assistant"; content: string }[] = [],
+  ) =>
     api.post<CoachReply>("/assistant/coach", {
       message,
       language,
+      history,
       ...(opportunityId ? { opportunity_id: opportunityId } : {}),
-    }),
+    }, { signal: aiSignal() }),
   assistantGuestAllowance: () =>
     api.get<GuestAllowance>("/assistant/guest-allowance", {
       headers: { "X-Guest-Id": guestId() },

@@ -23,6 +23,7 @@ import { Hint } from "@/components/guide/Parts";
 import { BusinessCard } from "@/components/business/BusinessCard";
 import { missingSignals } from "@/components/business/format";
 import { fill } from "@/components/jobs/format";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 const HELP: Record<"profile" | "score", { href: string; key: MessageKey }> = {
   profile: { href: "/welcome", key: "biz.empty.profile" },
@@ -75,9 +76,9 @@ export default function BusinessPage() {
         <div className="jb-empty">
           <p className="jb-empty-title">{t("biz.guest")}</p>
           <div className="jb-actions">
-            <Link href="/login" className="btn btn-primary">
+            <SignInLink className="btn btn-primary">
               {t("car.signInCta")}
-            </Link>
+            </SignInLink>
             <Link href="/imkoniyatlar?business=1" className="btn btn-outline">
               {t("biz.filter")}
             </Link>

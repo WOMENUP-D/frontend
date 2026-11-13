@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useI18n } from "@/i18n";
 import { Brand } from "@/components/Nav";
+import { SITE_CONTACTS } from "@/config/site";
 import { Sky } from "@/components/Sky";
 import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
 import { TryQuestion } from "@/components/TryQuestion";
-import { AiTeaser, ClosingCall, PathCards, Roadmap, Wellbeing } from "./Landing";
-import { CareerProgress, OpportunityShowcase, ProgramShowcase } from "./Showcase";
+import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
+import { AiTeaser, ClosingCall, PathCards, Roadmap } from "./Landing";
+import { OpportunityShowcase, ProgramShowcase } from "./Showcase";
 
 export default function LandingPage() {
   const { t } = useI18n();
@@ -42,9 +44,9 @@ export default function LandingPage() {
             </h1>
             <p className="lead">{t("landing.lead")}</p>
             <div className="hero-actions">
-              <Link href="/login" className="btn btn-primary">
-                {t("landing.cta")}
-              </Link>
+              {/* Worded for who is looking: a visitor, a woman without a
+                  score, with one, with a plan (C-05). */}
+              <ViewerCta className="btn btn-primary" />
               <Link href="/dasturlar" className="btn btn-ghost">
                 {t("landing.ctaAlt")}
               </Link>
@@ -55,7 +57,7 @@ export default function LandingPage() {
 
       {/* What the portal is, in the order a visitor meets it: who helps her,
           which way she can go, what the route looks like, what she can start
-          today, what progress will feel like, and what it leads to. */}
+          today, and what it leads to. */}
       {/* Partner promotions, directly under the hero — the position a reader
           expects one and the only one that does not cut a section in half. */}
       <section className="section section-promo">
@@ -69,13 +71,11 @@ export default function LandingPage() {
       <TryQuestion />
       <Roadmap />
       <ProgramShowcase />
-      <CareerProgress />
       <section className="section section-promo">
         <div className="wrap">
           <PromoSlot slot="home-mid" />
         </div>
       </section>
-      <Wellbeing />
       <OpportunityShowcase />
       {/* No <Pricing /> here yet. The tiers are designed and the section is
           ready in ./Landing, but a paid plan on a national programme portal is
@@ -96,7 +96,7 @@ export default function LandingPage() {
               <Link href="/dasturlar">{t("nav.programs")}</Link>
               <Link href="/imkoniyatlar">{t("nav.opportunities")}</Link>
               <Link href="/yordamchi">{t("asst.nav")}</Link>
-              <Link href="/login">{t("nav.signIn")}</Link>
+              <AccountLink />
             </div>
 
             <div className="footer-col">
@@ -106,17 +106,37 @@ export default function LandingPage() {
 
             <div className="footer-col">
               <span>{t("foot.contacts")}</span>
-              <span className="footer-line">{t("foot.phone")}</span>
-              <a href={`mailto:${t("foot.email")}`}>{t("foot.email")}</a>
+              {/* Contacts are business facts kept in config/site.ts (G-24);
+                  an unset one is hidden rather than printed as a template. */}
+              {SITE_CONTACTS.phone && (
+                <a className="footer-line" href={`tel:${SITE_CONTACTS.phone.replace(/[^+\d]/g, "")}`}>
+                  {SITE_CONTACTS.phone}
+                </a>
+              )}
+              {SITE_CONTACTS.email && <a href={`mailto:${SITE_CONTACTS.email}`}>{SITE_CONTACTS.email}</a>}
             </div>
 
-            <div className="footer-col">
-              <span>{t("foot.addressLabel")}</span>
-              <span className="footer-line">{t("foot.address")}</span>
-              <span className="footer-line">
-                {t("foot.socialLabel")}: {t("foot.soon")}
-              </span>
-            </div>
+            {(SITE_CONTACTS.address || SITE_CONTACTS.social.length > 0) && (
+              <div className="footer-col">
+                {SITE_CONTACTS.address && (
+                  <>
+                    <span>{t("foot.addressLabel")}</span>
+                    <span className="footer-line">{SITE_CONTACTS.address}</span>
+                  </>
+                )}
+                {SITE_CONTACTS.social.length > 0 && (
+                  <span className="footer-line">
+                    {t("foot.socialLabel")}:{" "}
+                    {SITE_CONTACTS.social.map((item, i) => (
+                      <span key={item.url}>
+                        {i > 0 && " · "}
+                        <a href={item.url} rel="noopener noreferrer" target="_blank">{item.label}</a>
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="footer-base">

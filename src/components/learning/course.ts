@@ -42,6 +42,7 @@ const CATEGORY_ART: Record<string, Art> = {
   leadership: { tone: "ink", emblem: "★" },
   legal_literacy: { tone: "sky", emblem: "§" },
   digital_safety: { tone: "sky", emblem: "⛉" },
+  digital_skills: { tone: "ink", emblem: "⌘" },
   international: { tone: "sky", emblem: "✈" },
   mentorship_networking: { tone: "sage", emblem: "◎" },
   volunteering: { tone: "sage", emblem: "✦" },
@@ -123,4 +124,19 @@ export function lessonCounts(
     done: lessons.filter((lesson) => isComplete(enrollment, lesson.id)).length,
     total: lessons.length,
   };
+}
+
+/** A course she is taking and has not finished or left. A fresh enrollment is
+ *  stored as "enrolled", not "in_progress" — it still counts. (QA C-14) */
+export function isOpen(item: Pick<Enrollment, "status">): boolean {
+  return item.status !== "completed" && item.status !== "dropped";
+}
+
+/** The course the dashboard's hero resumes: one taught here (a partner's
+ *  course has no lessons to resume), started ones before fresh ones. */
+export function resumeOf<T extends EnrollmentDetail>(enrollments: T[]): T | null {
+  const ours = enrollments.filter(
+    (item) => isOpen(item) && item.program && !item.program.external_url,
+  );
+  return ours.find((item) => item.status === "in_progress") ?? ours[0] ?? null;
 }

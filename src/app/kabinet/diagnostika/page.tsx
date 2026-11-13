@@ -23,14 +23,28 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
+import { decodeSubject } from "@/services/tokenStore";
+import { invalidateViewer } from "@/services/viewer";
 import { portal, type DiagnosticQuestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { shownQuestions } from "@/components/diagnostic/branching";
+import { partProgress } from "@/components/diagnostic/progress";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
 
 const DRAFT_ITEM = "womanup.diagnostic.v3";
+
+/* The draft is hers: kept under her account id, with the id written into it
+   and checked on the way back, and wiped on sign-out (services/personalData).
+   On a shared handset it used to be resumed by whoever signed in next (I-01). */
+function draftOwner(): string | null {
+  return decodeSubject(getAccessToken());
+}
+
+function draftKey(owner: string): string {
+  return `${DRAFT_ITEM}:${owner}`;
+}
 
 interface Draft {
   clientRef: string;
@@ -41,21 +55,30 @@ interface Draft {
   answers: Record<string, string[]>;
   /** The question ids it was answered against — a changed set voids it. */
   questionIds: string[];
+  /** Whose answers these are. A draft without it, or with another id, is not read. */
+  owner?: string;
 }
 
 function readDraft(): Draft | null {
+  const owner = draftOwner();
+  if (!owner) return null;
   try {
-    const raw = window.localStorage.getItem(DRAFT_ITEM);
-    return raw ? (JSON.parse(raw) as Draft) : null;
+    // The unkeyed draft an earlier release wrote cannot say whose it is.
+    window.localStorage.removeItem(DRAFT_ITEM);
+    const raw = window.localStorage.getItem(draftKey(owner));
+    const draft = raw ? (JSON.parse(raw) as Draft) : null;
+    return draft && draft.owner === owner ? draft : null;
   } catch {
     return null;
   }
 }
 
 function writeDraft(draft: Draft | null) {
+  const owner = draftOwner();
+  if (!owner) return;
   try {
-    if (draft) window.localStorage.setItem(DRAFT_ITEM, JSON.stringify(draft));
-    else window.localStorage.removeItem(DRAFT_ITEM);
+    if (draft) window.localStorage.setItem(draftKey(owner), JSON.stringify({ ...draft, owner }));
+    else window.localStorage.removeItem(draftKey(owner));
   } catch {
     /* A browser that blocks storage still gets a working check-in. */
   }
@@ -252,6 +275,8 @@ export default function DiagnosticPage() {
           })),
       });
       writeDraft(null);
+      // She has a score now: every state-dependent button moves on.
+      invalidateViewer();
       router.push("/kabinet/diagnostika/natija");
     } catch (err) {
       setSaving(false);
@@ -271,7 +296,13 @@ export default function DiagnosticPage() {
   }
 
   const name = `q-${question.id}`;
-  const progress = t("dg.progress").replace("{n}", String(index + 1)).replace("{total}", String(total));
+  // QA D-11: progress per part — see components/diagnostic/progress.ts.
+  const at = partProgress(shown, index);
+  const progress = at.total !== null
+    ? t("dg.progress").replace("{n}", String(at.n)).replace("{total}", String(at.total))
+    : t("dg.progressOpen").replace("{n}", String(at.n));
+  const partLabel = t("dg.partOf").replace("{n}", String(at.part)).replace("{total}", String(at.parts));
+  const filled = at.percent;
   const typed = text ? (chosen[0] ?? "") : "";
 
   return (
@@ -292,7 +323,7 @@ export default function DiagnosticPage() {
 
         <div className="dg-where">
           <span className="dg-section">
-            <span className="dg-part">{part}</span>
+            <span className="dg-part">{partLabel} · {part}</span>
             {section}
           </span>
           <span className="faint dg-count">{progress}</span>
@@ -302,10 +333,10 @@ export default function DiagnosticPage() {
           role="progressbar"
           aria-label={progress}
           aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={index + 1}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(filled)}
         >
-          <span style={{ width: `${((index + 1) / total) * 100}%` }} />
+          <span style={{ width: `${filled}%` }} />
         </div>
 
         <fieldset
@@ -390,9 +421,15 @@ export default function DiagnosticPage() {
           >
             {last
               ? (saving ? t("dg.saving") : t("dg.finish"))
-              : (has ? t("dg.next") : t("dg.skip"))}
+              : (has || !question.optional ? t("dg.next") : t("dg.skip"))}
           </button>
         </div>
+        {/* QA D-12: the main button reads "Next" on a required question; it
+            stays disabled until she answers, and says why. "Skip" is only
+            offered where skipping is allowed. */}
+        {!canGo && !saving && (
+          <p className="faint small dg-need" aria-live="polite">{t("dg.chooseFirst")}</p>
+        )}
       </div>
     </main>
   );

@@ -310,9 +310,12 @@ export function Sheet({
 export function StepIndicator({
   label,
   steps,
+  doneLabel,
 }: {
   label: string;
-  steps: { title: string; body?: string; href?: string; icon?: string }[];
+  steps: { title: string; body?: string; href?: string; icon?: string; done?: boolean }[];
+  /** Read to a screen reader beside a finished step ("Done"). */
+  doneLabel?: string;
 }) {
   return (
     <ol className="ds-steps" aria-label={label}>
@@ -320,16 +323,19 @@ export function StepIndicator({
         const inner = (
           <>
             <span className="ds-step-n" aria-hidden="true">
-              {index + 1}
+              {step.done ? "✓" : index + 1}
             </span>
             <span className="ds-step-text">
-              <span className="ds-step-title">{step.title}</span>
+              <span className="ds-step-title">
+                {step.title}
+                {step.done && doneLabel && <span className="sr-only"> — {doneLabel}</span>}
+              </span>
               {step.body && <span className="ds-step-body">{step.body}</span>}
             </span>
           </>
         );
         return (
-          <li key={step.title} className="ds-step">
+          <li key={step.title} className={step.done ? "ds-step is-done" : "ds-step"}>
             {step.href ? (
               <Link href={step.href} className="ds-step-link">
                 {inner}

@@ -22,6 +22,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
 import { getAccessToken } from "@/services/api";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 import {
   portal,
   type OpportunityCard,
@@ -34,11 +35,14 @@ import { JobCard } from "@/components/jobs/JobCard";
 import { FilterControls, FilterSheet, type FilterValue } from "@/components/jobs/Filters";
 import { activeFilters, fill } from "@/components/jobs/format";
 import { Reveal } from "@/components/motion/Reveal";
+import { SignInLink } from "@/components/auth/SignInLink";
 
 const PAGE = 20;
 
 function OpportunitiesView() {
   const { t, tx } = useI18n();
+  // QA B-19: the hh.uz link is hidden while the board is not connected.
+  const vacanciesShown = useVacancyBoardShown();
   const router = useRouter();
   const pathname = usePathname();
   const query = useSearchParams();
@@ -215,7 +219,7 @@ function OpportunitiesView() {
               </Link>
             </>
           )}
-          <Link href="/vakansiyalar">{t("vac.toMarket")}</Link>
+          {vacanciesShown && <Link href="/vakansiyalar">{t("vac.toMarket")}</Link>}
           <Link href="/imkoniyatlar/biznes">{t("biz.entry")}</Link>
           <Link href="/tadbirlar">{t("nav.events")}</Link>
         </nav>
@@ -224,9 +228,9 @@ function OpportunitiesView() {
       {authed === false && (
         <p className="jb-guest">
           {t("job.guest")}{" "}
-          <Link href="/login" className="jb-inline-link">
+          <SignInLink className="jb-inline-link">
             {t("car.signInCta")}
-          </Link>
+          </SignInLink>
         </p>
       )}
 

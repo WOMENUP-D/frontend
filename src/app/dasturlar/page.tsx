@@ -16,6 +16,12 @@ const CATEGORIES = [
   "", "vocational_skills", "financial_literacy", "entrepreneurship",
   "parenting", "health", "leadership", "legal_literacy",
   "international", "digital_safety",
+  // QA B-25: every category a card can carry is also a chip — a badge reading
+  // "Odob-axloq" with no way to filter by it was a dead end.
+  "ethics_culture", "mentorship_networking", "volunteering",
+  // QA G-04 (be-qa-cat): programming/office/data courses moved out of
+  // "digital safety" into their own category.
+  "digital_skills",
 ];
 
 const LEVELS = ["beginner", "elementary", "intermediate", "advanced"];
@@ -41,7 +47,7 @@ function hostOf(url: string) {
 }
 
 export default function ProgramsPage() {
-  const { t, tx, locale } = useI18n();
+  const { tn, t, tx, locale, apiLocale } = useI18n();
   const [programs, setPrograms] = useState<Program[]>([]);
   /* How many the catalogue holds for this filter, and how many pages of them
      have been asked for. Before this the page showed the first fifty and said
@@ -57,6 +63,7 @@ export default function ProgramsPage() {
      came for. */
   const [skill, setSkill] = useState("");
   const [topics, setTopics] = useState<ProgramTopic[]>([]);
+  const categoryNames = new Set(CATEGORIES.filter(Boolean).map((c) => t(categoryKey(c)).toLowerCase()));
   /* The fine filters. Level and duration only ever match a course that states
      them — the imported courses state neither, so these narrow to our own. */
   const [level, setLevel] = useState("");
@@ -162,6 +169,10 @@ export default function ProgramsPage() {
     if (level) params.set("level", level);
     if (duration) params.set("duration", duration);
     if (language) params.set("language", language);
+    // QA G-09: courses taught in her interface language first (none hidden).
+    // `prefer_language` is the backend's name (be-qa-cat); a server without it
+    // ignores the parameter.
+    else params.set("prefer_language", apiLocale);
     if (query) params.set("search", query);
     return `?${params}`;
   }
@@ -169,8 +180,13 @@ export default function ProgramsPage() {
   /* Two requests can be in flight when the address sets a filter right after
      the first load; only the latest one may write, or the stale answer wins. */
   const requestSeq = useRef(0);
+  // QA B-10/B-25: bumping this re-runs the load — the retry under an error.
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     setLoading(true);
+    // QA B-25: a new load starts clean; an old failure must not sit above
+    // results that arrived fine.
+    setError(null);
     setPage(1);
     const mine = ++requestSeq.current;
     portal.programs(pageQuery(1))
@@ -187,15 +203,20 @@ export default function ProgramsPage() {
           });
         }
       })
-      .catch(() => setError("pr.errLoad"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (mine === requestSeq.current) setError("pr.errLoad");
+      })
+      .finally(() => {
+        if (mine === requestSeq.current) setLoading(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query, skill, level, duration, language]);
+  }, [category, query, skill, level, duration, language, apiLocale, attempt]);
 
   /** The next page, appended — the list she is reading does not jump. */
   async function loadMore() {
     if (loadingMore) return;
     setLoadingMore(true);
+    setError(null);
     try {
       const next = page + 1;
       const result = await portal.programs(pageQuery(next));
@@ -276,6 +297,9 @@ export default function ProgramsPage() {
         {topics.length > 0 && (
           <div className="cat-filters cat-scroll cat-topics" role="group" aria-label={t("pr.topics")}>
             {topics
+              // A topic that only repeats a category chip ("Tadbirkorlik") is
+              // the same filter twice; the category row already offers it (G-10).
+              .filter((topic) => topic.label === skill || !categoryNames.has((tx(topic.title_i18n) || topic.label).toLowerCase()))
               .filter((topic, index) => allTopics || index < TOPICS_SHOWN || topic.label === skill)
               .map((topic) => (
               <button
@@ -362,7 +386,22 @@ export default function ProgramsPage() {
       </header>
 
       <div className="cat-results stack" style={{ gap: 14 }}>
-          {error && <ErrorNote message={t(error)} />}
+          {error && (
+            <div className="stack" style={{ gap: 8 }}>
+              <ErrorNote message={t(error)} />
+              {/* QA B-10: a failure says what to do next. */}
+              {error === "pr.errLoad" && (
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  style={{ alignSelf: "start" }}
+                  onClick={() => (programs.length ? loadMore() : setAttempt((n) => n + 1))}
+                >
+                  {t("lms.err.retry")}
+                </button>
+              )}
+            </div>
+          )}
           {loading && <Loading rows={3} />}
 
           {/* One message at a time, and only when it is true.
@@ -434,7 +473,14 @@ export default function ProgramsPage() {
                       <Link href={`/dasturlar/${program.id}`}>{tx(program.title_i18n)}</Link>
                     )}
                   </h3>
-                  <p className="prog-goal">{tx(program.goal_i18n)}</p>
+                  {/* QA G-16: an imported course has no goal line; its
+                      description stands in, and with neither there is no
+                      empty paragraph. */}
+                  {(tx(program.goal_i18n) || tx(program.description_i18n ?? {})) && (
+                    <p className="prog-goal">
+                      {tx(program.goal_i18n) || tx(program.description_i18n ?? {})}
+                    </p>
+                  )}
 
                   {/* Length as a shape and as figures. The bar is scaled against
                       the longest programme on offer, so "two weeks" and "twelve
@@ -450,10 +496,10 @@ export default function ProgramsPage() {
                     )}
                     <div className="prog-figs">
                       {program.duration_weeks != null && (
-                        <span><b>{program.duration_weeks}</b> {t("common.weeks")}</span>
+                        <span><b>{program.duration_weeks}</b> {tn("unit.week", program.duration_weeks)}</span>
                       )}
                       {program.duration_hours != null && (
-                        <span><b>{program.duration_hours}</b> {t("common.hours")}</span>
+                        <span><b>{program.duration_hours}</b> {tn("unit.hour", program.duration_hours)}</span>
                       )}
                       {outcomes > 0 && (
                         <span><b>{outcomes}</b> {t(pluralKey("pr.outcome", outcomes, locale) as MessageKey)}</span>
@@ -463,7 +509,11 @@ export default function ProgramsPage() {
 
                   <div className="prog-foot">
                     <span className="prog-marks">
-                      <span className="prog-fmt">{t(formatKey(program.format))}</span>
+                      {/* QA G-16: a partner platform that does not state the
+                          format leaves it empty — never a guessed "Video". */}
+                      {program.format && (
+                        <span className="prog-fmt">{t(formatKey(program.format))}</span>
+                      )}
                       {program.level && (
                         <span className="prog-fmt">{t(levelKey(program.level))}</span>
                       )}

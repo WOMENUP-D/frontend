@@ -15,6 +15,8 @@ import { useI18n, type MessageKey } from "@/i18n";
 import type { CalendarEvent, EventKind, EventStatus, LessonKind } from "@/content/learning";
 import type { LearningPath, PathItemStatus, PathStatus } from "@/services/portal";
 import type { CourseStatus, CourseView, CoverTone } from "@/components/learning/course";
+import { loginHref } from "@/utils/url";
+import { useReturnPath } from "@/components/auth/useReturnPath";
 
 /* ---- label helpers ------------------------------------------------- */
 
@@ -29,11 +31,17 @@ export const eventStatusKey = (v: EventStatus) => `lms.evst.${v}` as MessageKey;
 export const monthKey = (month: number) => `mon.${month}` as MessageKey;
 
 /** "1h 20m" / "45m" — minutes are unreadable past an hour or so. */
-export function duration(minutes: number, minLabel: string, hourLabel: string): string {
+export function duration(
+  minutes: number,
+  minLabel: string,
+  hourLabel: string | ((hours: number) => string),
+): string {
   if (minutes < 60) return `${minutes} ${minLabel}`;
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return rest ? `${hours} ${hourLabel} ${rest} ${minLabel}` : `${hours} ${hourLabel}`;
+  // A function gets the count, so the noun agrees with it: 1 час, 2 часа.
+  const hourWord = typeof hourLabel === "function" ? hourLabel(hours) : hourLabel;
+  return rest ? `${hours} ${hourWord} ${rest} ${minLabel}` : `${hours} ${hourWord}`;
 }
 
 /* ---- primitives ----------------------------------------------------- */
@@ -158,11 +166,12 @@ export function SectionHead({
  *  never adds lessons up itself, because the catalogue and the learning section
  *  would then be two opinions about the same course. */
 export function CourseCard({ view }: { view: CourseView }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const { program, status, percent, art, href, outside } = view;
 
   const actionKey: MessageKey =
-    status === "completed" ? "lms.course.review"
+    outside ? "lms.course.goOutside"
+      : status === "completed" ? "lms.course.review"
       : status === "not_started" ? "lms.course.start"
         : "lms.course.continue";
 
@@ -182,19 +191,26 @@ export function CourseCard({ view }: { view: CourseView }) {
         </div>
       </div>
 
-      <Bar percent={percent} done={status === "completed"} />
+      {/* QA B-13: a partner's course is taught and tracked on its own site —
+          a 0 % bar here would be a reading of nothing. */}
+      {!outside && <Bar percent={percent} done={status === "completed"} />}
 
       <div className="lms-course-meta">
         <span>
           {program.level ? t(levelKey(program.level)) : t(`cat.${program.category}` as MessageKey)}
-          {program.duration_weeks ? ` · ${program.duration_weeks} ${t("common.weeks")}` : ""}
+          {program.duration_weeks ? ` · ${program.duration_weeks} ${tn("unit.week", program.duration_weeks)}` : ""}
           {outside ? ` · ${outside}` : ""}
         </span>
-        <strong style={{ color: "var(--ink)" }}>{percent}%</strong>
+        {!outside && <strong style={{ color: "var(--ink)" }}>{percent}%</strong>}
       </div>
 
       <div className="lms-course-foot">
-        <StatusBadge status={status} />
+        {outside ? <Badge>{t("lms.course.partnerSite")}</Badge> : <StatusBadge status={status} />}
+        {/* QA G-09: most partner courses are taught in Russian — the card
+            says which language a course is in before she opens it. */}
+        {program.language && (
+          <Badge>{t(`pr.lang.${program.language}` as MessageKey)}</Badge>
+        )}
         {outside ? (
           <a
             className="lms-btn lms-btn-quiet lms-btn-sm"
@@ -238,7 +254,7 @@ export function PathBadge({ status }: { status: PathStatus }) {
  *  what it covers, a route says what it leaves you able to do. Her own gaps
  *  lead it, so the first thing she reads is what she would gain. */
 export function PathCard({ path }: { path: LearningPath }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const { progress } = path;
   const gained = path.new_skills.length ? path.new_skills : path.skills;
 
@@ -281,7 +297,7 @@ export function PathCard({ path }: { path: LearningPath }) {
         <span className="lms-rec-stats">
           <span>{path.program_count} {t("lms.path.courses")}</span>
           {path.level && <span>{t(levelKey(path.level))}</span>}
-          {path.total_hours ? <span>{path.total_hours} {t("common.hours")}</span> : null}
+          {path.total_hours ? <span>{path.total_hours} {tn("unit.hour", path.total_hours)}</span> : null}
         </span>
         <Link
           className="lms-btn lms-btn-quiet lms-btn-sm"
@@ -371,13 +387,15 @@ export function ErrorState({ onRetry }: { onRetry?: () => void }) {
  *  is hers: without a session there is no progress to draw. */
 export function NeedsAccount() {
   const { t } = useI18n();
+  // Sign-in mode, and back to this page afterwards (C-07, C-09).
+  const here = useReturnPath();
   return (
     <EmptyState
       mark="◔"
       title={t("auth.required")}
       hint={t("auth.requiredHint")}
       action={
-        <Link className="lms-btn lms-btn-primary" href="/login">
+        <Link className="lms-btn lms-btn-primary" href={loginHref("signin", here)}>
           {t("nav.signIn")}
         </Link>
       }

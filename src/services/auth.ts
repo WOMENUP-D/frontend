@@ -1,4 +1,13 @@
-import { api, clearSession, setAccessToken } from "./api";
+import {
+  api,
+  broadcastSignedOut,
+  clearSession,
+  endServerSession,
+  getAccessToken,
+  request,
+  setAccessToken,
+} from "./api";
+import { browserStorages, clearPersonalData } from "./personalData";
 import { googleSignOut } from "./googleAuth";
 
 export interface TokenPair {
@@ -80,18 +89,28 @@ export async function passwordLogin(email: string, password: string) {
   return tokens;
 }
 
-export function logout(): void {
-  // Tell the server first, while the access token is still at hand: it is
-  // revoked along with the refresh cookie the browser presents, so neither
-  // works again from any copy. Best effort — this tab forgets the session
-  // whether or not the call lands.
-  void api.post<unknown>("/auth/logout", {}).catch(() => undefined);
+/**
+ * Sign out of this browser.
+ *
+ * The tab forgets the session at once — the header changes on the click —
+ * then the server is told and the call is awaited, carrying the refresh
+ * cookie so the session is revoked even when the access token has already
+ * expired (C-03). Other tabs are told too, and what this person left in the
+ * browser (a diagnostic draft, lesson notes, the companion's chat) is wiped
+ * so the next person on a shared phone does not inherit it (I-01).
+ */
+export async function logout(): Promise<void> {
+  const access = getAccessToken();
+  forgetLocally();
+  await endServerSession(access);
+}
+
+/** Everything this browser holds for her, gone — without a server call. */
+function forgetLocally(): void {
   clearSession();
-  try {
-    window.sessionStorage.removeItem(GOOGLE_HANDOFF_KEY);
-  } catch {
-    // Nothing to clean up if storage is unavailable.
-  }
+  broadcastSignedOut();
+  const { local, session } = browserStorages();
+  clearPersonalData(local, session);
   // Firebase keeps its own session. On a shared handset, leaving it behind
   // would let the next person back in with one click.
   void googleSignOut();
@@ -103,13 +122,36 @@ export function staffLogin(login: string, password: string) {
 }
 
 
-/** End every session of this account, on every device. She signs in again
- *  here afterwards. */
+/** End every session of this account, on every device (C-17). She signs in
+ *  again here afterwards. Throws when the server did not confirm it, so the
+ *  page can say so instead of pretending it happened. */
 export async function logoutEverywhere(): Promise<void> {
-  try {
-    await api.post<unknown>("/auth/logout-all", {});
-  } finally {
-    clearSession();
-    void googleSignOut();
-  }
+  await api.post<unknown>("/auth/logout-all", {});
+  forgetLocally();
+}
+
+/* ---- QA Phase 2 (auth): forgotten password (C-04) and deletion (I-06) ---- */
+
+/** Ask for a reset link. The API answers 202 whether or not the address has
+ *  an account, so nothing here can tell her which. */
+export function requestPasswordReset(email: string, language?: string): Promise<unknown> {
+  // The e-mail is written in the language she is reading the page in.
+  return api.post<unknown>("/auth/password/forgot", language ? { email, language } : { email });
+}
+
+/** Set a new password with the token from the emailed link. Every session of
+ *  the account is revoked by the server, this browser's included. */
+export async function resetPassword(token: string, password: string): Promise<void> {
+  await api.post<unknown>("/auth/password/reset", { token, password });
+  forgetLocally();
+}
+
+/** What the deletion call needs to prove it is her: the current password, or
+ *  — for an account that has none (Google) — the typed word DELETE. */
+export type DeletionProof = { password: string } | { confirm: "DELETE" };
+
+/** Delete the account. On success this browser forgets everything about her. */
+export async function deleteAccount(proof: DeletionProof): Promise<void> {
+  await request<unknown>("/users/me", { method: "DELETE", body: JSON.stringify(proof) });
+  forgetLocally();
 }

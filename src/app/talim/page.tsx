@@ -28,9 +28,10 @@ import {
   type Recommendations,
   type SkillProfile,
 } from "@/services/portal";
-import { getAccessToken } from "@/services/api";
+import { ApiError, getAccessToken } from "@/services/api";
 import { useApi } from "@/components/learning/useApi";
-import { nextLessonOf, viewsOf } from "@/components/learning/course";
+import { isOpen, nextLessonOf, resumeOf, viewsOf } from "@/components/learning/course";
+import { sharedProfile } from "@/components/learning/sharedProfile";
 import {
   CourseCard,
   EmptyState,
@@ -65,6 +66,9 @@ export default function LearningDashboard() {
   useEffect(() => setAuthed(Boolean(getAccessToken())), []);
 
   const { data, loading, error, retry } = useApi(async () => {
+    // A visitor has no records to ask for: no request, straight to the
+    // sign-in invitation (C-18).
+    if (!getAccessToken()) throw new ApiError("signed out", 401);
     const [enrollments, activity, certificates, skills, recommendations, paths] =
       await Promise.all([
         portal.myEnrollments(),
@@ -78,8 +82,12 @@ export default function LearningDashboard() {
     // The course she was last working on decides the hero. Its lessons are not
     // in the enrollment list, so the one course she is resuming is fetched in
     // full — and only that one.
-    const resume =
-      enrollments.find((item) => item.status === "in_progress" && item.program) ?? null;
+    // QA C-14: a fresh enrollment is stored as "enrolled", not "in_progress",
+    // and it is still the course she is taking — so the hero takes any course
+    // she has not finished, the one she is furthest into first. Courses taught
+    // on a partner's site have no lessons here to resume, so the hero prefers
+    // the platform's own (their cards still open the partner site).
+    const resume = resumeOf(enrollments);
     const detail: ProgramDetail | null = resume?.program
       ? await portal.programBySlug(resume.program.slug).catch(() => null)
       : null;
@@ -89,7 +97,15 @@ export default function LearningDashboard() {
     };
   });
 
-  const head = <Head greeting={greeting} />;
+  // QA C-14: "you are doing well" only to someone who has started something;
+  // a visitor is greeted as one (C-18).
+  const head = (
+    <Head
+      greeting={greeting}
+      signedIn={authed ?? Boolean(getAccessToken())}
+      started={Boolean(data && data.enrollments.length > 0)}
+    />
+  );
 
   if (authed === false) {
     return (
@@ -128,7 +144,10 @@ export default function LearningDashboard() {
     data;
   const views = viewsOf(enrollments);
   const completed = enrollments.filter((item) => item.status === "completed").length;
-  const inProgress = enrollments.filter((item) => item.status === "in_progress").length;
+  // Courses taught here that she has not finished; a partner's course is not
+  // tracked here, so it is not "in progress" on this page (QA B-13).
+  const inProgress = enrollments.filter((item) => isOpen(item) && !item.program?.external_url).length;
+  const elsewhere = enrollments.filter((item) => isOpen(item) && item.program?.external_url).length;
   const learned = (skills?.skills ?? []).filter((item) => item.status !== "self_reported");
   const suggestion = recommendations?.programs[0] ?? null;
 
@@ -139,6 +158,18 @@ export default function LearningDashboard() {
       {/* ---- the one thing to press --------------------------------- */}
       {resume && detail ? (
         <Resume enrollment={resume} detail={detail} />
+      ) : !resume && elsewhere > 0 ? (
+        /* QA C-14: she is taking courses, just none taught here — never tell
+           her nothing has started. */
+        <EmptyState
+          title={t("lms.continue.elsewhere")}
+          hint={t("lms.continue.elsewhereHint")}
+          action={
+            <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+              {t("lms.courses.title")}
+            </Link>
+          }
+        />
       ) : (
         <EmptyState
           title={t("lms.continue.empty")}
@@ -316,20 +347,41 @@ export default function LearningDashboard() {
 
 /* ---- pieces ---------------------------------------------------------- */
 
-function Head({ greeting }: { greeting: MessageKey | null }) {
+function Head({
+  greeting,
+  signedIn,
+  started,
+}: {
+  greeting: MessageKey | null;
+  signedIn: boolean;
+  started: boolean;
+}) {
   const { t } = useI18n();
   const [name, setName] = useState("");
 
   // Her own name, from her own profile — not a constant in the source.
+  // A visitor has none, and is not asked for it (C-18).
   useEffect(() => {
-    portal
-      .profile()
+    if (!signedIn || !getAccessToken()) return;
+    // Shared with the shell's request for the same record (QA H-06).
+    sharedProfile()
       .then((profile) => {
         const full = (profile as { full_name: string | null }).full_name ?? "";
         setName(full.split(" ")[0] ?? "");
       })
       .catch(() => setName(""));
-  }, []);
+  }, [signedIn]);
+
+  // A visitor is greeted as one: no "keep going, you're doing well" above a
+  // sign-in wall (C-18).
+  if (!signedIn) {
+    return (
+      <header className="lms-head">
+        <h1 className="lms-h1">{t("au.lms.guestH")}</h1>
+        <p className="lms-lead">{t("au.lms.guestLead")}</p>
+      </header>
+    );
+  }
 
   return (
     <header className="lms-head">
@@ -337,7 +389,7 @@ function Head({ greeting }: { greeting: MessageKey | null }) {
         {greeting ? `${t(greeting)}${name ? `, ${name}` : ""}` : name}{" "}
         <span aria-hidden="true">👋</span>
       </h1>
-      <p className="lms-lead">{t("lms.greet.sub")}</p>
+      <p className="lms-lead">{t(started ? "lms.greet.sub" : "lms.greet.subNew")}</p>
     </header>
   );
 }

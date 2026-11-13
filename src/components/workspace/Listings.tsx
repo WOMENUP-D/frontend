@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useId, useState } from "react";
-import { useI18n } from "@/i18n";
+import { useI18n, formatDate } from "@/i18n";
 import { ApiError } from "@/services/api";
 import { portal, type OrgListing, type OrganizationRead } from "@/services/portal";
 import { REGIONS, regionKey, typeKey } from "@/utils/format";
@@ -60,7 +60,7 @@ export function Listings({
   const [problem, setProblem] = useState<string | null>(null);
 
   const date = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString(locale === "en" ? "en-GB" : locale === "ru" ? "ru-RU" : "uz-UZ") : "—";
+    iso ? formatDate(locale, iso) : "—";
 
   async function close(listing: OrgListing) {
     setBusy(true);

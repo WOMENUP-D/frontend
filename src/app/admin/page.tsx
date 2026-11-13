@@ -16,37 +16,38 @@ type Tab = "analytics" | "results" | "users" | "orgs" | "audit";
 export default function AdminPage() {
   const { t } = useI18n();
   const router = useRouter();
-  const [authed, setAuthed] = useState<boolean | null>(null);
-  // Organisations are the administrators' alone; the server refuses anyone else.
-  const [isAdmin, setIsAdmin] = useState(false);
-  // A regional coordinator's region is decided by the server, not picked here.
-  // The national analytics — traffic, funnels, errors — have no region to
-  // scope to, so they are for the same two roles that may pick one.
-  const [canPickRegion, setCanPickRegion] = useState(false);
-  const [tab, setTab] = useState<Tab>("results");
+  /* Who is looking is settled before anything renders: the session gate has
+     already resumed the token, so the roles are known on the first render.
+     A learner used to see the panel for a moment — and its first request
+     went out — before the redirect (C-24). */
+  const [access] = useState(() => {
+    const token = getAccessToken();
+    const roles = token ? getRoles() : [];
+    const staff = roles.some((role) => role !== "user" && role !== "mother");
+    return {
+      authed: Boolean(token),
+      staff,
+      // An organisation's person has no panel: her screen is the workspace.
+      orgOnly: staff && staffHome() === "/hamkor",
+      // Organisations are the administrators' alone; the server refuses anyone else.
+      isAdmin: roles.includes("admin"),
+      // A regional coordinator's region is decided by the server, not picked
+      // here. The national analytics have no region to scope to, so they are
+      // for the same two roles that may pick one.
+      national: roles.includes("admin") || roles.includes("moderator"),
+    };
+  });
+  const authed = access.authed;
+  const isAdmin = access.isAdmin;
+  const canPickRegion = access.national;
+  // The administrator's first screen answers "is anyone here": the analytics.
+  // A coordinator opens on her region's results.
+  const [tab, setTab] = useState<Tab>(access.national ? "analytics" : "results");
+  const redirect = authed && (!access.staff ? "/kabinet" : access.orgOnly ? "/hamkor" : null);
 
   useEffect(() => {
-    const token = getAccessToken();
-    setAuthed(Boolean(token));
-    if (!token) return;
-
-    // A learner who lands here by typing the address is sent back to her own
-    // cabinet rather than shown a dashboard of zeros and a load error. The
-    // server refuses her either way; this only spares her the broken page.
-    const roles = getRoles();
-    const national = roles.includes("admin") || roles.includes("moderator");
-    setIsAdmin(roles.includes("admin"));
-    setCanPickRegion(national);
-    // The administrator's first screen is the one that answers "is anyone
-    // here": the analytics. A coordinator opens on her region's results.
-    if (national) setTab("analytics");
-    if (!roles.some((role) => role !== "user" && role !== "mother")) {
-      router.replace("/kabinet");
-      return;
-    }
-    // An organisation's person has no panel: her screen is the workspace.
-    if (staffHome() === "/hamkor") router.replace("/hamkor");
-  }, [router]);
+    if (redirect) router.replace(redirect);
+  }, [redirect, router]);
 
   // The staff door, not the learner's: a coordinator sent to /login could
   // never get in from there.
@@ -57,7 +58,7 @@ export default function AdminPage() {
       </main>
     );
   }
-  if (authed === null) return <main className="wrap page"><Loading rows={4} /></main>;
+  if (redirect) return <main className="wrap page"><Loading rows={4} /></main>;
 
   const link = (value: Tab, label: string) => (
     <button

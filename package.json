@@ -7,12 +7,16 @@
     "@grpc/grpc-js": "^1.14.5",
     "sharp": "^0.35.5",
     "source-map-js": "^1.2.2",
-    "re2js": "^2.8.7"
+    "re2js": "^2.8.7",
+    "brace-expansion@^1.1.0": "^1.1.21",
+    "brace-expansion@^5.0.0": "^5.0.12",
+    "minimatch@^10.0.0": "^11.0.7"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:standalone": "node scripts/start-standalone.mjs",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test \"src/**/*.test.ts\"",
@@ -21,15 +25,15 @@
   },
   "dependencies": {
     "firebase": "^12.18.0",
-    "next": "^15.5.28",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "next": "^15.5.29",
+    "react": "^19.2.9",
+    "react-dom": "^19.2.9"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
+    "eslint-config-next": "^15.5.29",
     "playwright": "^1.62.1",
     "tsx": "^4.23.12",
     "typescript": "^5.6.0"

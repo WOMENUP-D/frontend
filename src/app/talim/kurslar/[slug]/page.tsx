@@ -54,6 +54,7 @@ import {
   lessonKindKey,
   levelKey,
 } from "@/components/learning/ui";
+import { getAccessToken } from "@/services/api";
 
 export default function CoursePage() {
   const { t, tx } = useI18n();
@@ -63,7 +64,9 @@ export default function CoursePage() {
   const { data, loading, error, retry } = useApi(async () => {
     const course = await portal.programBySlug(slug);
     // A visitor may read the card; only a signed-in woman has an enrollment.
-    const mine = await portal.myEnrollments().catch(() => [] as EnrollmentDetail[]);
+    const mine = await (getAccessToken()
+        ? portal.myEnrollments().catch(() => [] as EnrollmentDetail[])
+        : Promise.resolve([] as EnrollmentDetail[]));
     return {
       course,
       enrollment: (mine.find((item) => item.program_id === course.id) ?? null) as Enrollment | null,
@@ -138,7 +141,7 @@ export default function CoursePage() {
     <>
       <Back />
 
-      <div className="lms-course-layout">
+      <div className="lms-course-layout lms-course-overview">
         <Contents course={course} enrollment={current} next={next} />
 
         <div style={{ minWidth: 0 }}>
@@ -160,11 +163,13 @@ export default function CoursePage() {
             </div>
           </header>
 
+          {/* A partner's course: the panel beside this already says where it
+              is taught and links there, so the contents section is not drawn
+              a second time with the same notice and button (QA E-17). */}
+          {!outside && (
           <section className="lms-sec">
             <SectionHead title={t("lms.course.contents")} />
-            {outside ? (
-              <OutsideNotice host={outside} href={course.external_url ?? ""} />
-            ) : lessons.length ? (
+            {lessons.length ? (
               <div style={{ display: "grid", gap: 14 }}>
                 {course.modules.map((module) => (
                   <ModuleBlock
@@ -180,6 +185,7 @@ export default function CoursePage() {
               <EmptyState title={t("lms.course.noLessons")} hint={t("lms.course.noLessonsHint")} />
             )}
           </section>
+          )}
         </div>
 
         <Panel
@@ -195,24 +201,6 @@ export default function CoursePage() {
 }
 
 /* ---- pieces ---------------------------------------------------------- */
-
-/** A course that is not ours. The lessons, the sign-up and the certificate
- *  live on the partner's site, so the page says so and sends her there in
- *  the same tab — a second tab left her wondering which window she was in. */
-function OutsideNotice({ host, href }: { host: string; href: string }) {
-  const { t } = useI18n();
-  return (
-    <EmptyState
-      title={t("lms.course.outside").replace("{host}", host)}
-      hint={t("lms.course.outsideHint")}
-      action={
-        <a className="lms-btn lms-btn-primary" href={href} rel="noopener noreferrer">
-          {t("lms.course.goOutside")}
-        </a>
-      }
-    />
-  );
-}
 
 function Back() {
   const { t } = useI18n();
@@ -293,7 +281,7 @@ function ModuleBlock({
   enrollment: Enrollment | null;
   nextId?: string;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const done = module.lessons.filter((lesson) => isComplete(enrollment, lesson.id)).length;
   const minutes = module.lessons.reduce(
     (sum, lesson) => sum + (lesson.duration_minutes ?? 0),
@@ -306,10 +294,10 @@ function ModuleBlock({
         <h3 className="lms-goal-title">{tx(module.title_i18n)}</h3>
         <span className="lms-rec-stats">
           <span>
-            {done} / {module.lessons.length} {t("lms.course.lessons")}
+            {done} / {module.lessons.length} {tn("unit.lesson", module.lessons.length)}
           </span>
           {minutes > 0 && (
-            <span>{duration(minutes, t("lms.lesson.min"), t("common.hours"))}</span>
+            <span>{duration(minutes, t("unit.min"), (h) => tn("unit.hour", h))}</span>
           )}
         </span>
       </div>
@@ -326,7 +314,7 @@ function ModuleBlock({
             <span className="lms-rec-stats" style={{ marginLeft: "auto", flex: "none" }}>
               <span>{t(lessonKindKey(lesson.kind))}</span>
               {lesson.duration_minutes ? (
-                <span>{lesson.duration_minutes} {t("lms.lesson.min")}</span>
+                <span>{lesson.duration_minutes} {t("unit.min")}</span>
               ) : null}
             </span>
           </Link>
@@ -349,7 +337,7 @@ function Panel({
   outside: string | null;
   onEnrolled: (enrollment: Enrollment) => void;
 }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -392,7 +380,7 @@ function Panel({
             <Ring percent={enrollment?.progress_percent ?? 0} size={104} />
             {counts.total > 0 && (
               <strong style={{ fontSize: "0.92rem" }}>
-                {counts.done} / {counts.total} {t("lms.course.lessons")}
+                {counts.done} / {counts.total} {tn("unit.lesson", counts.total)}
               </strong>
             )}
           </div>
@@ -402,7 +390,7 @@ function Panel({
         {left > 0 && (
           <p className="lms-course-by" style={{ textAlign: "center", margin: "0 0 16px" }}>
             {t("lms.course.timeLeft")}:{" "}
-            {duration(left, t("lms.lesson.min"), t("common.hours"))}
+            {duration(left, t("unit.min"), (h) => tn("unit.hour", h))}
           </p>
         )}
 
@@ -453,13 +441,16 @@ function Panel({
           {course.duration_weeks && (
             <div className="lms-fact">
               <dt>{t("lms.course.duration")}</dt>
-              <dd>{course.duration_weeks} {t("common.weeks")}</dd>
+              <dd>{course.duration_weeks} {tn("unit.week", course.duration_weeks)}</dd>
             </div>
           )}
           {course.has_certificate && (
             <div className="lms-fact">
               <dt>{t("pd.certificate")}</dt>
-              <dd>{t("common.yes")}</dd>
+              {/* QA B-06: the certificate now needs a passed final
+                  assessment and real time on the course, not just every
+                  lesson ticked — the page says so instead of a bare "yes". */}
+              <dd>{t("lms.course.certRule")}</dd>
             </div>
           )}
         </dl>

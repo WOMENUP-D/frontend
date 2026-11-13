@@ -10,6 +10,7 @@ import {
   type DevelopmentScore,
   type Recommendations,
   type ScoreInsights,
+  type WeekRead,
 } from "@/services/portal";
 import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth, ScoreRing } from "@/components/ui";
 import { YourWeek } from "@/components/home/YourWeek";
@@ -20,6 +21,8 @@ import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { ProfileCard } from "@/components/ProfileCard";
 import { CareerHistory } from "@/components/CareerHistory";
 import { useI18n, type MessageKey } from "@/i18n";
+import { useViewer } from "@/components/auth/useViewer";
+import { AccountSecurity } from "@/components/auth/AccountSecurity";
 import { dimensionKey, interestKey, regionKey } from "@/utils/format";
 
 interface Profile {
@@ -174,12 +177,11 @@ function ProfileSummary({
   name: string;
   t: (key: MessageKey) => string;
 }) {
+  // The interface language, not the browser's (G-10/G-21).
+  const { fmtDate } = useI18n();
   const shortId = account?.id ? account.id.split("-")[0].toUpperCase() : "—";
   const joined = account?.created_at
-    ? new Date(account.created_at).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-      })
+    ? fmtDate(account.created_at, { year: "numeric", month: "long" })
     : null;
   /** Numeric runs are skipped: "dilnoza1998" should give D, not D1. */
   const initials =
@@ -275,7 +277,12 @@ export default function CabinetPage() {
   /* Age and the development directions live on the assistant persona, not on
      the profile row — the directions are the weakest score dimensions. */
   const [persona, setPersona] = useState<AssistantProfile | null>(null);
+  // QA D-20: the latest diagnostic score, to name it beside today's score.
+  const [diagnosed, setDiagnosed] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [week, setWeek] = useState<WeekRead | null>(null);
+  /* What she has done so far, from the one shared answer (J-01). */
+  const viewer = useViewer();
 
   /* Not through `soft` below: a failure here is shown and can be retried. An
      empty "next step" would read as "nothing to do", which is a different and
@@ -306,7 +313,7 @@ export default function CabinetPage() {
     }
 
     (async () => {
-      const [p, s, pl, en, lq, acc, per] = await Promise.all([
+      const [p, s, pl, en, lq, acc, per, wk, , hist] = await Promise.all([
         soft(() => portal.profile() as Promise<Profile>),
         soft(() => portal.scoreInsights()),
         soft(() => portal.activePlan() as Promise<Plan>),
@@ -314,13 +321,22 @@ export default function CabinetPage() {
         soft(() => portal.learningProfile()),
         soft(() => portal.me() as Promise<Account>),
         soft(() => portal.assistantProfile()),
+        // Fetched with the rest so "your week" lands in the same frame (QA H-01).
+        soft(() => portal.week()),
         loadRecommendations(),
+        soft(() => portal.diagnosticHistory()),
       ]);
+      // The newest scored diagnostic, for the "today vs. diagnostic" note.
+      const latest = (hist ?? [])
+        .filter((item) => item.overall !== null && item.completed_at)
+        .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))[0];
+      setDiagnosed(latest ? Number(latest.overall) : null);
       setProfile(p); setScore(s); setPlan(pl); setEnrollments(en ?? []);
       setAssessed(Boolean(lq?.completed)); setAccount(acc); setPersona(per);
+      setWeek(wk);
       setLoading(false);
     })();
-  }, []);
+  }, [router]);
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
   if (loading) return <main className="wrap page"><Loading rows={4} /></main>;
@@ -336,9 +352,21 @@ export default function CabinetPage() {
 
   return (
     <main className="wrap page">
-      {/* For somebody new: five steps, each a link. Hidden by one tap, and
-          never shown to a woman who has started a course. */}
-      <GettingStarted isNew={enrollments.length === 0} />
+      {/* No name or date of birth on record: onboarding was skipped or
+          failed, and the age gate treats her as a minor until she says (C-16). */}
+      {viewer?.profileIncomplete && (
+        <div className="notice notice-warn stack" style={{ gap: 8, marginBottom: 18 }}>
+          <strong>{t("au.profile.title")}</strong>
+          <span className="small">{t("au.profile.hint")}</span>
+          <Link href="/welcome" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
+            {t("au.profile.cta")}
+          </Link>
+        </div>
+      )}
+
+      {/* For somebody new: four steps, each a link, the ones she has done
+          ticked. Never shown to a woman who has started a course (C-26). */}
+      <GettingStarted viewer={viewer} />
 
       <div className="ed-split">
         {/* Score rides along as the reader scrolls */}
@@ -360,6 +388,16 @@ export default function CabinetPage() {
               <div className="row" style={{ justifyContent: "center" }}>
                 <ScoreRing value={score.composite} size={158} />
               </div>
+              {/* QA D-20: the ring is today's score — it moves with finished
+                  courses — while the result page shows the diagnostic's own
+                  number. When they differ, both are named. */}
+              {diagnosed !== null && Math.round(diagnosed) !== Math.round(score.composite) && (
+                <p className="faint small center">
+                  {t("cab.scoreNow")
+                    .replace("{now}", String(Math.round(score.composite)))
+                    .replace("{then}", String(Math.round(diagnosed)))}
+                </p>
+              )}
               <div className="spread">
                 <span className="eyebrow">{t("cab.score")}</span>
                 {/* The score is retaken on its own diagnostic. The learning
@@ -382,8 +420,11 @@ export default function CabinetPage() {
                   {t("cab.weakest")}{" "}
                   <strong>
                     {score.weakest_dimensions.map((d) => t(dimensionKey(d))).join(", ")}
-                  </strong>{" "}
-                  {t("cab.weakestTail")}
+                  </strong>
+                  {/* QA D-14: the tail "the plan starts from exactly these" was
+                      false — the plan follows the diagnostic's priorities,
+                      which weigh her goals too. The lowest scores are stated
+                      as what they are. */}
                 </p>
               )}
             </div>
@@ -402,7 +443,7 @@ export default function CabinetPage() {
 
           {/* Her week first: the lesson she left off at, then the next event,
               task and listing — each a real record or not drawn at all. */}
-          <YourWeek />
+          <YourWeek initial={week} />
 
           {/* The invitation to sit the assessment, on the wide side of the page
               where it has room to be an invitation rather than a footnote. It
@@ -410,16 +451,36 @@ export default function CabinetPage() {
               Development Score, which is a separate record that may not exist
               yet — so it disappears once she has done it instead of asking
               again for something already finished. */}
-          {!assessed && (
+          {/* Keyed on the diagnostic itself — the Development Score — and it
+              opens the diagnostic, the same place every other "Start the
+              assessment" goes (C-06). */}
+          {!score && viewer?.stage === "registered" && (
             <Empty
               title={t("cab.noScore")}
               hint={t("cab.noScoreHint")}
               action={
-                <Link href="/welcome?step=assessment" className="btn btn-primary">
+                <Link href="/kabinet/diagnostika" className="btn btn-primary">
                   {t("cab.startAssess")}
                 </Link>
               }
             />
+          )}
+
+          {/* The learning questionnaire is a different, optional instrument,
+              so it has its own name and its own smaller invitation — offered
+              only once the diagnostic is done. */}
+          {score && !assessed && (
+            <div className="notice stack" style={{ gap: 8 }}>
+              <strong>{t("au.lp.title")}</strong>
+              <span className="small muted">{t("au.lp.hint")}</span>
+              <Link
+                href="/welcome?step=assessment"
+                className="btn btn-outline btn-sm"
+                style={{ alignSelf: "flex-start" }}
+              >
+                {t("au.lp.cta")}
+              </Link>
+            </div>
           )}
 
           {/* What to do next, before anything about the past: up to three
@@ -500,10 +561,15 @@ export default function CabinetPage() {
             <Link href="/imkoniyatlar" className="btn btn-outline btn-sm">
               {t("nav.opportunities")}
             </Link>
-            <Link href="/navigator" className="btn btn-outline btn-sm">
-              {t("nav.navigator")}
+            {/* One name and a direct link: the navigator route only redirects
+                to the assistant (E-06). */}
+            <Link href="/yordamchi" className="btn btn-outline btn-sm">
+              {t("asst.nav")}
             </Link>
           </div>
+
+          {/* Sign out everywhere (C-17) and delete the account (I-06). */}
+          <AccountSecurity />
         </div>
       </div>
     </main>

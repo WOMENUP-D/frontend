@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { LOCALE_COOKIE, LOCALE_PARAM, isLocale } from "@/i18n/locales";
 
 /**
  * A Content Security Policy with a fresh nonce on every page.
@@ -50,8 +51,28 @@ export function middleware(request: NextRequest) {
   headers.set("x-nonce", nonce);
   headers.set("Content-Security-Policy", csp);
 
+  // The interface language for this render (G-11): `?lang=` — what hreflang
+  // links point at — wins and is remembered; otherwise the cookie; otherwise
+  // the layout's default, uz-Latn.
+  const requested = request.nextUrl.searchParams.get(LOCALE_PARAM);
+  const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
+  const locale = isLocale(requested) ? requested : isLocale(cookie) ? cookie : null;
+  // The path, so the root layout can write canonical and hreflang links for
+  // every page, including the ones without metadata of their own (E-01).
+  headers.set("x-pathname", request.nextUrl.pathname);
+  if (locale) headers.set("x-locale", locale);
+  else headers.delete("x-locale");
+
   const response = NextResponse.next({ request: { headers } });
   response.headers.set("Content-Security-Policy", csp);
+  if (isLocale(requested) && requested !== cookie) {
+    response.cookies.set(LOCALE_COOKIE, requested, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+    });
+  }
   return response;
 }
 

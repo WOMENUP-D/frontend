@@ -18,14 +18,19 @@ import { CTA, Icon, Section } from "@/components/ds";
 import { DateLeaf } from "@/components/events/EventCard";
 import { dateText, whenLine } from "@/components/events/format";
 
-export function YourWeek() {
+/** `initial`: the week already fetched by the page, so the row is drawn in
+ *  the same frame as the rest instead of arriving later and shifting what is
+ *  below it (QA H-01). `null` means it was fetched and is unavailable. Left
+ *  out, the component fetches it itself, as before. */
+export function YourWeek({ initial }: { initial?: WeekRead | null } = {}) {
   const { t, tx, locale } = useI18n();
-  const [week, setWeek] = useState<WeekRead | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [week, setWeek] = useState<WeekRead | null>(initial ?? null);
+  const [failed, setFailed] = useState(initial === null);
 
   useEffect(() => {
+    if (initial !== undefined) return;
     portal.week().then(setWeek).catch(() => setFailed(true));
-  }, []);
+  }, [initial]);
 
   // A failure here costs her one convenience, not the cabinet: the row simply
   // is not drawn, and every record it would name is one click away elsewhere.

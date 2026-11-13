@@ -28,6 +28,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getAccessToken, staffHome } from "@/services/api";
+import { loginHref } from "@/utils/url";
 import { takeGoogleName } from "@/services/auth";
 import { portal } from "@/services/portal";
 import { Questionnaire } from "@/components/Questionnaire";
@@ -92,6 +93,7 @@ export default function WelcomePage() {
      the moment it mounts. The catalogue reads its category filter the same
      way. */
   const [stage, setStage] = useState<1 | 2 | 3>(1);
+  const [questionCount, setQuestionCount] = useState<number | null>(null);
   // null while the profile loads: nothing is drawn until we know whether she
   // has already introduced herself, so the identity form never flashes up.
   const [known, setKnown] = useState<boolean | null>(null);
@@ -122,7 +124,7 @@ export default function WelcomePage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/login");
+      router.replace(loginHref("signin", "/welcome"));
       return;
     }
     // Google already told us her name. Asking for it again would be the
@@ -217,6 +219,12 @@ export default function WelcomePage() {
 
   // With her identity already known the identity step is not one of hers.
   const offset = known ? 1 : 0;
+  /* QA D-21: the lead quoted a fixed "18 questions" while the counter said
+     "1 / 17". The number is the questionnaire's own, once it has loaded. */
+  const lead =
+    stage === 1 ? t("wel.lead1")
+      : stage === 2 ? t("wel.lead2")
+        : questionCount ? t("lq.leadN").replace("{n}", String(questionCount)) : t("lq.leadNoCount");
 
   return (
     <main className="auth-page">
@@ -230,7 +238,7 @@ export default function WelcomePage() {
               {t(stage === 1 ? "wel.title1" : stage === 2 ? "wel.title2" : "lq.title")}
             </h1>
             <p className="muted small">
-              {t(stage === 1 ? "wel.lead1" : stage === 2 ? "wel.lead2" : "lq.lead")}
+              {lead}
             </p>
             <div className="wel-progress" aria-hidden="true">
               <span
@@ -244,7 +252,10 @@ export default function WelcomePage() {
             /* The questions themselves. Onboarding ends when they do: the feed
                is the first thing the portal owes her once it has stopped
                asking. */
-            <Questionnaire onDone={() => router.push("/kabinet")} />
+            <Questionnaire
+              onDone={() => router.push("/kabinet")}
+              onProgress={(_, total) => setQuestionCount(total)}
+            />
           ) : stage === 1 ? (
             <>
               <div className="wel-row">

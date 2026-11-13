@@ -1,23 +1,36 @@
 "use client";
 
 /**
- * Sign-in.
+ * Sign-in and sign-up, on one card.
  *
- * One centred card rather than a form dropped on a page: signing in is the
- * moment a woman decides whether this portal is for her, so the left side says
- * what she gets and the right side asks for the one thing needed — her number.
+ * The left side says what she gets; the right side is the form. Two tabs at
+ * the top of the card name the two things the page does (J-02), and the page
+ * opens on the one she came for: `?mode=signin` from every "Sign in" link,
+ * `?mode=signup` from "Get started", otherwise the mode she last used in this
+ * tab (C-07). A woman who is already signed in is sent on, not shown an empty
+ * registration form under her own header (C-07); `?next=` brings her back to
+ * the page that asked her to sign in (C-09).
  *
- * The code step shows the number it was sent to and keeps a way back, because
- * a mistyped digit is the most common way this flow fails.
+ * Every rule is checked when she presses the button, not by greying it out:
+ * the first field that is wrong gets the focus and says what is wrong (C-11).
+ * Server refusals arrive as stable codes and are said beside the field they
+ * concern (C-08, C-10, C-20) — see services/authErrors.ts.
  */
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
-import { ApiError, getRoles, staffHome } from "@/services/api";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { getAccessToken, getRoles, isStaff, staffHome } from "@/services/api";
 import { passwordLogin, register } from "@/services/auth";
 import { track } from "@/services/analytics";
 import { portal } from "@/services/portal";
+import {
+  EMAIL_PATTERN,
+  authProblem,
+  passwordIssue,
+  type AuthField,
+  type AuthProblem,
+} from "@/services/authErrors";
 import {
   BirthDateField,
   EMPTY_BIRTH,
@@ -28,12 +41,16 @@ import {
 import { useI18n, type MessageKey } from "@/i18n";
 import { PasswordInput } from "@/components/PasswordInput";
 import { showDemo } from "@/services/env";
-import { loadFirebaseConfig } from "@/services/firebase";
+import { safeNext } from "@/utils/url";
+import { RESET_EMAIL_KEY } from "@/app/parol-tiklash/handoff";
 
-/** Where a signed-in learner lands. The feed is the portal's first tab, and
- *  it is the one screen that has something on it before she has done any
- *  work — which is exactly the state she is in one second after registering. */
+/** Where a signed-in learner lands when nothing asked her to come back. */
 const HOME = "/kabinet";
+
+/** The mode she last used in this tab, so a reload does not flip the form. */
+const MODE_KEY = "womanup.login.mode";
+
+type Mode = "signup" | "signin";
 
 /**
  * The ready-made account for a demonstration build.
@@ -50,9 +67,6 @@ const DEMO_ACCOUNTS =
   process.env.NEXT_PUBLIC_DEMO_PASSWORD
     ? ([
         {
-          // The demo credentials come from the demo deployment's own
-          // environment, never from the source: a password in a repository is
-          // a password in every clone and every history.
           email: process.env.NEXT_PUBLIC_DEMO_EMAIL,
           password: process.env.NEXT_PUBLIC_DEMO_PASSWORD,
           label: "login.roleUser",
@@ -60,10 +74,6 @@ const DEMO_ACCOUNTS =
         },
       ] as const)
     : ([] as const);
-
-/** Good enough to catch a typo before a code is sent nowhere; the address is
- *  proved by the code arriving, not by this. */
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const BENEFITS: ReadonlyArray<MessageKey> = ["login.b1", "login.b2", "login.b3"];
 
@@ -84,37 +94,83 @@ const REGIONS: ReadonlyArray<[string, MessageKey]> = [
   ["surkhandarya", "reg.surkhandarya"],
 ];
 
+/** The page's address parameters, from the router: during a client-side
+ *  navigation `window.location` still holds the page she came from. */
+function readParams(params: URLSearchParams | null): { mode: Mode; next: string | null } {
+  if (typeof window === "undefined" || !params) return { mode: "signup", next: null };
+  const asked = params.get("mode");
+  let mode: Mode = "signup";
+  if (asked === "signin" || asked === "signup") mode = asked;
+  else {
+    try {
+      const last = window.sessionStorage.getItem(MODE_KEY);
+      if (last === "signin" || last === "signup") mode = last;
+    } catch {
+      /* no storage: sign-up, the default */
+    }
+  }
+  return { mode, next: safeNext(params.get("next")) };
+}
+
+type FieldErrors = Partial<Record<AuthField, MessageKey>>;
+
+const ORDER: AuthField[] = ["name", "birth", "email", "password", "consent"];
+
 export default function LoginPage() {
-  const { t, locale } = useI18n();
+  return (
+    <Suspense fallback={<main className="auth-page" aria-busy="true" />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const { t } = useI18n();
   const router = useRouter();
-  const [mode, setMode] = useState<"signup" | "signin">("signup");
+  const search = useSearchParams();
+  const initial = useMemo(() => readParams(search as URLSearchParams | null), [search]);
+  const [mode, setModeState] = useState<Mode>(initial.mode);
+  const next = initial.next;
+  // Already signed in: nothing on this page is for her.
+  const [leaving, setLeaving] = useState(() => Boolean(getAccessToken()));
+
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [region, setRegion] = useState("");
   const [birth, setBirth] = useState<BirthParts>(EMPTY_BIRTH);
-  const [birthTouched, setBirthTouched] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  /** The API speaks English to developers; the login screen must not. The OTP
-   *  throttle is the one error a real user hits routinely, so it gets its own
-   *  translated string with the remaining seconds carried across. */
-  function localiseError(err: unknown, fallback: MessageKey): string {
-    if (err instanceof ApiError) {
-      if (err.status === 429) return t("login.tooMany");
-      // Only registration can answer 409, and it is the one failure she can
-      // actually act on — so it says plainly what happened.
-      if (err.status === 409) return t("login.taken");
-    }
-    return t(fallback);
-  }
-
-  /* Opening an account and agreeing to the privacy policy are one act: the
-     account cannot lawfully exist without a basis for holding her data, so the
-     tick is a precondition of the button rather than a setting to find later. */
   const [agreed, setAgreed] = useState(false);
+  const [problem, setProblem] = useState<AuthProblem | null>(null);
+  const [fields, setFields] = useState<FieldErrors>({});
+  const [busy, setBusy] = useState(false);
+  const failures = useRef(0);
+
+  const refs = {
+    name: useRef<HTMLInputElement>(null),
+    birth: useRef<HTMLSelectElement>(null),
+    email: useRef<HTMLInputElement>(null),
+    password: useRef<HTMLInputElement>(null),
+    consent: useRef<HTMLInputElement>(null),
+  };
+
+  useEffect(() => {
+    if (!getAccessToken()) return;
+    router.replace(isStaff() ? staffHome() : (next ?? HOME));
+  }, [router, next]);
+
+  function setMode(value: Mode) {
+    setModeState(value);
+    // A message about the other form is not about this one (C-19).
+    setProblem(null);
+    setFields({});
+    failures.current = 0;
+    try {
+      window.sessionStorage.setItem(MODE_KEY, value);
+    } catch {
+      /* the mode simply is not remembered */
+    }
+  }
 
   /* The sign-up funnel's first step: she touched the form. Reported once per
      visit to this page, so the figure counts people, not keystrokes. */
@@ -126,24 +182,44 @@ export default function LoginPage() {
   }
 
   const today = useMemo(() => new Date(), []);
-  const birthIso = isoBirthDate(birth);
-  const birthIssue = birthError(birth, today);
 
-  /* The date of birth is now a precondition of signing up, not an optional
-     extra. It used to be blank-able, and a blank one became 18 — which handed
-     every reader who skipped it the adult health scope by default, including
-     the children this portal is explicitly open to. */
-  const valid =
-    EMAIL.test(email) &&
-    password.length >= (mode === "signup" ? 8 : 1) &&
-    (mode !== "signup" ||
-      (name.trim().length > 0 && agreed && birthIssue === null && birthIso !== null));
+  /** What is wrong with the form as it stands, field by field. */
+  function validate(): FieldErrors {
+    const out: FieldErrors = {};
+    if (mode === "signup") {
+      if (!name.trim()) out.name = "au.err.name";
+      const issue = birthError(birth, today);
+      if (issue) out.birth = issue;
+      else if (isoBirthDate(birth) === null) out.birth = "au.err.birth";
+    }
+    if (!EMAIL_PATTERN.test(email)) out.email = "au.err.emailInvalid";
+    if (mode === "signup") {
+      const pw = passwordIssue(password, email);
+      if (pw === "short") out.password = "au.err.short";
+      else if (pw === "common") out.password = "au.err.weak";
+      if (!agreed) out.consent = "au.err.consent";
+    } else if (!password) {
+      out.password = "au.err.passwordEmpty";
+    }
+    return out;
+  }
+
+  function focusFirst(errors: FieldErrors) {
+    const first = ORDER.find((field) => errors[field]);
+    if (first) refs[first].current?.focus();
+  }
 
   /** Register or sign in, then decide where she lands. */
   async function submit() {
-    if (busy || !valid) return;
+    if (busy) return;
+    const errors = validate();
+    setFields(errors);
+    setProblem(null);
+    if (Object.keys(errors).length > 0) {
+      focusFirst(errors);
+      return;
+    }
     setBusy(true);
-    setError(null);
     try {
       if (mode === "signup") {
         await register(email, password, agreed);
@@ -153,7 +229,7 @@ export default function LoginPage() {
           await portal.assistantOnboarding({
             name: name.trim(),
             surname: surname.trim(),
-            birth_date: birthIso!,
+            birth_date: isoBirthDate(birth)!,
             region: region || null,
             interests: [],
             goal: "",
@@ -161,41 +237,75 @@ export default function LoginPage() {
             consent_ai_personalisation: true,
           });
         } catch {
-          // The account exists and she is signed in, but the portal now knows
-          // nothing about her — including her age, which decides what she may
-          // be shown. Finish it on /welcome rather than dropping her into an
-          // unpersonalised feed as an unknown, which the age gate has to treat
-          // as a minor anyway.
+          // The account exists, but the portal knows nothing about her —
+          // including her age, which decides what she may be shown. Finish it
+          // on /welcome rather than dropping her in as an unknown.
+          setLeaving(true);
           router.push("/welcome");
           return;
         }
-        // The feed, not her cabinet. A minute-old account has no score, no
-        // plan and no activity, so the cabinet greets her with an empty form
-        // and a 0% bar — the portal asking for work before it has shown her
-        // anything. The feed has something to read on day one.
-        router.push(HOME);
+        setLeaving(true);
+        router.push(next ?? HOME);
         return;
       }
 
       await passwordLogin(email, password);
+      failures.current = 0;
+      setLeaving(true);
       // A coordinator signing in here belongs in the panel, not in a cabinet
       // she does not have.
-      const staff = getRoles().some((role) => role !== "user" && role !== "mother");
-      router.push(staff ? staffHome() : HOME);
+      if (getRoles().some((role) => role !== "user" && role !== "mother")) {
+        router.push(staffHome());
+        return;
+      }
+      // An account that never finished onboarding has no name or age on
+      // record; ask now rather than leave her as an unknown (C-16).
+      const me = (await portal.me().catch(() => null)) as { onboarding_completed_at?: string | null } | null;
+      router.push(me && !me.onboarding_completed_at ? "/welcome" : (next ?? HOME));
     } catch (err) {
-      setError(localiseError(err, mode === "signup" ? "login.errRegister" : "login.errLogin"));
+      if (mode === "signin") failures.current += 1;
+      const found = authProblem(err, mode, failures.current);
+      if (found.field) {
+        const fieldErrors = { [found.field]: found.key } as FieldErrors;
+        setFields(fieldErrors);
+        focusFirst(fieldErrors);
+      }
+      setProblem(found);
     } finally {
       setBusy(false);
     }
   }
 
+  if (leaving) return <main className="auth-page" aria-busy="true" />;
+
+  const fieldError = (field: AuthField) =>
+    fields[field] ? (
+      <span className="au-field-error" id={`${field}-error`} role="alert">
+        {t(fields[field]!)}
+      </span>
+    ) : null;
+  const invalid = (field: AuthField) =>
+    fields[field] ? { "aria-invalid": true, "aria-describedby": `${field}-error` } : {};
+
+  // A problem shown beside its field is not repeated under the button.
+  const general = problem && !problem.field ? problem : null;
+  // The address she typed is handed to the reset page in this tab's storage,
+  // not in the URL, where it would sit in history and in server logs.
+  const handOverEmail = () => {
+    try {
+      if (email) window.sessionStorage.setItem(RESET_EMAIL_KEY, email);
+    } catch {
+      /* she types it again */
+    }
+  };
+
   return (
     <main className="auth-page">
       <div className="auth-shell">
         <section className="auth-aside stack">
-          <span className="eyebrow">{t("login.badge")}</span>
+          <span className="eyebrow">{t(mode === "signup" ? "au.badge.signup" : "au.badge.signin")}</span>
           <h1 className="auth-title">{t(mode === "signup" ? "login.signupTitle" : "login.title")}</h1>
-          <p className="muted">{t("login.lead")}</p>
+          <p className="muted">{t(mode === "signup" ? "au.lead.signup" : "au.lead.signin")}</p>
           <ul className="stack" style={{ gap: 12, marginTop: 8 }}>
             {BENEFITS.map((key) => (
               <li key={key} className="auth-benefit">
@@ -207,7 +317,35 @@ export default function LoginPage() {
         </section>
 
         <section className="auth-card stack" onFocusCapture={onSignupTouched}>
-          <>
+          <div className="au-tabs" role="tablist" aria-label={t("au.tabs")}>
+            {(["signin", "signup"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                role="tab"
+                id={`tab-${value}`}
+                aria-selected={mode === value}
+                aria-controls="auth-form"
+                className={mode === value ? "au-tab is-on" : "au-tab"}
+                onClick={() => mode !== value && setMode(value)}
+              >
+                {t(value === "signin" ? "nav.signIn" : "login.signupTitle")}
+              </button>
+            ))}
+          </div>
+
+          <form
+            id="auth-form"
+            role="tabpanel"
+            aria-labelledby={`tab-${mode}`}
+            className="stack"
+            style={{ gap: 16 }}
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+          >
             {mode === "signup" && (
               <>
                 <div className="wel-row">
@@ -215,12 +353,15 @@ export default function LoginPage() {
                     <label className="label" htmlFor="name">{t("wel.firstName")}</label>
                     <input
                       id="name"
+                      ref={refs.name}
                       className="input"
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       autoComplete="given-name"
                       autoFocus
+                      {...invalid("name")}
                     />
+                    {fieldError("name")}
                   </div>
                   <div className="field">
                     <label className="label" htmlFor="surname">{t("wel.lastName")}</label>
@@ -234,9 +375,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Alone in the column now that the age input has become the
-                    date-of-birth control below, so it takes the full width
-                    rather than sitting in half a two-column row. */}
                 <div className="field">
                   <label className="label" htmlFor="region">{t("wel.region")}</label>
                   <select
@@ -252,13 +390,15 @@ export default function LoginPage() {
                   </select>
                 </div>
 
-                <div onBlur={() => setBirthTouched(true)}>
-                  <BirthDateField
-                    value={birth}
-                    onChange={setBirth}
-                    error={birthTouched ? birthIssue : null}
-                  />
-                </div>
+                <BirthDateField
+                  value={birth}
+                  onChange={(value) => {
+                    setBirth(value);
+                    if (fields.birth) setFields((current) => ({ ...current, birth: undefined }));
+                  }}
+                  dayRef={refs.birth}
+                  error={fields.birth ?? null}
+                />
               </>
             )}
 
@@ -266,68 +406,83 @@ export default function LoginPage() {
               <label className="label" htmlFor="email">{t("login.email")}</label>
               <input
                 id="email"
+                ref={refs.email}
                 type="email"
                 className="input input-lg"
                 value={email}
                 onChange={(event) => setEmail(event.target.value.trim())}
-                onKeyDown={(event) => event.key === "Enter" && void submit()}
-                placeholder="ism@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 inputMode="email"
-                autoComplete="email"
+                autoComplete={mode === "signin" ? "username" : "email"}
                 autoFocus={mode === "signin"}
+                {...invalid("email")}
               />
-              <span className="faint">{t("login.emailWhy")}</span>
+              {fieldError("email") ?? <span className="faint">{t("login.emailWhy")}</span>}
+              {problem?.offerSignIn && (
+                <button type="button" className="au-inline-action" onClick={() => setMode("signin")}>
+                  {t("au.err.takenAction")}
+                </button>
+              )}
             </div>
 
             <div className="field">
-              <label className="label" htmlFor="password">{t("login.password")}</label>
+              <div className="spread">
+                <label className="label" htmlFor="password">{t("login.password")}</label>
+                {mode === "signin" && (
+                  <Link href="/parol-tiklash" className="au-forgot" onClick={handOverEmail}>{t("au.forgot")}</Link>
+                )}
+              </div>
               <PasswordInput
                 id="password"
+                ref={refs.password}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && void submit()}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                {...invalid("password")}
               />
-              {mode === "signup" && <span className="faint">{t("login.passwordHint")}</span>}
+              {fieldError("password") ??
+                (mode === "signup" && <span className="faint">{t("login.passwordHint")}</span>)}
             </div>
 
             {mode === "signup" && (
-              <label className="auth-consent">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                />
-                <span>
-                  {t("login.agreeLead")}{" "}
-                  <Link href="/maxfiylik" target="_blank" rel="noopener noreferrer">
-                    {t("legal.privacyTitle")}
-                  </Link>
-                </span>
-              </label>
+              <div className="field">
+                <label className="auth-consent">
+                  <input
+                    ref={refs.consent}
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => {
+                      setAgreed(e.target.checked);
+                      if (e.target.checked) setFields((current) => ({ ...current, consent: undefined }));
+                    }}
+                    {...invalid("consent")}
+                  />
+                  <span>
+                    {t("login.agreeLead")}{" "}
+                    <Link href="/maxfiylik" target="_blank" rel="noopener noreferrer">
+                      {t("legal.privacyTitle")}
+                    </Link>
+                  </span>
+                </label>
+                {fieldError("consent")}
+              </div>
             )}
 
-            <button
-              className="btn btn-primary btn-block btn-lg"
-              onClick={submit}
-              disabled={busy || !valid}
-            >
-              {t(
-                busy
-                  ? "login.working"
-                  : mode === "signup"
-                    ? "login.doRegister"
-                    : "login.doLogin",
+            <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
+              {t(busy ? "login.working" : mode === "signup" ? "login.doRegister" : "login.doLogin")}
+            </button>
+          </form>
+
+          {general && (
+            <div className="notice notice-red small stack" style={{ gap: 6 }} role="alert">
+              <span>{t(general.key)}</span>
+              {general.offerReset && (
+                <Link href="/parol-tiklash" className="au-inline-action" onClick={handOverEmail}>
+                  {t("au.forgot")}
+                </Link>
               )}
-            </button>
-            <button
-              className="btn btn-ghost btn-block btn-sm"
-              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-            >
-              {t(mode === "signup" ? "login.haveAccount" : "login.noAccount")}
-            </button>
-          </>
-          {error && <div className="notice notice-red small">{error}</div>}
+            </div>
+          )}
 
           {/* The ready-made accounts publish a working password, so they
               appear only in a demonstration build. */}
@@ -338,13 +493,13 @@ export default function LoginPage() {
                 {DEMO_ACCOUNTS.map((account) => (
                   <button
                     key={account.email}
+                    type="button"
                     className="btn btn-outline btn-sm btn-block"
                     style={{ justifyContent: "space-between" }}
                     onClick={() => {
+                      setMode("signin");
                       setEmail(account.email);
                       setPassword(account.password);
-                      setMode("signin");
-                      setError(null);
                     }}
                   >
                     <span>{t(account.label)} · {account.email}</span>
@@ -356,11 +511,7 @@ export default function LoginPage() {
             </details>
           )}
 
-          <p className="faint auth-terms">{t("login.terms")}</p>
-          {/* The staff door, named once and quietly. It was unlinked, so that
-              a public page would not advertise it — and the people it was for
-              could not find it either. The address is public in any case; the
-              password is what guards it. */}
+          {/* The staff door, named once and quietly. */}
           <Link href="/admin/login" className="faint auth-staff">{t("login.staff")}</Link>
         </section>
       </div>

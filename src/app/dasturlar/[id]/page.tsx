@@ -16,16 +16,16 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getAccessToken } from "@/services/api";
-import { portal, type Program, type ProgramDetail } from "@/services/portal";
+import { portal, type Enrollment, type Program, type ProgramDetail } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { useI18n, type MessageKey } from "@/i18n";
 import { categoryKey, formatKey } from "@/utils/format";
-import { Loading } from "@/components/ui";
-import { levelKey } from "@/components/learning/ui";
-import { hostOf } from "@/utils/url";
+import { ErrorNote, Loading } from "@/components/ui";
+import { duration, levelKey } from "@/components/learning/ui";
+import { hostOf, loginHref } from "@/utils/url";
 
 export default function ProgramPage() {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
 
@@ -33,7 +33,14 @@ export default function ProgramPage() {
   const [related, setRelated] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
-  const [enrolled, setEnrolled] = useState(false);
+  // QA B-10: a failed load is not "no such programme" — only a 404 (or an id
+  // that is not one, 422) is. Anything else offers a retry.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  // QA C-15: her enrollment itself, not a yes/no — "enrolled" and "finished"
+  // lead to different places.
+  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+  const [enrolError, setEnrolError] = useState<MessageKey | null>(null);
   const [busy, setBusy] = useState(false);
   // One module open at a time: a page of unfolded modules is the syllabus
   // again, only longer.
@@ -42,14 +49,18 @@ export default function ProgramPage() {
 
   useEffect(() => {
     if (!params?.id) return;
+    setLoading(true);
+    setFailed(false);
+    setMissing(false);
     portal
       .program(params.id)
       .then(setProgram)
       .catch((err) => {
-        if (err instanceof ApiError && err.status === 404) setMissing(true);
+        if (err instanceof ApiError && (err.status === 404 || err.status === 422)) setMissing(true);
+        else setFailed(true);
       })
       .finally(() => setLoading(false));
-  }, [params?.id]);
+  }, [params?.id, attempt]);
 
   useEffect(() => {
     if (!program) return;
@@ -77,8 +88,8 @@ export default function ProgramPage() {
     portal
       .myEnrollments()
       .then((rows) =>
-        setEnrolled(
-          (rows as Array<{ program_id: string }>).some((r) => r.program_id === program.id),
+        setEnrollment(
+          rows.find((row) => row.program_id === program.id && row.status !== "dropped") ?? null,
         ),
       )
       .catch(() => undefined);
@@ -87,13 +98,27 @@ export default function ProgramPage() {
   async function enrol() {
     if (!program) return;
     if (!signedIn) {
-      router.push("/login");
+      // Sign-in mode, and back to this programme afterwards (C-09).
+      router.push(loginHref("signin", `/dasturlar/${program.id}`));
       return;
     }
     setBusy(true);
+    setEnrolError(null);
     try {
-      await portal.enroll(program.id);
-      setEnrolled(true);
+      setEnrollment(await portal.enroll(program.id));
+    } catch (err) {
+      // QA B-10: a failed enrolment says so instead of doing nothing.
+      if (err instanceof ApiError && err.status === 401) {
+        router.push("/login");
+        return;
+      }
+      setEnrolError(
+        err instanceof ApiError && err.status === 429
+          ? "pd.enrolBusy"
+          : err instanceof ApiError && err.status === 409
+            ? "pd.enrolExternal"
+            : "pd.enrolFailed",
+      );
     } finally {
       setBusy(false);
     }
@@ -103,6 +128,22 @@ export default function ProgramPage() {
     return (
       <main className="wrap page">
         <Loading rows={5} />
+      </main>
+    );
+  }
+
+  if (failed && !program) {
+    return (
+      <main className="wrap page stack" style={{ gap: 14 }}>
+        <ErrorNote message={t("pd.loadFailed")} />
+        <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setAttempt((n) => n + 1)}>
+            {t("lms.err.retry")}
+          </button>
+          <Link href="/dasturlar" className="btn btn-outline btn-sm">
+            {t("pd.back")}
+          </Link>
+        </div>
       </main>
     );
   }
@@ -136,14 +177,15 @@ export default function ProgramPage() {
     stats.push([t("pd.moduleCount").replace("{n}", String(program.modules.length)), t("pd.modules")]);
   }
   if (program.duration_hours) {
-    stats.push([`${program.duration_hours} ${t("common.hours")}`, t("pr.duration")]);
+    stats.push([`${program.duration_hours} ${tn("unit.hour", program.duration_hours)}`, t("pr.duration")]);
   }
   if (program.duration_weeks) {
-    stats.push([`${program.duration_weeks} ${t("common.weeks")}`, t("pr.period")]);
+    stats.push([`${program.duration_weeks} ${tn("unit.week", program.duration_weeks)}`, t("pr.period")]);
   }
   if (program.level) stats.push([t(levelKey(program.level)), t("pd.level")]);
   if (!outside) {
-    stats.push([t(program.has_certificate ? "common.yes" : "common.no"), t("pr.certificate")]);
+    // QA B-06: a certificate is earned by a passed final assessment.
+    stats.push([t(program.has_certificate ? "lms.course.certShort" : "common.no"), t("pr.certificate")]);
   }
 
   return (
@@ -163,14 +205,26 @@ export default function ProgramPage() {
             >
               {t(categoryKey(program.category))}
             </Link>
-            <span className="badge badge-grey">{t(formatKey(program.format))}</span>
+            {program.format && (
+              <span className="badge badge-grey">{t(formatKey(program.format))}</span>
+            )}
+            {/* QA G-09: the language it is taught in, before she opens it. */}
+            {program.language && (
+              <span className="badge badge-grey">{t(`pr.lang.${program.language}` as MessageKey)}</span>
+            )}
             {program.has_certificate && (
               <span className="badge badge-green">{t("pr.certificate")}</span>
             )}
           </div>
 
           <h1 className="pd-title">{tx(program.title_i18n)}</h1>
-          <p className="lead" style={{ maxWidth: "48rem" }}>{tx(program.goal_i18n)}</p>
+          {/* QA G-16: imported courses have no goal line — the description's
+              first sentence stands in rather than an empty paragraph. */}
+          {(tx(program.goal_i18n) || firstSentence(tx(program.description_i18n ?? {}))) && (
+            <p className="lead" style={{ maxWidth: "48rem" }}>
+              {tx(program.goal_i18n) || firstSentence(tx(program.description_i18n ?? {}))}
+            </p>
+          )}
 
           {program.provider && (
             <p className="small">
@@ -193,13 +247,26 @@ export default function ProgramPage() {
               >
                 {t("lms.course.goOutside")}
               </a>
+            ) : enrollment?.status === "completed" ? (
+              /* QA C-15: finished — say so, and point at the certificate. */
+              <>
+                <span className="badge badge-green" style={{ alignSelf: "center" }}>{t("pd.completed")}</span>
+                <Link className="btn btn-primary btn-lg" href="/talim/yutuqlar">
+                  {program.has_certificate ? t("pd.toCertificate") : t("pd.toAchievements")}
+                </Link>
+              </>
+            ) : enrollment ? (
+              /* QA C-15: enrolled — the main button goes on to the course. */
+              <Link className="btn btn-primary btn-lg" href={`/talim/kurslar/${program.slug}`}>
+                {t("pd.continue")}
+              </Link>
             ) : (
               <button
                 className="btn btn-primary btn-lg"
                 onClick={enrol}
-                disabled={busy || enrolled}
+                disabled={busy}
               >
-                {enrolled ? t("pd.enrolled") : signedIn ? t("pd.enrol") : t("pd.signInFirst")}
+                {signedIn ? t("pd.enrol") : t("pd.signInFirst")}
               </button>
             )}
             {topic && (
@@ -211,6 +278,7 @@ export default function ProgramPage() {
               </Link>
             )}
           </div>
+          {enrolError && <ErrorNote message={t(enrolError)} />}
         </div>
       </section>
 
@@ -256,9 +324,12 @@ export default function ProgramPage() {
               <div className="stack" style={{ gap: 14 }}>
                 <div className="spread">
                   <h2 className="pd-h2">{t("pd.modules")}</h2>
+                  {/* QA E-08: this is the modules' own reading time, exact and
+                      labelled — not a second, rounded "course length" that
+                      contradicts the duration tile above. */}
                   {totalMinutes > 0 && (
                     <span className="faint">
-                      {Math.round(totalMinutes / 60)} {t("common.hours")}
+                      {t("pd.modulesTime")}: {duration(totalMinutes, t("unit.min"), (hours) => tn("unit.hour", hours))}
                     </span>
                   )}
                 </div>
@@ -282,7 +353,7 @@ export default function ProgramPage() {
                           <strong className="pd-module-title">{tx(module.title_i18n)}</strong>
                           {module.duration_minutes && (
                             <span className="faint nowrap">
-                              {module.duration_minutes} {t("pd.minutes")}
+                              {module.duration_minutes} {t("unit.min")}
                             </span>
                           )}
                           {body && (
@@ -350,22 +421,58 @@ export default function ProgramPage() {
               </Link>
             </div>
             <div className="showcase-grid">
-              {related.map((item) => (
-                <Link key={item.id} href={`/dasturlar/${item.id}`} className="tile">
-                  <span className="badge">{t(categoryKey(item.category) as MessageKey)}</span>
-                  <h3 className="tile-title">{tx(item.title_i18n)}</h3>
-                  <p className="muted small tile-lead">{tx(item.goal_i18n)}</p>
-                  {item.duration_hours ? (
-                    <span className="faint">
-                      {item.duration_hours} {t("common.hours")}
+              {/* One card for every programme, ours or a partner's (QA E-09):
+                  the category as the catalogue writes it, the goal when there
+                  is one, and the same foot — provider, hours, language and a
+                  "partner course" mark — whichever of those exist. */}
+              {related.map((item) => {
+                const goal = tx(item.goal_i18n);
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/dasturlar/${item.id}`}
+                    className="tile tile-related"
+                    data-cat={item.category}
+                  >
+                    <span className="prog-cat">{t(categoryKey(item.category) as MessageKey)}</span>
+                    <h3 className="tile-title">{tx(item.title_i18n)}</h3>
+                    {goal ? (
+                      <p className="muted small tile-lead">{goal}</p>
+                    ) : item.provider ? (
+                      <p className="muted small tile-lead">
+                        {t("pd.provider")}: {item.provider}
+                      </p>
+                    ) : (
+                      <span className="tile-lead" aria-hidden="true" />
+                    )}
+                    <span className="tile-related-foot">
+                      {item.duration_hours ? (
+                        <span className="prog-fmt">
+                          {item.duration_hours} {tn("unit.hour", item.duration_hours)}
+                        </span>
+                      ) : null}
+                      {item.language && ["uz", "ru", "en"].includes(item.language) ? (
+                        <span className="prog-fmt">{t(`pr.lang.${item.language}` as MessageKey)}</span>
+                      ) : null}
+                      {item.external_url ? (
+                        <span className="prog-fmt">{t("lms.course.outsideTitle")} ↗</span>
+                      ) : null}
                     </span>
-                  ) : null}
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
       )}
     </main>
   );
+}
+
+/** The first sentence of a description, for a card that has no goal line. */
+function firstSentence(text: string): string {
+  const clean = text.trim();
+  if (!clean) return "";
+  const match = clean.match(/^[\s\S]{20,220}?[.!?](\s|$)/);
+  return (match ? match[0] : clean.slice(0, 200)).trim();
 }

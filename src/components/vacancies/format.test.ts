@@ -4,6 +4,8 @@
  * address round-trips: what a link says is what the server is asked.
  */
 
+// translate() reads registered tables; tests register every language (QA H-02).
+import "@/i18n/catalog";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
@@ -22,7 +24,8 @@ const unit = (currency: string | null) => (currency === "RUB" ? "RUB" : "сум"
 test("an amount is grouped with spaces whatever the locale", () => {
   assert.equal(formatAmount(6_000_000), "6 000 000");
   assert.equal(formatAmount(300), "300");
-  assert.equal(currencyUnit("UZS", "uz"), "so'm");
+  assert.equal(currencyUnit("UZS", "uz"), "söm");
+  assert.equal(currencyUnit("UZS", "uz-Cyrl"), "сўм");
   assert.equal(currencyUnit(null, "ru"), "сум");
   assert.equal(currencyUnit("uzs", "en"), "UZS");
   assert.equal(currencyUnit("RUB", "uz"), "RUB");

@@ -14,7 +14,8 @@ try {
     const response = await page.goto(base + path);
     assert.equal(response.status(), 200, path);
     await page.locator("body").waitFor();
-    await page.waitForLoadState("networkidle");
+    // Not "networkidle": a keepalive beacon can keep it from ever firing (QA B-04).
+    await page.locator("main").first().waitFor();
     assert.ok((await page.locator("body").innerText()).length > 50, path);
   }
   const config = await (await page.request.get(base + "/public-config")).json();

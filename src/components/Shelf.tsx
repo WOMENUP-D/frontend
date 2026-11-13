@@ -39,7 +39,7 @@ function spineWidth(hours: number | null): number {
 }
 
 export function Shelf({ programs }: { programs: Program[] }) {
-  const { t, tx } = useI18n();
+  const { tn, t, tx } = useI18n();
   const [openId, setOpenId] = useState<string | null>(null);
 
   /* The legend states the range the encoding actually spans, read off the
@@ -63,17 +63,18 @@ export function Shelf({ programs }: { programs: Program[] }) {
           <i style={{ width: spineWidth((low + high) / 2) / 3 }} />
           <i style={{ width: spineWidth(high) / 3 }} />
         </span>
-        <span className="shelf-scale-ends">{low} → {high} {t("common.hours")}</span>
+        <span className="shelf-scale-ends">{low} → {high} {tn("unit.hour", high)}</span>
       </div>
 
       <div className="shelf" role="list">
         {programs.map((program) => {
           const picked = program.id === openId;
           return (
+            /* The list item is a layout-free wrapper so the toggle inside can
+               keep its button role — and with it `aria-expanded`. */
+            <div key={program.id} role="listitem" style={{ display: "contents" }}>
             <button
-              key={program.id}
               type="button"
-              role="listitem"
               data-cat={program.category}
               className={picked ? "spine is-open" : "spine"}
               style={{ width: spineWidth(program.duration_hours) }}
@@ -81,7 +82,7 @@ export function Shelf({ programs }: { programs: Program[] }) {
               aria-expanded={picked}
               title={
                 program.duration_hours != null
-                  ? `${tx(program.title_i18n)} — ${program.duration_hours} ${t("common.hours")}`
+                  ? `${tx(program.title_i18n)} — ${program.duration_hours} ${tn("unit.hour", program.duration_hours)}`
                   : tx(program.title_i18n)
               }
             >
@@ -90,6 +91,7 @@ export function Shelf({ programs }: { programs: Program[] }) {
                 <span className="spine-hours">{program.duration_hours}</span>
               )}
             </button>
+            </div>
           );
         })}
       </div>
@@ -105,12 +107,12 @@ export function Shelf({ programs }: { programs: Program[] }) {
 
           <div className="shelf-open-figs">
             {open.duration_weeks != null && (
-              <span><b>{open.duration_weeks}</b> {t("common.weeks")}</span>
+              <span><b>{open.duration_weeks}</b> {tn("unit.week", open.duration_weeks)}</span>
             )}
             {open.duration_hours != null && (
-              <span><b>{open.duration_hours}</b> {t("common.hours")}</span>
+              <span><b>{open.duration_hours}</b> {tn("unit.hour", open.duration_hours)}</span>
             )}
-            <span className="shelf-open-fmt">{t(formatKey(open.format))}</span>
+            {open.format && <span className="shelf-open-fmt">{t(formatKey(open.format))}</span>}
             {open.has_certificate && (
               <span className="shelf-open-cert">{t("pr.certificate")}</span>
             )}
