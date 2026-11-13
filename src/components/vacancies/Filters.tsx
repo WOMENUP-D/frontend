@@ -13,7 +13,7 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n";
 import type { VacancyMeta } from "@/services/portal";
-import { regionKey } from "@/utils/format";
+import { REGIONS, regionKey } from "@/utils/format";
 import {
   categoryKey,
   employmentKey,
@@ -22,13 +22,32 @@ import {
   type VacancyFilterState,
 } from "./format";
 
+// Used when `/vacancies/meta` is unavailable (the board is not connected yet)
+// or sends an empty list, so the pickers still offer every region and sphere
+// instead of a lone "any" option. Category ids are the board's 27 professional
+// groups; their names come from the `vac.cat.<id>` messages.
 const FALLBACK: Pick<VacancyMeta, "regions" | "experience" | "employment" | "work_format" | "categories"> = {
-  regions: [],
+  regions: [...REGIONS],
   experience: ["noExperience", "between1And3", "between3And6", "moreThan6"],
   employment: ["full", "part", "project", "volunteer", "probation"],
   work_format: ["ON_SITE", "REMOTE", "HYBRID", "FIELD_WORK"],
-  categories: [],
+  categories: Array.from({ length: 27 }, (_, i) => ({ id: String(i + 1), name: "", roles: 0 })),
 };
+
+type FilterOptions = typeof FALLBACK;
+
+/** The board's lists where it sent them, the built-in ones where it did not. */
+function filterOptions(meta: VacancyMeta | null): FilterOptions {
+  const pick = <K extends keyof FilterOptions>(key: K): FilterOptions[K] =>
+    meta && meta[key]?.length ? meta[key] : FALLBACK[key];
+  return {
+    regions: pick("regions"),
+    experience: pick("experience"),
+    employment: pick("employment"),
+    work_format: pick("work_format"),
+    categories: pick("categories"),
+  };
+}
 
 export function VacancyFilterControls({
   meta,
@@ -42,7 +61,7 @@ export function VacancyFilterControls({
   idPrefix: string;
 }) {
   const { t } = useI18n();
-  const options = meta ?? FALLBACK;
+  const options = filterOptions(meta);
   // The salary box is committed after a pause, so each digit is not a request.
   const [salary, setSalary] = useState(value.salaryFrom ?? "");
   useEffect(() => setSalary(value.salaryFrom ?? ""), [value.salaryFrom]);
