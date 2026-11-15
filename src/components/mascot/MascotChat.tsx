@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { fill } from "@/components/jobs/format";
 import { ApiError, getAccessToken } from "@/services/api";
+import { isTransientError } from "@/services/transient";
 import { isTimeout, portal, type AssistantReply, type GuestAllowance } from "@/services/portal";
 import { HelpResources } from "@/components/HelpResources";
 import { MascotFigure } from "./Mascot";
@@ -100,7 +101,14 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const reply: AssistantReply = await portal.assistantAsk(text, apiLocale, route);
+      // One quiet retry when the failure was the network or the server, not
+      // the question: a dropped connection should not cost her the answer.
+      const send = () => portal.assistantAsk(text, apiLocale, route);
+      const reply: AssistantReply = await send().catch(async (err: unknown) => {
+        if (!isTransientError(err)) throw err;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return send();
+      });
       if (reply.guest_questions_left !== null && reply.guest_questions_left !== undefined) {
         setAllowance({
           unlimited: false,

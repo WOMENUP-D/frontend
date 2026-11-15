@@ -2268,6 +2268,26 @@ button.ed-row { cursor: pointer; }
   .face-mark { width: 40%; right: -6%; bottom: -5%; }
 }
 
+/* On a phone six full-width panels were most of a screen each, and the
+   section took five swipes to get past. Two to a row they are three rows: a
+   compact tile per direction, the words across the whole tile, the figure
+   shrunk into the corner behind them. */
+@media (max-width: 560px) {
+  .face-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .face-card { min-height: 0; padding: 13px 13px 14px; border-radius: 10px; }
+  .face-num { font-size: .7rem; letter-spacing: .12em; }
+  .face-card h3 {
+    margin-top: 0; padding-top: 8px; max-width: none;
+    font-size: 1.02rem; line-height: 1.2;
+  }
+  .face-card p {
+    margin-top: 5px; max-width: none;
+    font-size: .8rem; line-height: 1.4;
+  }
+  .face-mark { width: 56%; right: -16%; bottom: -16%; opacity: .2; }
+  [data-theme="dark"] .face-mark { opacity: .24; }
+}
+
 /* Near-square where there is room for it. At 1.57:1 the figure had nowhere to
    be oversized and the middle void — the thing this composition is built on —
    was 75px of nothing. Written after the base rule on purpose: inside a media
