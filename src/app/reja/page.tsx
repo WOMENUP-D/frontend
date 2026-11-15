@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ApiError, getAccessToken } from "@/services/api";
 import { clearPlanGenerating, isPlanGenerating } from "@/services/planDraft";
-import { portal, type Plan } from "@/services/portal";
+import { planInLanguage, portal, type Plan } from "@/services/portal";
 import { EdRow, EdRows, Empty, ErrorNote, Loading, NeedsAuth } from "@/components/ui";
 import { useI18n, type MessageKey } from "@/i18n";
 import { dimensionKey } from "@/utils/format";
@@ -17,20 +17,20 @@ const PRIORITY_KEY: Record<string, MessageKey> = {
 };
 
 /** The newest proposal she has not accepted yet. */
-async function findDraft(): Promise<Plan | null> {
-  const mine = await portal.myPlans();
+async function findDraft(language?: string): Promise<Plan | null> {
+  const mine = await portal.myPlans(language);
   return mine.find((candidate) => !candidate.is_active && !candidate.accepted_at) ?? null;
 }
 
 /** Polls until the draft started by the assessment lands. Bounded, because a
  *  marker can outlive the request that set it. */
-async function waitForDraft(cancelled: () => boolean): Promise<Plan | null> {
+async function waitForDraft(cancelled: () => boolean, language?: string): Promise<Plan | null> {
   const deadline = Date.now() + 150_000;
   while (Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 3000));
     if (cancelled()) return null;
     if (!isPlanGenerating()) return null;
-    const found = await findDraft().catch(() => null);
+    const found = await findDraft(language).catch(() => null);
     if (found) return found;
   }
   return null;
@@ -55,6 +55,8 @@ async function waitForDraft(cancelled: () => boolean): Promise<Plan | null> {
  * draft she may be part-way through reading.
  */
 function looksWrongLanguage(plan: Plan, reading: string): boolean {
+  // The server says which language the text in front of her is in.
+  if (plan.language) return plan.language !== reading;
   const recorded = plan.rationale?.language;
   if (typeof recorded === "string" && recorded) return recorded !== reading;
 
@@ -192,14 +194,14 @@ export default function PlanPage() {
     let cancelled = false;
     (async () => {
       try {
-        const active = await portal.activePlan();
+        const active = await portal.activePlan(localeRef.current);
         if (!cancelled) setPlan(active);
       } catch (err) {
         if (!(err instanceof ApiError && err.status === 404)) {
           if (!cancelled) setError("plan.errLoad");
         } else {
           try {
-            const pending = await findDraft();
+            const pending = await findDraft(localeRef.current);
             if (cancelled) return;
             if (pending) { setDraft(pending); return; }
 
@@ -221,7 +223,7 @@ export default function PlanPage() {
             // mean nothing is coming — waiting for it is what stops a second
             // call and a second draft.
             if (isPlanGenerating()) {
-              const arrived = await waitForDraft(() => cancelled);
+              const arrived = await waitForDraft(() => cancelled, localeRef.current);
               if (cancelled) return;
               if (arrived) { clearPlanGenerating(); setDraft(arrived); return; }
             }
@@ -238,6 +240,29 @@ export default function PlanPage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  /* The plan follows the language she reads the site in. A plan is written
+     once; on a language switch it is translated — same steps, dates and
+     progress — once per plan and language (the server caches it, so this is a
+     model call only the first time). Tried once per plan+language: if it
+     cannot be made, the original stays with the "other language" notice
+     below and its rebuild offer. */
+  const translated = useRef(new Set<string>());
+  const [translating, setTranslating] = useState<string | null>(null);
+  useEffect(() => {
+    const current = draft ?? plan;
+    if (!current?.language || current.language === apiLocale) return;
+    const key = `${current.id}:${apiLocale}`;
+    if (translated.current.has(key)) return;
+    translated.current.add(key);
+    setTranslating(key);
+    void planInLanguage(current, apiLocale).then((next) => {
+      const swap = (old: Plan | null) => (old && old.id === next.id ? next : old);
+      setDraft(swap);
+      setPlan(swap);
+      setTranslating((was) => (was === key ? null : was));
+    });
+  }, [draft, plan, apiLocale]);
 
   /* QA I-05: a proposal in another language used to be rebuilt by the model
      automatically on every visit after a language switch. Generation now
@@ -404,7 +429,10 @@ export default function PlanPage() {
               one she agreed to, and rebuilding it on a language switch would
               throw away something she chose. So the page says what it can do
               and waits to be asked. */}
-          {looksWrongLanguage(shown, apiLocale) && (
+          {translating === `${shown.id}:${apiLocale}` && (
+            <p className="faint small" role="status">{t("plan.translating")}</p>
+          )}
+          {translating !== `${shown.id}:${apiLocale}` && looksWrongLanguage(shown, apiLocale) && (
             <div className="notice">
               {t("plan.otherLang")}{" "}
               <button

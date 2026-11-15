@@ -1764,6 +1764,28 @@ export interface Plan {
   progress_percent: number;
   items: PlanItem[];
   rationale: Record<string, unknown>;
+  /** The language the plan was written in, and the language of the text in
+   *  this response. Absent from an older API. */
+  content_language?: string;
+  language?: string | null;
+  /** A translation was asked for and could not be made: this is the original. */
+  translation_unavailable?: boolean;
+}
+
+/** The plan in the language she is reading the site in.
+ *
+ *  A plan is written once, in the language she had chosen then; switching the
+ *  site's language used to leave it in the old one. This asks the server for
+ *  the translation (cached after the first time) and falls back to the
+ *  original — marked `translation_unavailable` — when it cannot be made, so a
+ *  plan is never lost to a translation error. */
+export async function planInLanguage(plan: Plan, language: string): Promise<Plan> {
+  if (!plan.language || plan.language === language) return plan;
+  try {
+    return await portal.translatePlan(plan.id, language);
+  } catch {
+    return { ...plan, translation_unavailable: true };
+  }
 }
 
 export interface NavigatorAnswer {
@@ -2477,8 +2499,16 @@ export const portal = {
   saveLearning: (answers: Record<string, unknown>) =>
     api.put<LearningProfileRead>("/assessments/learning-profile", { answers }),
 
-  activePlan: () => api.get<Plan>("/plans/active"),
-  myPlans: () => api.get<Plan[]>("/plans"),
+  /** `language`: the locale she is reading in. A translation the server has
+   *  already made for it is applied; a read never makes one. */
+  activePlan: (language?: string) =>
+    api.get<Plan>(`/plans/active${language ? `?language=${encodeURIComponent(language)}` : ""}`),
+  myPlans: (language?: string) =>
+    api.get<Plan[]>(`/plans${language ? `?language=${encodeURIComponent(language)}` : ""}`),
+  /** The plan translated (not rebuilt) into `language`: same steps, dates and
+   *  progress. Made once per language and cached on the server. */
+  translatePlan: (planId: string, language: string) =>
+    api.post<Plan>(`/plans/${planId}/translate`, { language }),
   /** `language` is the locale she is reading in. Without it the server falls
    *  back to a stored column that used to be `uz` for every account, which is
    *  why plans came back in Uzbek on the Russian pages. */
