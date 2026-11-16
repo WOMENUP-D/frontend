@@ -168,6 +168,11 @@ export default function PlanPage() {
      without one the page says so and links to it — no model call, no 30 s
      wait ending in an error. */
   const [noDiagnostic, setNoDiagnostic] = useState(false);
+  /* Whether she has taken the assessment at all, asked on every visit. A
+     starter plan does not need one, so a plan on screen said nothing about it;
+     without this the way to the assessment disappeared the moment any plan
+     existed. Null until known, and on any error other than "none yet". */
+  const [assessed, setAssessed] = useState<boolean | null>(null);
   /* QA I-05: a horizon picked on a draft is confirmed before the model is
      called — a tap on "1 month" used to regenerate at once. */
   const [pendingHorizon, setPendingHorizon] = useState<Horizon | null>(null);
@@ -186,6 +191,18 @@ export default function PlanPage() {
    * it every visit to a planless roadmap would call the model again and leave
    * another abandoned draft behind.
    */
+  useEffect(() => {
+    if (!getAccessToken()) return;
+    let cancelled = false;
+    portal
+      .diagnosticResult()
+      .then(() => { if (!cancelled) setAssessed(true); })
+      .catch((cause: unknown) => {
+        if (!cancelled) setAssessed(cause instanceof ApiError && cause.status === 404 ? false : null);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     const token = getAccessToken();
     setAuthed(Boolean(token));
@@ -429,6 +446,15 @@ export default function PlanPage() {
               one she agreed to, and rebuilding it on a language switch would
               throw away something she chose. So the page says what it can do
               and waits to be asked. */}
+          {assessed === false && (
+            <div className="notice notice-warn plan-diag">
+              <p>{t("plan.diagBanner")}</p>
+              <Link className="btn btn-primary btn-sm" href="/kabinet/diagnostika">
+                {t("plan.toDiagnostic")}
+              </Link>
+            </div>
+          )}
+
           {translating === `${shown.id}:${apiLocale}` && (
             <p className="faint small" role="status">{t("plan.translating")}</p>
           )}

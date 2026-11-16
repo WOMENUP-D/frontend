@@ -1860,6 +1860,10 @@ select.input option { background: var(--control); color: var(--ink); }
   font-size: .92rem; border: 1px solid var(--border);
   background: var(--bg-2); color: var(--text);
 }
+.plan-diag {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+}
+.plan-diag p { margin: 0; flex: 1 1 260px; }
 .notice-warn { background: rgba(196,128,141,.14); border-color: var(--border-strong); color: var(--ink); }
 .notice-red { background: rgba(209,75,75,.1); border-color: rgba(209,75,75,.3); color: var(--danger); }
 .notice-green { background: rgba(18,122,90,.1); border-color: rgba(18,122,90,.28); color: var(--success); }
