@@ -1273,6 +1273,7 @@ export const messages = {
   "lms.course.partnerSite": { uz: "Hamkor saytida", ru: "На сайте партнёра", en: "On the partner's site" },
   "plan.needsDiagnostic": { uz: "Avval diagnostikadan öting", ru: "Сначала пройдите диагностику", en: "Take the assessment first" },
   "plan.needsDiagnosticHint": { uz: "Reja diagnostika natijalaringiz asosida tuziladi. Taxminan 10 daqiqa oladi — söng reja şu yerda taklif qilinadi.", ru: "План строится по результатам диагностики. Она занимает около 10 минут — после неё план появится здесь.", en: "The plan is built from your assessment. It takes about 10 minutes, and the plan is proposed here afterwards." },
+  "plan.diagBanner": { uz: "Bu boşlanğiç reja. Diagnostikadan öting — reja natijalaringiz asosida tuziladi.", ru: "Это стартовый план. Пройдите диагностику, чтобы план строился по вашим результатам.", en: "This is a starter plan. Take the assessment so the plan is built from your results." },
   "plan.toDiagnostic": { uz: "Diagnostikadan ötiş", ru: "Пройти диагностику", en: "Take the assessment" },
   "plan.discard": { uz: "Taklifni bekor qiliş", ru: "Отклонить предложение", en: "Discard this proposal" },
   "plan.errDiscard": { uz: "Taklifni öçirib bölmadi. Qayta urinib köring.", ru: "Не удалось удалить предложение. Попробуйте ещё раз.", en: "Could not discard the proposal. Please try again." },
