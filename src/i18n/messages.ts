@@ -1213,6 +1213,7 @@ export const messages = {
   "lms.cal.allDay": { uz: "Kun davomida", ru: "Весь день", en: "All day" },
   "lms.nav.diary":      { uz: "Kundalik", ru: "Дневник", en: "Diary" },
   "lms.goal.streak": { uz: "kunlik seriya", ru: "дней подряд", en: "day streak" },
+  "plan.translating": { uz: "Rejangizni tanlagan tilingizga tarjima qilyapmiz…", ru: "Переводим ваш план на выбранный язык…", en: "Translating your plan into the language you chose…" },
   "plan.otherLang":   { uz: "Bu reja boşqa tilda tuzilgan.", ru: "Этот план составлен на другом языке.", en: "This plan was written in another language." },
   "plan.rebuildHere": { uz: "Şu tilda qayta tuziş", ru: "Пересоздать на этом языке", en: "Rebuild in this language" },
   /* Said on the steps the platform cannot observe, so an unfinished mark is

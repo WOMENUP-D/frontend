@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
 import {
+  planInLanguage,
   portal,
   type AssistantProfile,
+  type Plan,
   type DevelopmentScore,
   type Recommendations,
   type ScoreInsights,
@@ -41,7 +43,6 @@ interface Profile {
   bio: string | null;
   birth_date: string | null;
 }
-interface Plan { id: string; title: string; progress_percent: number; items: unknown[]; is_active: boolean }
 /** The account itself. Unlike the profile table this is never empty — she has
  *  an id, an address and a joining date from the moment she signs up. */
 interface Account {
@@ -258,7 +259,7 @@ function ProfileStats({
 }
 
 export default function CabinetPage() {
-  const { t, tu } = useI18n();
+  const { t, tu, apiLocale } = useI18n();
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -268,6 +269,16 @@ export default function CabinetPage() {
   const [recs, setRecs] = useState<Recommendations | null>(null);
   const [recsFailed, setRecsFailed] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
+  /* The plan in the language she reads the site in — translated once on the
+     server and cached (see /reja). Keyed on the plan's language so a
+     translation that could not be made is not asked for again. */
+  useEffect(() => {
+    if (!plan?.language || plan.language === apiLocale) return;
+    void planInLanguage(plan, apiLocale).then((next) =>
+      setPlan((current) => (current && current.id === next.id ? next : current)),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan?.id, plan?.language, apiLocale]);
   const [enrollments, setEnrollments] = useState<{ progress_percent: number; status: string }[]>([]);
   /* The questionnaire she actually fills in on the last onboarding step. It is a different
      record from the Development Score, and telling them apart is the whole

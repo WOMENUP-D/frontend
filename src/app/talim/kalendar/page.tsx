@@ -17,7 +17,7 @@
 import Link from "next/link";
 import { useI18n } from "@/i18n";
 import { ApiError } from "@/services/api";
-import { portal, type Plan, type PlanItem } from "@/services/portal";
+import { planInLanguage, portal, type Plan, type PlanItem } from "@/services/portal";
 import { useApi } from "@/components/learning/useApi";
 import {
   Badge,
@@ -44,17 +44,18 @@ function today(): string {
 }
 
 export default function LearningCalendar() {
-  const { t, tu } = useI18n();
+  const { t, tu, apiLocale } = useI18n();
 
   const { data, loading, error, unauthorised, retry } = useApi(async () => {
     try {
-      return await portal.activePlan();
+      // In the language she is reading the site in (translated, not rebuilt).
+      return await planInLanguage(await portal.activePlan(apiLocale), apiLocale);
     } catch (cause) {
       // No accepted plan is an answer, not a failure.
       if (cause instanceof ApiError && cause.status === 404) return null as Plan | null;
       throw cause;
     }
-  });
+  }, [apiLocale]);
 
   const head = <PageHead title={t("lms.dl.title")} lead={t("lms.dl.lead")} />;
   const toEvents = (
