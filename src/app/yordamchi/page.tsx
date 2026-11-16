@@ -32,6 +32,7 @@ import { HelpResources } from "@/components/HelpResources";
 import { stripLeadingNumber } from "@/components/text/markdown";
 import { historyFor, loadChats, ownerOf, saveChats, turnId } from "./chatStore";
 import { SignInLink } from "@/components/auth/SignInLink";
+import { isTransientError } from "@/services/transient";
 
 /** The longest question the assistant endpoints take (schemas/assistant.py). */
 const MAX_MESSAGE = 1000;
@@ -231,7 +232,13 @@ export default function AssistantPage() {
       }
 
       const route: Route = asked === "daily" ? "auto" : asked;
-      const reply = await portal.assistantAsk(question, language, route, history);
+      // One quiet retry when the network or the server failed, not the question.
+      const send = () => portal.assistantAsk(question, language, route, history);
+      const reply = await send().catch(async (err: unknown) => {
+        if (!isTransientError(err)) throw err;
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return send();
+      });
       if (reply.guest_questions_left !== null) {
         setAllowance({
           unlimited: false,
