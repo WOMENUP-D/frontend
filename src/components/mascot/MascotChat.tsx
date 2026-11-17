@@ -103,7 +103,11 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
     try {
       // One quiet retry when the failure was the network or the server, not
       // the question: a dropped connection should not cost her the answer.
-      const send = () => portal.assistantAsk(text, apiLocale, route);
+      // The conversation so far, so a follow-up is read in context. It is
+      // this person's own: the store is wiped on sign-out and on a change of
+      // account (services/personalData), and the server keeps the last 8.
+      const history = turns.slice(-8).map((turn) => ({ role: turn.role, content: turn.text }));
+      const send = () => portal.assistantAsk(text, apiLocale, route, history);
       const reply: AssistantReply = await send().catch(async (err: unknown) => {
         if (!isTransientError(err)) throw err;
         await new Promise((resolve) => setTimeout(resolve, 1500));

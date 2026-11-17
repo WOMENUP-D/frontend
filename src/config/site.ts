@@ -27,6 +27,10 @@ export interface SiteContacts {
   site: string | null;
   /** Social profiles: label → URL. Empty hides the line. */
   social: ReadonlyArray<{ label: string; url: string }>;
+  /** Where the office is, for visitors — per language. Shown in the footer.
+   *  Not the operator's legal address (`address`), which the privacy policy
+   *  cites and which is confirmed separately. */
+  office: Readonly<Record<"uz" | "ru" | "en", string>> | null;
 }
 
 export const SITE_CONTACTS: SiteContacts = {
@@ -36,7 +40,15 @@ export const SITE_CONTACTS: SiteContacts = {
   email: "info@womanup.uz",
   phone: null,
   site: "https://womanup.uz",
-  social: [],
+  social: [
+    { label: "Instagram", url: "https://www.instagram.com/womanup.uz/" },
+    { label: "Telegram", url: "https://t.me/womanup_uz" },
+  ],
+  office: {
+    uz: "Toşkent ş., Şayxontohur tumani, Furqat köçasi, 1",
+    ru: "г. Ташкент, Шайхантахурский район, улица Фурката, 1",
+    en: "1 Furqat Street, Shaykhantakhur District, Tashkent",
+  },
 };
 
 /** The canonical origin, for metadata, canonical links and the sitemap.

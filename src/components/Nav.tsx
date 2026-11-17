@@ -49,6 +49,8 @@ const STAFF_LINKS: ReadonlyArray<{
  *  opportunities and the assistant — what the portal can show her before she
  *  has an account. */
 const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
+  // Named, not only behind the logo: many did not know the logo goes home.
+  { href: "/", key: "nav.home", guest: true },
   { href: "/reja", key: "nav.plan" },
   { href: "/dasturlar", key: "nav.programs", guest: true },
   // Next to the catalogue on purpose: the catalogue is what she can enrol in,

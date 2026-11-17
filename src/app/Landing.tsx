@@ -297,32 +297,3 @@ export function Pricing() {
     </section>
   );
 }
-
-/* ------------------------------------------------------- the closing call */
-
-export function ClosingCall() {
-  const { t } = useI18n();
-  return (
-    <section className="section">
-      <div className="wrap">
-        <Reveal className="cta-panel">
-          {/* Blossom in the corners, not a second branch. The branch is the
-              hero's and there is one to a page; here the garden is only
-              implied — five flowers at the edge of the frame. */}
-          <span className="cta-bloom" aria-hidden="true">
-            <span><Blossom alive size={46} /></span>
-            <span><Blossom alive size={28} /></span>
-            <span><Blossom alive size={52} /></span>
-            <span><Blossom alive size={32} /></span>
-            <span><Blossom alive size={22} /></span>
-          </span>
-
-          <h2>{t("landing.ctaTitle")}</h2>
-          <p>{t("landing.ctaLead")}</p>
-          {/* The same next step as the hero's, worded for who is looking (C-05). */}
-          <ViewerCta className="btn btn-primary btn-lg" />
-        </Reveal>
-      </div>
-    </section>
-  );
-}

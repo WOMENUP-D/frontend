@@ -7,13 +7,12 @@ import { SITE_CONTACTS } from "@/config/site";
 import { Sky } from "@/components/Sky";
 import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
-import { TryQuestion } from "@/components/TryQuestion";
 import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
-import { AiTeaser, ClosingCall, PathCards, Roadmap } from "./Landing";
+import { AiTeaser, PathCards, Roadmap } from "./Landing";
 import { OpportunityShowcase, ProgramShowcase } from "./Showcase";
 
 export default function LandingPage() {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
 
   return (
     <main className="landing">
@@ -68,7 +67,6 @@ export default function LandingPage() {
 
       <AiTeaser />
       <PathCards />
-      <TryQuestion />
       <Roadmap />
       <ProgramShowcase />
       <section className="section section-promo">
@@ -81,7 +79,6 @@ export default function LandingPage() {
           ready in ./Landing, but a paid plan on a national programme portal is
           a decision that has to be made off the page first — and there is no
           billing behind either button. Mounting it is one import and one line. */}
-      <ClosingCall />
 
       <footer className="site-footer">
         <div className="wrap stack" style={{ gap: 34 }}>
@@ -116,12 +113,14 @@ export default function LandingPage() {
               {SITE_CONTACTS.email && <a href={`mailto:${SITE_CONTACTS.email}`}>{SITE_CONTACTS.email}</a>}
             </div>
 
-            {(SITE_CONTACTS.address || SITE_CONTACTS.social.length > 0) && (
+            {(SITE_CONTACTS.office || SITE_CONTACTS.address || SITE_CONTACTS.social.length > 0) && (
               <div className="footer-col">
-                {SITE_CONTACTS.address && (
+                {(SITE_CONTACTS.office || SITE_CONTACTS.address) && (
                   <>
                     <span>{t("foot.addressLabel")}</span>
-                    <span className="footer-line">{SITE_CONTACTS.address}</span>
+                    <span className="footer-line">
+                      {SITE_CONTACTS.office ? tx(SITE_CONTACTS.office) : SITE_CONTACTS.address}
+                    </span>
                   </>
                 )}
                 {SITE_CONTACTS.social.length > 0 && (
