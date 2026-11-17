@@ -1040,7 +1040,7 @@ export const messages = {
   "lms.section":      { uz: "Taʼlim", ru: "Обучение", en: "Learning" },
   "lms.nav.dashboard":{ uz: "Boş sahifa", ru: "Главная", en: "Dashboard" },
   "lms.nav.courses":  { uz: "Kurslarim", ru: "Мои курсы", en: "My courses" },
-  "lms.nav.paths":    { uz: "Öquv yöllari", ru: "Траектории", en: "Learning paths" },
+  "lms.nav.paths":    { uz: "Yönalişlar", ru: "Направления", en: "Directions" },
   "lms.nav.practice": { uz: "Amaliyot", ru: "Практика", en: "Practice" },
   "lms.nav.calendar": { uz: "Kalendar", ru: "Календарь", en: "Calendar" },
   "lms.nav.goals":    { uz: "Maqsadlarim", ru: "Мои цели", en: "My goals" },
@@ -1352,7 +1352,7 @@ export const messages = {
   /* Learning paths: a route through courses that already exist. "Yoʻnalish"
      rather than "yoʻl" — it is a direction of study, and "yoʻl" is the word
      the portal already uses for a road on the landing page. */
-  "lms.path.title":     { uz: "Yönalişlar", ru: "Направления", en: "Learning paths" },
+  "lms.path.title":     { uz: "Yönalişlar", ru: "Направления", en: "Directions" },
   "lms.path.lead":      { uz: "Bir-biriga ulangan kurslar: qaysi biridan boşlaş va keyin nima kelişi belgilangan.", ru: "Курсы, связанные в маршрут: с какого начать и что идёт следом.", en: "Courses joined into a route: where to start, and what comes after." },
   "lms.path.mine":      { uz: "Mening yönalişlarim", ru: "Мои направления", en: "My learning paths" },
   "lms.path.all":       { uz: "Barça yönalişlar", ru: "Все направления", en: "All paths" },
