@@ -1381,23 +1381,30 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
 /* ---------- Site footer ----------
    Three columns on desktop, stacked on a phone. The contact details are
    placeholders until the real ones land. */
+/* The footer is read, not looked at: an opaque floor the branch stays behind
+   (the blossoms used to run through the address), body-size type, and the
+   page's text colour rather than its faintest grey. */
 .site-footer {
+  position: relative; z-index: 1;
+  background: var(--bg);
   border-top: 1px solid var(--border);
-  padding: 52px 0 40px;
+  /* The bottom clears the floating assistant and its greeting, which sat on
+     the last line of the footer. */
+  padding: 56px 0 128px;
   margin-top: 10px;
 }
 .footer-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
-  gap: 34px 28px;
+  grid-template-columns: minmax(0, 1.3fr) repeat(4, minmax(0, 1fr));
+  gap: 34px 32px;
   align-items: start;
 }
-.footer-col { display: flex; flex-direction: column; gap: 9px; }
+.footer-col { display: flex; flex-direction: column; gap: 11px; }
 .footer-col > span:first-child {
-  font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--text-faint); font-weight: 700; margin-bottom: 2px;
+  font-size: .8rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--text-dim); font-weight: 700; margin-bottom: 4px;
 }
-.footer-col a, .footer-col .footer-line { font-size: .9rem; color: var(--text-dim); }
+.footer-col a, .footer-col .footer-line { font-size: 1.02rem; line-height: 1.5; color: var(--text); }
 .footer-col a:hover { color: var(--ink); }
 /* Social profiles as two square buttons: thin border, grey mark, the mark
    darkens on hover. The Instagram glyph cuts its lens out with the button's
@@ -1415,7 +1422,10 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
 .footer-base {
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   border-top: 1px solid var(--border); padding-top: 20px;
-  font-size: .84rem; color: var(--text-faint);
+  font-size: .95rem; color: var(--text-dim);
+}
+@media (max-width: 1100px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
   .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
