@@ -1354,7 +1354,7 @@ export const messages = {
      rather than "yoʻl" — it is a direction of study, and "yoʻl" is the word
      the portal already uses for a road on the landing page. */
   "lms.path.title":     { uz: "Yönalişlar", ru: "Направления", en: "Directions" },
-  "lms.path.lead":      { uz: "Bir-biriga ulangan kurslar: qaysi biridan boşlaş va keyin nima kelişi belgilangan.", ru: "Курсы, связанные в маршрут: с какого начать и что идёт следом.", en: "Courses joined into a route: where to start, and what comes after." },
+  "lms.path.lead":      { uz: "Sizga mos yönalişlar va ularning kurslari: qayerdan boşlaş va keyin nima örganiş kerakligi.", ru: "Подходящие вам направления и их курсы: с чего начать и что изучать дальше.", en: "Directions that suit you and their courses: where to start and what to learn next." },
   "lms.path.mine":      { uz: "Mening yönalişlarim", ru: "Мои направления", en: "My learning paths" },
   "lms.path.all":       { uz: "Barça yönalişlar", ru: "Все направления", en: "All paths" },
   "lms.path.courses":   { uz: "kurs", ru: "курса", en: "courses" },

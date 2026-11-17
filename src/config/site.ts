@@ -27,9 +27,9 @@ export interface SiteContacts {
   site: string | null;
   /** Social profiles: label → URL. Empty hides the line. */
   social: ReadonlyArray<{ label: string; url: string }>;
-  /** Where the office is, for visitors — per language. Shown in the footer.
-   *  Not the operator's legal address (`address`), which the privacy policy
-   *  cites and which is confirmed separately. */
+  /** The address, per language: the office in the footer and, confirmed by
+   *  the operator on 2026-11-17, also the legal address the privacy policy
+   *  cites. `address` is only for a single-language override. */
   office: Readonly<Record<"uz" | "ru" | "en", string>> | null;
 }
 
