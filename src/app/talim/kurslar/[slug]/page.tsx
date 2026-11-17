@@ -399,6 +399,7 @@ function Panel({
             className="lms-btn lms-btn-primary"
             style={{ width: "100%" }}
             href={course.external_url ?? ""}
+            target="_blank"
             rel="noopener noreferrer"
           >
             {t("lms.course.goOutside")}

@@ -880,6 +880,7 @@ export const messages = {
   "sl.login":     { uz: "Kiriş", ru: "Вход", en: "Sign in" },
   "pr.more":      { uz: "Yana körsatiş", ru: "Показать ещё", en: "Show more" },
   "pr.shown":     { uz: "{total} tadan {n} tasi", ru: "Показано {n} из {total}", en: "{n} of {total} shown" },
+  "pc.signupToOpen": { uz: "Röyxatdan ötib oching", ru: "Открыть после регистрации", en: "Sign up to open" },
   "pc.opens":     { uz: "Oçiladi:", ru: "Откроется на сайте", en: "Opens on" },
   "sl.password":  { uz: "Parol", ru: "Пароль", en: "Password" },
   "pw.show":      { uz: "Parolni körsatiş", ru: "Показать пароль", en: "Show password" },
