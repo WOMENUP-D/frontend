@@ -1,6 +1,8 @@
 /** Typed calls for the personal cabinet screens. */
 
 import { api } from "./api";
+import { askOverStream } from "./assistantStream";
+import { isTransientError } from "./transient";
 
 export interface DevelopmentScore {
   composite: number;
@@ -2764,6 +2766,28 @@ export const portal = {
     api.post<AssistantReply>("/assistant/ask", { message, language, route, history }, {
       headers: { "X-Guest-Id": guestId() },
       signal: aiSignal(),
+    }),
+  /** `assistantAsk`, with the answer shown while it is written: `onText` gets
+   *  the text so far as it grows, and the promise resolves with the very reply
+   *  `/assistant/ask` returns. Falls back to that endpoint when the API has no
+   *  stream yet; one quiet retry on a transient failure before any text; a
+   *  break after text rejects with `StreamBrokenError` carrying it. */
+  assistantAskStream: (
+    message: string,
+    language: string,
+    route = "auto",
+    history: { role: "user" | "assistant"; content: string }[] = [],
+    onText: (text: string) => void = () => {},
+  ) =>
+    askOverStream<AssistantReply>({
+      open: () =>
+        api.stream("/assistant/ask/stream", { message, language, route, history }, {
+          headers: { "X-Guest-Id": guestId(), Accept: "text/event-stream" },
+          signal: aiSignal(),
+        }),
+      fallback: () => portal.assistantAsk(message, language, route, history),
+      onText,
+      isTransient: isTransientError,
     }),
   assistantDetail: (message: string, answer: string, kind: string, language: string) =>
     api.post<AssistantReply>(

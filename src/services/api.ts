@@ -345,11 +345,16 @@ export function bootstrapSession(): Promise<boolean> {
   return bootstrapping;
 }
 
-export async function request<T>(
+/**
+ * One call with the session's headers, the one refresh-and-replay on a 401,
+ * and the error shape every caller expects — returning the raw response, so
+ * a caller that reads a stream reads it through the same front door.
+ */
+export async function requestResponse(
   path: string,
   options: RequestInit = {},
   retrying = false,
-): Promise<T> {
+): Promise<Response> {
   const token = getAccessToken();
 
   const session = currentSession();
@@ -377,7 +382,7 @@ export async function request<T>(
     !path.startsWith("/auth/") &&
     (await refreshTokens())
   ) {
-    return request<T>(path, options, true);
+    return requestResponse(path, options, true);
   }
 
   if (!response.ok) {
@@ -391,6 +396,11 @@ export async function request<T>(
     );
   }
 
+  return response;
+}
+
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const response = await requestResponse(path, options);
   return response.status === 204 ? (undefined as T) : ((await response.json()) as T);
 }
 
@@ -422,6 +432,9 @@ export const api = {
   text: (path: string) => requestText(path),
   post: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, { ...options, method: "POST", body: JSON.stringify(body ?? {}) }),
+  /** A POST whose answer is read as a stream (`text/event-stream`). */
+  stream: (path: string, body?: unknown, options?: RequestInit) =>
+    requestResponse(path, { ...options, method: "POST", body: JSON.stringify(body ?? {}) }),
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body ?? {}) }),
   patch: <T>(path: string, body?: unknown) =>
