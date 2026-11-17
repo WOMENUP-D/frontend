@@ -182,7 +182,7 @@ export function CourseCard({ view }: { view: CourseView }) {
         <div style={{ minWidth: 0 }}>
           <h3 className="lms-course-title">
             {outside ? (
-              <a href={href} rel="noopener noreferrer">{tx(program.title_i18n)}</a>
+              <a href={href} target="_blank" rel="noopener noreferrer">{tx(program.title_i18n)}</a>
             ) : (
               <Link href={href}>{tx(program.title_i18n)}</Link>
             )}
@@ -215,6 +215,7 @@ export function CourseCard({ view }: { view: CourseView }) {
           <a
             className="lms-btn lms-btn-quiet lms-btn-sm"
             href={href}
+            target="_blank"
             rel="noopener noreferrer"
             style={{ marginLeft: "auto" }}
           >

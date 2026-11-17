@@ -198,7 +198,8 @@ export default function PlanPage() {
       .diagnosticResult()
       .then(() => { if (!cancelled) setAssessed(true); })
       .catch((cause: unknown) => {
-        if (!cancelled) setAssessed(cause instanceof ApiError && cause.status === 404 ? false : null);
+        // Only "none yet" counts as not assessed; an outage must not hide her plan.
+        if (!cancelled) setAssessed(!(cause instanceof ApiError && cause.status === 404));
       });
     return () => { cancelled = true; };
   }, []);
@@ -212,7 +213,21 @@ export default function PlanPage() {
     (async () => {
       try {
         const active = await portal.activePlan(localeRef.current);
-        if (!cancelled) setPlan(active);
+        if (cancelled) return;
+        setPlan(active);
+        /* A plan made before she sat the diagnostic is not built on it. Once
+           she has, the assessment drafts a new proposal — show that one, not
+           the old starter plan, so the diagnostic visibly changes the plan. */
+        if (active.rationale?.from_diagnostic !== true) {
+          const proposal = isPlanGenerating()
+            ? await waitForDraft(() => cancelled, localeRef.current)
+            : await findDraft(localeRef.current).catch(() => null);
+          if (cancelled) return;
+          clearPlanGenerating();
+          if (proposal && proposal.id !== active.id && proposal.rationale?.from_diagnostic === true) {
+            setDraft(proposal);
+          }
+        }
       } catch (err) {
         if (!(err instanceof ApiError && err.status === 404)) {
           if (!cancelled) setError("plan.errLoad");
@@ -310,6 +325,7 @@ export default function PlanPage() {
       setDraft(made);
       setPendingHorizon(null);
     } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 409) { setNoDiagnostic(true); return; }
       setError(makeError(cause));
     } finally { setBusy(false); }
   }
@@ -326,7 +342,7 @@ export default function PlanPage() {
   }
 
   if (authed === false) return <main className="wrap page"><NeedsAuth /></main>;
-  if (loading) {
+  if (loading || (authed && assessed === null)) {
     return (
       /* The heading is drawn from the first frame, the way the loaded page
          draws it, and the "building" line keeps its place whether or not it
@@ -345,7 +361,10 @@ export default function PlanPage() {
     );
   }
 
-  const shown = draft ?? plan;
+  /* No diagnostic, no plan: the roadmap is built from the assessment, so a
+     plan left over from before one (a starter plan) is not shown either. */
+  const needsDiagnostic = noDiagnostic || assessed === false;
+  const shown = needsDiagnostic ? null : (draft ?? plan);
 
   return (
     <main className="wrap page stack" style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -354,7 +373,7 @@ export default function PlanPage() {
           <span className="eyebrow">{t("nav.cabinet")}</span>
           <h1>{t("plan.title")}</h1>
         </div>
-        {plan && !draft && (
+        {shown && plan && !draft && (
           <div className="plan-make">
             <HorizonPicker value={horizon} onChange={setHorizon} disabled={busy} />
             <button className="btn btn-outline btn-sm" onClick={() => generate()} disabled={busy}>
@@ -373,7 +392,7 @@ export default function PlanPage() {
         </Link>
       )}
 
-      {!shown && noDiagnostic && (
+      {needsDiagnostic && (
         <Empty
           title={t("plan.needsDiagnostic")}
           hint={t("plan.needsDiagnosticHint")}
@@ -385,7 +404,7 @@ export default function PlanPage() {
         />
       )}
 
-      {!shown && !noDiagnostic && (
+      {!shown && !needsDiagnostic && (
         <Empty
           title={t("plan.none")}
           hint={t("plan.noneHint")}
@@ -446,14 +465,6 @@ export default function PlanPage() {
               one she agreed to, and rebuilding it on a language switch would
               throw away something she chose. So the page says what it can do
               and waits to be asked. */}
-          {assessed === false && (
-            <div className="notice notice-warn plan-diag">
-              <p>{t("plan.diagBanner")}</p>
-              <Link className="btn btn-primary btn-sm" href="/kabinet/diagnostika">
-                {t("plan.toDiagnostic")}
-              </Link>
-            </div>
-          )}
 
           {translating === `${shown.id}:${apiLocale}` && (
             <p className="faint small" role="status">{t("plan.translating")}</p>

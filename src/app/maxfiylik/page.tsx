@@ -47,10 +47,10 @@ function Rich({ text: raw }: { text: string }) {
 
 /** Section 20's contact lines, from the one place the facts are kept. */
 function Contacts() {
-  const { t } = useI18n();
+  const { t, tx } = useI18n();
   const rows: Array<[MessageKey, string | null]> = [
     ["legal.c.name", SITE_CONTACTS.legalName],
-    ["legal.c.address", SITE_CONTACTS.address],
+    ["legal.c.address", SITE_CONTACTS.address ?? (SITE_CONTACTS.office ? tx(SITE_CONTACTS.office) : null)],
     ["legal.c.email", SITE_CONTACTS.email],
     ["legal.c.phone", SITE_CONTACTS.phone],
     ["legal.c.site", SITE_CONTACTS.site],

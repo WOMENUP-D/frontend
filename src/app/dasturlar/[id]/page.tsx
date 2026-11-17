@@ -239,10 +239,20 @@ export default function ProgramPage() {
             </p>
           )}
           <div className="row" style={{ gap: 12, flexWrap: "wrap" }}>
-            {outside ? (
+            {outside && !signedIn ? (
+              /* Courses open to members: the way in is an account, and she
+                 comes back here, one tap from the course. */
+              <Link
+                className="btn btn-primary btn-lg"
+                href={loginHref("signup", `/dasturlar/${program.id}`)}
+              >
+                {t("pc.signupToOpen")}
+              </Link>
+            ) : outside ? (
               <a
                 className="btn btn-primary btn-lg"
                 href={program.external_url ?? ""}
+                target="_blank"
                 rel="noopener noreferrer"
               >
                 {t("lms.course.goOutside")}

@@ -1,6 +1,8 @@
 /** Typed calls for the personal cabinet screens. */
 
 import { api } from "./api";
+import { askOverStream } from "./assistantStream";
+import { isTransientError } from "./transient";
 
 export interface DevelopmentScore {
   composite: number;
@@ -1049,6 +1051,38 @@ export interface LearningPath {
 
 export interface LearningPathDetail extends LearningPath {
   items: LearningPathItem[];
+}
+
+/** One answer to the diagnostic's interests question, in its own words. */
+export interface InterestRef {
+  id: string;
+  label_i18n: Record<string, string>;
+}
+
+export type DirectionReason = "interest" | "weakest_dimension" | "popular";
+
+/** A field her diagnostic points to, with the catalogue courses that lead
+ *  into it — first steps first. A reading: nothing is stored or started. */
+export interface LearningDirection {
+  slug: string;
+  title_i18n: Record<string, string>;
+  summary_i18n: Record<string, string>;
+  reason: DirectionReason;
+  interest: InterestRef | null;
+  dimension: string | null;
+  /** The catalogue topic that lists every course of the field. */
+  topic: string | null;
+  course_total: number;
+  courses: Program[];
+}
+
+export interface LearningDirectionsForMe {
+  needs_diagnostic: boolean;
+  basis: "interests" | "weakest_dimension" | "popular" | null;
+  interests: InterestRef[];
+  unmatched_interests: InterestRef[];
+  directions: LearningDirection[];
+  assessment_id: string | null;
 }
 
 export type EnrollmentStatus = "enrolled" | "in_progress" | "completed" | "dropped";
@@ -2568,6 +2602,8 @@ export const portal = {
   learningPath: (slug: string) =>
     api.get<LearningPathDetail>(`/learning-paths/${encodeURIComponent(slug)}`),
   myLearningPaths: () => api.get<LearningPathDetail[]>("/learning-paths/me"),
+  /** The directions her latest diagnostic points to. Signed in only. */
+  myDirections: () => api.get<LearningDirectionsForMe>("/learning-paths/for-me"),
   /** Take a route on. Idempotent, and enrols her in nothing. */
   startLearningPath: (slug: string) =>
     api.post<LearningPathDetail>(`/learning-paths/${encodeURIComponent(slug)}/start`, {}),
@@ -2730,6 +2766,28 @@ export const portal = {
     api.post<AssistantReply>("/assistant/ask", { message, language, route, history }, {
       headers: { "X-Guest-Id": guestId() },
       signal: aiSignal(),
+    }),
+  /** `assistantAsk`, with the answer shown while it is written: `onText` gets
+   *  the text so far as it grows, and the promise resolves with the very reply
+   *  `/assistant/ask` returns. Falls back to that endpoint when the API has no
+   *  stream yet; one quiet retry on a transient failure before any text; a
+   *  break after text rejects with `StreamBrokenError` carrying it. */
+  assistantAskStream: (
+    message: string,
+    language: string,
+    route = "auto",
+    history: { role: "user" | "assistant"; content: string }[] = [],
+    onText: (text: string) => void = () => {},
+  ) =>
+    askOverStream<AssistantReply>({
+      open: () =>
+        api.stream("/assistant/ask/stream", { message, language, route, history }, {
+          headers: { "X-Guest-Id": guestId(), Accept: "text/event-stream" },
+          signal: aiSignal(),
+        }),
+      fallback: () => portal.assistantAsk(message, language, route, history),
+      onText,
+      isTransient: isTransientError,
     }),
   assistantDetail: (message: string, answer: string, kind: string, language: string) =>
     api.post<AssistantReply>(

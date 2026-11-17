@@ -424,7 +424,7 @@ function Result({
       )}
 
       {attempt.submission.link && (
-        <a className="lms-route-why" href={attempt.submission.link} rel="noreferrer noopener">
+        <a className="lms-route-why" href={attempt.submission.link} target="_blank" rel="noreferrer noopener">
           {attempt.submission.link}
         </a>
       )}

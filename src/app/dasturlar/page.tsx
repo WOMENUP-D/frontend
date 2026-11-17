@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getAccessToken } from "@/services/api";
+import { loginHref } from "@/utils/url";
 import { portal, type Program, type ProgramTopic, type ProgramSuggestion } from "@/services/portal";
 import { track } from "@/services/analytics";
 import { Empty, ErrorNote, Loading } from "@/components/ui";
@@ -461,9 +462,17 @@ export default function ProgramsPage() {
                       there is no page of ours to send her to, and finding that
                       out after the tap is worse than reading it before. */}
                   <h3 className="prog-title">
-                    {program.external_url ? (
+                    {program.external_url && !authed ? (
+                      /* Courses open to members: a guest sees the catalogue,
+                         and the way into a course is an account. After it she
+                         lands on the course page, one tap from the course. */
+                      <Link href={loginHref("signup", `/dasturlar/${program.id}`)}>
+                        {tx(program.title_i18n)}
+                      </Link>
+                    ) : program.external_url ? (
                       <a
                         href={program.external_url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`${tx(program.title_i18n)} — ${t("pc.opens")} ${hostOf(program.external_url)}`}
                       >
@@ -525,12 +534,20 @@ export default function ProgramsPage() {
                       )}
                     </span>
                     <div className="prog-actions">
-                      {program.external_url ? (
+                      {program.external_url && !authed ? (
+                        <Link
+                          className="btn btn-outline btn-sm"
+                          href={loginHref("signup", `/dasturlar/${program.id}`)}
+                        >
+                          {t("pc.signupToOpen")}
+                        </Link>
+                      ) : program.external_url ? (
                         /* No "details" and no "enrol": we hold neither. What we
                            can honestly offer is the address it lives at. */
                         <a
                           className="btn btn-outline btn-sm"
                           href={program.external_url}
+                          target="_blank"
                           rel="noopener noreferrer"
                         >
                           {hostOf(program.external_url)}

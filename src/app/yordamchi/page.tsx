@@ -32,7 +32,7 @@ import { HelpResources } from "@/components/HelpResources";
 import { stripLeadingNumber } from "@/components/text/markdown";
 import { historyFor, loadChats, ownerOf, saveChats, turnId } from "./chatStore";
 import { SignInLink } from "@/components/auth/SignInLink";
-import { isTransientError } from "@/services/transient";
+import { StreamBrokenError } from "@/services/assistantStream";
 
 /** The longest question the assistant endpoints take (schemas/assistant.py). */
 const MAX_MESSAGE = 1000;
@@ -121,6 +121,9 @@ export default function AssistantPage() {
   }, []);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  /* The answer while it is being written, and the tab it belongs to; null
+     until its first words arrive — until then "thinking…" is shown. */
+  const [live, setLive] = useState<{ tab: Tab; text: string } | null>(null);
     /* The key, not the sentence. Translating at the moment the request fails
      froze whatever language was current then — and the locale is restored from
      storage in an effect, so a request that failed first put an Uzbek sentence
@@ -181,9 +184,10 @@ export default function AssistantPage() {
   }, [owner, chats]);
 
   const turnCount = turns.length;
+  const liveShown = live !== null;
   useEffect(() => {
     if (turnCount) endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [turnCount, tab]);
+  }, [turnCount, tab, liveShown]);
 
   useEffect(() => {
     if (tab !== "daily" || daily || !authed) return;
@@ -218,6 +222,7 @@ export default function AssistantPage() {
     appendTo(asked, { id: turnId(), role: "user", text: question });
     setInput("");
     setBusy(true);
+    setLive(null);
     setError(null);
     setRetryable(null);
 
@@ -232,13 +237,11 @@ export default function AssistantPage() {
       }
 
       const route: Route = asked === "daily" ? "auto" : asked;
-      // One quiet retry when the network or the server failed, not the question.
-      const send = () => portal.assistantAsk(question, language, route, history);
-      const reply = await send().catch(async (err: unknown) => {
-        if (!isTransientError(err)) throw err;
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        return send();
-      });
+      // Streamed as it is written. A failure before the first words is retried
+      // once, quietly, when it was the network or the server, not the question.
+      const reply = await portal.assistantAskStream(question, language, route, history, (text) =>
+        setLive({ tab: asked, text }),
+      );
       if (reply.guest_questions_left !== null) {
         setAllowance({
           unlimited: false,
@@ -260,17 +263,23 @@ export default function AssistantPage() {
           .catch(() => patchTurn(asked, id, { detailPending: false }));
       }
     } catch (err) {
+      // Broken part-way: what she already read stays, with the note under it.
+      if (err instanceof StreamBrokenError && err.partial) {
+        appendTo(asked, { id: turnId(), role: "assistant", text: err.partial });
+      }
+      const cause = err instanceof StreamBrokenError && err.partial ? err.reason : err;
       // A model call that ran past 45 s says so and offers to ask again
       // (QA H-04); every other refusal says what it is (E-03): a visitor's
       // spent trial, a signed-in hourly limit, a message over the length the
       // API takes.
-      if (isTimeout(err)) {
+      if (isTimeout(cause)) {
         setError("asst.errTimeout");
         setRetryable(question);
       } else {
-        setError(askErrorKey(err, question.length));
+        setError(askErrorKey(cause, question.length));
       }
     } finally {
+      setLive(null);
       setBusy(false);
     }
   }
@@ -401,7 +410,10 @@ export default function AssistantPage() {
               ),
             )}
 
-            {busy && <p className="muted small">{t("asst.thinking")}</p>}
+            {busy && live?.tab === tab && (
+              <AssistantTurn turn={{ id: "live", role: "assistant", text: live.text }} />
+            )}
+            {busy && !live && <p className="muted small">{t("asst.thinking")}</p>}
             <div ref={endRef} />
           </div>
 

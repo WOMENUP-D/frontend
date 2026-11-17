@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n, type MessageKey } from "@/i18n";
 import { fill } from "@/components/jobs/format";
 import { ApiError, getAccessToken } from "@/services/api";
-import { isTransientError } from "@/services/transient";
+import { StreamBrokenError } from "@/services/assistantStream";
 import { isTimeout, portal, type AssistantReply, type GuestAllowance } from "@/services/portal";
 import { HelpResources } from "@/components/HelpResources";
 import { MascotFigure } from "./Mascot";
@@ -61,6 +61,9 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  /* The answer while it is being written; null until its first words arrive,
+     which is when the typing dots give way to it. */
+  const [live, setLive] = useState<string | null>(null);
   const [error, setError] = useState<MessageKey | null>(null);
   const [allowance, setAllowance] = useState<GuestAllowance | null>(null);
   const [signedIn, setSignedIn] = useState(false);
@@ -78,7 +81,7 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [turns, busy]);
+  }, [turns, busy, live]);
 
   // Escape closes; focus comes back to the blossom through the parent.
   useEffect(() => {
@@ -99,16 +102,22 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
     writeHistory(next);
     setInput("");
     setBusy(true);
+    setLive(null);
     setError(null);
     try {
-      // One quiet retry when the failure was the network or the server, not
-      // the question: a dropped connection should not cost her the answer.
-      const send = () => portal.assistantAsk(text, apiLocale, route);
-      const reply: AssistantReply = await send().catch(async (err: unknown) => {
-        if (!isTransientError(err)) throw err;
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        return send();
-      });
+      // The conversation so far, so a follow-up is read in context. It is
+      // this person's own: the store is wiped on sign-out and on a change of
+      // account (services/personalData), and the server keeps the last 8.
+      // The answer is streamed; a failure before its first words is retried
+      // once, quietly, as before — a dropped connection should not cost her it.
+      const history = turns.slice(-8).map((turn) => ({ role: turn.role, content: turn.text }));
+      const reply: AssistantReply = await portal.assistantAskStream(
+        text,
+        apiLocale,
+        route,
+        history,
+        setLive,
+      );
       if (reply.guest_questions_left !== null && reply.guest_questions_left !== undefined) {
         setAllowance({
           unlimited: false,
@@ -128,14 +137,22 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
       setTurns(answered);
       writeHistory(answered);
     } catch (err) {
+      // Broken part-way: what she already read stays, with the note under it.
+      if (err instanceof StreamBrokenError && err.partial) {
+        const kept: Turn[] = [...next, { role: "assistant", text: err.partial }];
+        setTurns(kept);
+        writeHistory(kept);
+      }
+      const cause = err instanceof StreamBrokenError ? err.reason : err;
       setError(
         err instanceof ApiError && err.status === 429
           ? "wu.err.limit"
-          : isTimeout(err)
+          : isTimeout(cause)
             ? "asst.errTimeout"
             : "asst.err",
       );
     } finally {
+      setLive(null);
       setBusy(false);
       inputRef.current?.focus();
     }
@@ -172,7 +189,12 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
             {turn.role === "assistant" && <HelpResources resources={turn.resources} />}
           </div>
         ))}
-        {busy && (
+        {busy && live !== null && (
+          <div className="wu-msg wu-msg-assistant" aria-busy="true">
+            <p>{tu(live)}</p>
+          </div>
+        )}
+        {busy && live === null && (
           <div className="wu-msg wu-msg-assistant wu-msg-typing" aria-label={t("asst.thinking")}>
             <span className="ai-typing"><i /><i /><i /></span>
           </div>
