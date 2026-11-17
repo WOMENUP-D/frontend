@@ -41,8 +41,8 @@ export const SITE_CONTACTS: SiteContacts = {
   phone: null,
   site: "https://womanup.uz",
   social: [
-    { label: "Instagram", url: "https://www.instagram.com/womanup.uz/" },
     { label: "Telegram", url: "https://t.me/womanup_uz" },
+    { label: "Instagram", url: "https://www.instagram.com/womanup.uz/" },
   ],
   office: {
     uz: "Toşkent ş., Şayxontohur tumani, Furqat köçasi, 1",
