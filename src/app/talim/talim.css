@@ -2277,3 +2277,137 @@ html[data-theme="dark"] body[data-section="learning"] .sakura-behind > .sakura {
   .lms-goal-grid { grid-template-columns: minmax(0, 1fr); }
 }
 /* ==== end QA phase 2 — learn ==================================== */
+
+/* ---------- personal directions ---------------------------------------
+   A field her diagnostic points to. Same outlined card as a path; what
+   differs is the inside: an ordered track of real courses, drawn as a
+   line through numbered stops because the order is the point — first
+   steps first. An open card takes the full row so the track reads as one
+   column instead of squeezing beside a closed neighbour.
+   ---------------------------------------------------------------------- */
+
+.lms-dirs { align-items: start; }
+.lms-dir-open { grid-column: 1 / -1; }
+
+.lms-dir-note {
+  margin: -4px 0 16px;
+  max-width: 68ch;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.lms-dir-why {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.lms-dir-why::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.lms-dir-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.lms-dir-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lms-dir-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 0 0 16px;
+}
+
+/* The line between stops: from under one numeral to the next. */
+.lms-dir-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: 2px;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.lms-dir-step:last-child { padding-bottom: 0; }
+
+.lms-dir-n {
+  flex: none;
+  width: 27px;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.lms-dir-step:first-child .lms-dir-n {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.lms-dir-step-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 3px;
+}
+
+.lms-dir-step-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.lms-dir-step-title a { color: var(--text); text-decoration: none; }
+.lms-dir-step-title a:hover { color: var(--primary); text-decoration: underline; }
+.lms-dir-step-title a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.lms-dir-step-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lms-dir-step-by { font-size: 0.78rem; color: var(--text-faint); }
+
+.lms-dir-body > .lms-sec-link { align-self: flex-start; }
+
+@media (max-width: 560px) {
+  .lms-dir-step { gap: 12px; }
+}

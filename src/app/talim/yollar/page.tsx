@@ -8,7 +8,11 @@
  * question this screen answers is "where would this get me", not "what is in
  * week three" — that question belongs to the course page, one tap in.
  *
- * Her own routes come first, and only when she has any. A section headed "My
+ * Her directions come first: the fields her diagnostic says interest her,
+ * each opening onto real catalogue courses in order (`/learning-paths/for-me`).
+ * No diagnostic yet is an invitation to take one, not an empty box.
+ *
+ * Her own routes come next, and only when she has any. A section headed "My
  * learning paths" above an empty box is a screen telling her she has failed at
  * something she has not been offered yet; the catalogue below is the offer.
  *
@@ -21,9 +25,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useI18n } from "@/i18n";
-import { portal, type LearningPathDetail } from "@/services/portal";
+import {
+  portal,
+  type LearningDirectionsForMe,
+  type LearningPathDetail,
+} from "@/services/portal";
 import { getAccessToken } from "@/services/api";
 import { useApi } from "@/components/learning/useApi";
+import { DirectionCard } from "@/components/learning/Directions";
 import {
   EmptyState,
   ErrorState,
@@ -44,13 +53,19 @@ export default function PathsPage() {
   const { data, loading, error, retry } = useApi(async () => {
     // The catalogue is public; her own routes need a session, and not having
     // one is an answer rather than a failure.
-    const [all, mine] = await Promise.all([
+    // Her directions are a reading of her diagnostic: without a session, or
+    // if that read fails, the page still shows the authored routes.
+    const signedIn = Boolean(getAccessToken());
+    const [all, mine, forMe] = await Promise.all([
       portal.learningPaths(),
-      getAccessToken()
+      signedIn
         ? portal.myLearningPaths().catch(() => [] as LearningPathDetail[])
         : Promise.resolve([] as LearningPathDetail[]),
+      signedIn
+        ? portal.myDirections().catch(() => null)
+        : Promise.resolve<LearningDirectionsForMe | null>(null),
     ]);
-    return { all, mine };
+    return { all, mine, forMe, signedIn };
   });
 
   const head = <PageHead title={t("lms.path.title")} lead={t("lms.path.lead")} />;
@@ -114,13 +129,62 @@ export default function PathsPage() {
   }
 
   const mine = data.mine;
+  const forMe = data.forMe;
+  const directions = forMe?.directions ?? [];
+  /* The authored catalogue is shown only when it holds something: with her
+     own directions above, "no paths yet" would contradict the page. */
+  const showCatalogue = rest.length > 0;
+  const nothingAtAll = !directions.length && !mine.length && !showCatalogue;
 
   return (
     <>
       {head}
 
+      <section className="lms-sec" style={{ marginTop: 0 }}>
+        <SectionHead title={t("lms.dir.title")} />
+        {forMe && !forMe.needs_diagnostic && directions.length > 0 ? (
+          <>
+            <p className="lms-dir-note">
+              {t(
+                forMe.basis === "weakest_dimension" || forMe.basis === "popular"
+                  ? (`lms.dir.fallback.${forMe.basis}` as const)
+                  : "lms.dir.lead",
+              )}
+            </p>
+            <div className="lms-paths lms-dirs">
+              {directions.map((direction) => (
+                <DirectionCard key={direction.slug} direction={direction} />
+              ))}
+            </div>
+          </>
+        ) : forMe && !forMe.needs_diagnostic ? (
+          nothingAtAll ? (
+            <EmptyState
+              title={t("lms.dir.none")}
+              hint={t("lms.dir.noneHint")}
+              action={
+                <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
+                  {t("lms.nav.courses")}
+                </Link>
+              }
+            />
+          ) : null
+        ) : (
+          <EmptyState
+            mark="◔"
+            title={t("lms.dir.empty")}
+            hint={t("lms.dir.emptyHint")}
+            action={
+              <Link className="lms-btn lms-btn-primary" href="/kabinet/diagnostika">
+                {t("lms.dir.cta")}
+              </Link>
+            }
+          />
+        )}
+      </section>
+
       {mine.length > 0 && (
-        <section className="lms-sec" style={{ marginTop: 0 }}>
+        <section className="lms-sec">
           <SectionHead title={t("lms.path.mine")} />
           <div className="lms-paths">
             {mine.map((path) => (
@@ -130,7 +194,8 @@ export default function PathsPage() {
         </section>
       )}
 
-      <section className="lms-sec" style={mine.length ? undefined : { marginTop: 0 }}>
+      {showCatalogue && (
+      <section className="lms-sec">
         <SectionHead title={t("lms.path.all")} />
 
         {rest.length > 1 && (
@@ -179,7 +244,7 @@ export default function PathsPage() {
               <PathCard key={path.id} path={path} />
             ))}
           </div>
-        ) : rest.length ? (
+        ) : (
           <EmptyState
             title={t("lms.path.noMatch")}
             action={
@@ -196,20 +261,9 @@ export default function PathsPage() {
               </button>
             }
           />
-        ) : (
-          /* No paths published at all — the honest answer, with the courses
-             she can still take one at a time. */
-          <EmptyState
-            title={t(mine.length ? "lms.path.allTaken" : "lms.path.empty")}
-            hint={t(mine.length ? "lms.path.allTakenHint" : "lms.path.emptyHint")}
-            action={
-              <Link className="lms-btn lms-btn-primary" href="/talim/kurslar">
-                {t("lms.nav.courses")}
-              </Link>
-            }
-          />
         )}
       </section>
+      )}
     </>
   );
 }
