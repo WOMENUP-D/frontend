@@ -124,15 +124,23 @@ export default function LandingPage() {
                   </>
                 )}
                 {SITE_CONTACTS.social.length > 0 && (
-                  <span className="footer-line">
-                    {t("foot.socialLabel")}:{" "}
-                    {SITE_CONTACTS.social.map((item, i) => (
-                      <span key={item.url}>
-                        {i > 0 && " · "}
-                        <a href={item.url} rel="noopener noreferrer" target="_blank">{item.label}</a>
-                      </span>
+                  /* Icons, not words: the two marks are known on sight. Each
+                     keeps its name for a screen reader and as a tooltip. */
+                  <div className="footer-social" aria-label={t("foot.socialLabel")}>
+                    {SITE_CONTACTS.social.map((item) => (
+                      <a
+                        key={item.url}
+                        className="footer-social-link"
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={item.label}
+                        title={item.label}
+                      >
+                        <SocialIcon name={item.label} />
+                      </a>
                     ))}
-                  </span>
+                  </div>
                 )}
               </div>
             )}
@@ -146,4 +154,29 @@ export default function LandingPage() {
       </footer>
     </main>
   );
+}
+
+/** Telegram's plane and Instagram's camera, drawn in the footer's own ink. */
+function SocialIcon({ name }: { name: string }) {
+  const key = name.toLowerCase();
+  if (key.includes("telegram")) {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <path
+          fill="currentColor"
+          d="M21.4 3.6 2.9 10.8c-1.1.4-1.1 1.6 0 1.9l4.6 1.4 1.8 5.6c.3.8 1.2 1 1.8.4l2.6-2.4 4.8 3.5c.8.6 1.9.1 2.1-.8l3.1-15.1c.3-1.2-.9-2.1-2.3-1.5ZM9.6 14.1l8.3-7.3-6.6 8.6-.3 3-1.4-4.3Z"
+        />
+      </svg>
+    );
+  }
+  if (key.includes("instagram")) {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+        <rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor" />
+        <circle cx="12" cy="12" r="4.2" fill="none" stroke="var(--footer-social-bg, #fff)" strokeWidth="2" />
+        <circle cx="17.2" cy="6.8" r="1.2" fill="var(--footer-social-bg, #fff)" />
+      </svg>
+    );
+  }
+  return <span aria-hidden="true">{name.slice(0, 1)}</span>;
 }

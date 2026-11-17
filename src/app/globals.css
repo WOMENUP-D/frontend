@@ -1399,6 +1399,19 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
 }
 .footer-col a, .footer-col .footer-line { font-size: .9rem; color: var(--text-dim); }
 .footer-col a:hover { color: var(--ink); }
+/* Social profiles as two square buttons: thin border, grey mark, the mark
+   darkens on hover. The Instagram glyph cuts its lens out with the button's
+   own background, so it reads on paper and after dark alike. */
+.footer-social { display: flex; gap: 10px; margin-top: 4px; }
+.footer-col a.footer-social-link {
+  --footer-social-bg: var(--bg);
+  width: 44px; height: 44px; display: inline-grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--footer-social-bg); color: var(--text-dim);
+  transition: color .2s, border-color .2s;
+}
+.footer-col a.footer-social-link:hover { color: var(--ink); border-color: var(--border-strong); }
+.footer-col a.footer-social-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .footer-base {
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   border-top: 1px solid var(--border); padding-top: 20px;
