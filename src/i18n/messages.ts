@@ -820,17 +820,12 @@ export const messages = {
   "act.streakHint":{ uz: "Har kuni bitta kiçik qadam seriyani saqlaydi.", ru: "Один маленький шаг в день сохраняет серию.", en: "One small step a day keeps the streak." },
 
   // ---- Landing showcase sections ----------------------------------
-  "ls.catTitle":    { uz: "Bugun örganişni boşlaş mumkin", ru: "Учиться можно начать сегодня", en: "You can start learning today" },
-  "ls.catLead":     { uz: "Har bir kurs rejaga boğlanadi va yakunda sertifikat beriladi.", ru: "Каждый курс привязывается к плану, а в конце выдаётся сертификат.", en: "Every course ties into your plan, and ends with a certificate." },
-  "ls.catStart":    { uz: "Örganişni boşlaş", ru: "Начать обучение", en: "Start learning" },
-  "ls.catAll":      { uz: "Barça dasturlar", ru: "Все программы", en: "All programmes" },
   "ls.opTitle":     { uz: "Öqiş natijaga olib boradi", ru: "Обучение доводит до результата", en: "Learning leads to a result" },
   "ls.opLead":      { uz: "hh.uz, Wbip.uz va Tijoratmarkazi.uzʼdan real takliflar.", ru: "Реальные предложения с hh.uz, Wbip.uz и Tijoratmarkazi.uz.", en: "Real listings from hh.uz, Wbip.uz and Tijoratmarkazi.uz." },
   "ls.opAll":       { uz: "Barça imkoniyatlar", ru: "Все возможности", en: "All opportunities" },
   "ls.opTotal":     { uz: "Faol takliflar", ru: "Активных предложений", en: "Active listings" },
   "ls.opRegions":   { uz: "Viloyatlar", ru: "Регионов", en: "Regions" },
   "ls.opOpen":      { uz: "Röyxatdan ötmasdan köriş mumkin — akkaunt faqat ariza yuboriş va şaxsiy tanlov uçun kerak.", ru: "Смотреть можно без регистрации — аккаунт нужен только для заявки и персонального подбора.", en: "Browsable without an account — you only need one to apply and to get personal matches." },
-  "ls.cert":        { uz: "Sertifikat", ru: "Сертификат", en: "Certificate" },
   "ls.deadline":    { uz: "kun qoldi", ru: "дн. осталось", en: "days left" },
 
   // ---- Programme detail page --------------------------------------
