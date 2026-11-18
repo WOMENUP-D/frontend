@@ -12,81 +12,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { portal, type Opportunity, type OpportunityStats, type Program } from "@/services/portal";
+import { portal, type Opportunity, type OpportunityStats } from "@/services/portal";
 import { useI18n, type MessageKey } from "@/i18n";
-import { categoryKey, money, sourceKey, typeKey } from "@/utils/format";
+import { money, sourceKey, typeKey } from "@/utils/format";
 import { CountUp, Reveal } from "@/components/motion/Reveal";
 
 /* -------------------------------------------- live rows from the API */
-
-export function ProgramShowcase() {
-  const { tn, t, tx } = useI18n();
-  const [items, setItems] = useState<Program[]>([]);
-  // "Empty" and "failed" are different answers: an empty catalogue hides the
-  // section, a failed request says so and offers a retry (E-04).
-  const [failed, setFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-
-  useEffect(() => {
-    setFailed(false);
-    portal
-      .programs("?size=6")
-      .then((page) => setItems(page.items))
-      .catch(() => {
-        setItems([]);
-        setFailed(true);
-      });
-  }, [attempt]);
-
-  if (failed) {
-    return <SectionFailed title={t("ls.catTitle")} onRetry={() => setAttempt((n) => n + 1)} />;
-  }
-  if (items.length === 0) return null;
-
-  return (
-    <section className="section">
-      <div className="wrap">
-        <div className="sec-head">
-          <h2>{t("ls.catTitle")}</h2>
-          <p>{t("ls.catLead")}</p>
-        </div>
-
-        <Reveal className="showcase-grid" stagger>
-          {items.map((program) => (
-            <article key={program.id} className="tile">
-              <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-                <span className="badge">{t(categoryKey(program.category))}</span>
-                {program.has_certificate && (
-                  <span className="badge badge-grey">{t("ls.cert")}</span>
-                )}
-              </div>
-              <h3 className="tile-title">{tx(program.title_i18n)}</h3>
-              <p className="muted small tile-lead">{tx(program.goal_i18n)}</p>
-              <span className="faint">
-                {program.duration_hours} {tn("unit.hour", program.duration_hours)}
-              </span>
-              {/* The card ends in the action it is selling. A whole-card link
-                  cannot hold a button, so the card is an article and the
-                  button is the only thing in it that navigates. */}
-              <Link
-                href={`/dasturlar/${program.id}`}
-                className="btn btn-primary btn-sm btn-block"
-              >
-                {t("ls.catStart")}
-              </Link>
-            </article>
-          ))}
-        </Reveal>
-
-        <div className="sec-more">
-          <Link href="/dasturlar" className="btn btn-outline">
-            {t("ls.catAll")}
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function rewardLine(reward: Record<string, unknown>, locale: string): string | null {
   const currency = (reward.currency as string) ?? "UZS";

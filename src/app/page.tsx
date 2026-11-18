@@ -9,7 +9,7 @@ import { Sakura } from "@/components/Sakura";
 import { PromoSlot } from "@/components/PromoSlot";
 import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
 import { AiTeaser, PathCards, Roadmap } from "./Landing";
-import { OpportunityShowcase, ProgramShowcase } from "./Showcase";
+import { OpportunityShowcase } from "./Showcase";
 
 export default function LandingPage() {
   const { t, tx } = useI18n();
@@ -68,7 +68,6 @@ export default function LandingPage() {
       <AiTeaser />
       <PathCards />
       <Roadmap />
-      <ProgramShowcase />
       <section className="section section-promo">
         <div className="wrap">
           <PromoSlot slot="home-mid" />

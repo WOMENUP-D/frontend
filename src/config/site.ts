@@ -13,7 +13,7 @@
 
 /** The privacy policy's effective date (last revision), ISO `YYYY-MM-DD`.
  *  Consent records cite `PRIVACY_POLICY_VERSION` on the API; bump both together. */
-export const PRIVACY_POLICY_EFFECTIVE_DATE: string | null = null;
+export const PRIVACY_POLICY_EFFECTIVE_DATE: string | null = "2026-11-18";
 
 export interface SiteContacts {
   /** Full legal name of the operator of the personal data. */
