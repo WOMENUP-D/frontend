@@ -1379,9 +1379,12 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
 }
 
 /* ---------- Site footer ----------
-   Three columns on desktop, stacked on a phone. The contact details are
-   placeholders until the real ones land. */
+   Three columns on desktop, stacked on a phone. The footer is the ground the
+   garden ends on: it carries its own page colour, so the pinned branch and the
+   falling petals stop at its edge instead of running through the words. */
 .site-footer {
+  position: relative;
+  background: var(--bg);
   border-top: 1px solid var(--border);
   padding: 52px 0 40px;
   margin-top: 10px;
@@ -1392,30 +1395,40 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
   gap: 34px 28px;
   align-items: start;
 }
-.footer-col { display: flex; flex-direction: column; gap: 9px; }
+.footer-col { display: flex; flex-direction: column; gap: 11px; }
+/* Column names in sentence case at reading size: small spaced capitals in the
+   faintest grey were the hardest thing on the page to read. */
 .footer-col > span:first-child {
-  font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--text-faint); font-weight: 700; margin-bottom: 2px;
+  font-size: .95rem; font-weight: 700; letter-spacing: 0;
+  color: var(--ink); margin-bottom: 3px;
 }
-.footer-col a, .footer-col .footer-line { font-size: .9rem; color: var(--text-dim); }
-.footer-col a:hover { color: var(--ink); }
-/* Social profiles as two square buttons: thin border, grey mark, the mark
-   darkens on hover. The Instagram glyph cuts its lens out with the button's
-   own background, so it reads on paper and after dark alike. */
-.footer-social { display: flex; gap: 10px; margin-top: 4px; }
+.footer-col a, .footer-col .footer-line {
+  font-size: 1rem; font-weight: 500; line-height: 1.5; color: var(--text);
+}
+.footer-col .footer-line { text-wrap: pretty; }
+/* The phone header hides the wordmark to fit its row; the footer has the room,
+   so the name stays next to the flower here. */
+.site-footer .brand { gap: 9px; }
+.site-footer .logo-text { display: inline; }
+.footer-col a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.footer-col a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+/* Social profiles as two square buttons: thin border, mark in body ink, the
+   mark darkens on hover. The Instagram glyph cuts its lens out with the
+   button's own background, so it reads on paper and after dark alike. */
+.footer-social { display: flex; gap: 10px; margin-top: 6px; }
 .footer-col a.footer-social-link {
   --footer-social-bg: var(--bg);
   width: 44px; height: 44px; display: inline-grid; place-items: center;
-  border: 1px solid var(--border); border-radius: 12px;
-  background: var(--footer-social-bg); color: var(--text-dim);
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  background: var(--footer-social-bg); color: var(--text);
   transition: color .2s, border-color .2s;
 }
-.footer-col a.footer-social-link:hover { color: var(--ink); border-color: var(--border-strong); }
+.footer-col a.footer-social-link:hover { color: var(--ink); border-color: var(--ink); text-decoration: none; }
 .footer-col a.footer-social-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .footer-base {
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   border-top: 1px solid var(--border); padding-top: 20px;
-  font-size: .84rem; color: var(--text-faint);
+  font-size: .9rem; font-weight: 500; color: var(--text-dim);
 }
 @media (max-width: 860px) {
   .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
