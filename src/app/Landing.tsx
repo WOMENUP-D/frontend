@@ -89,12 +89,9 @@ export function PathCards() {
   return (
     <section className="section">
       <div className="wrap">
-        <div className="sec-head sec-head-counted">
+        <div className="sec-head">
           <h2>{t("landing.faceTitle")}</h2>
           <p>{t("landing.faceLead")}</p>
-          <span className="sec-count" aria-hidden="true">
-            ({DIRECTIONS.length})
-          </span>
         </div>
 
         <Reveal className="face-grid" stagger>
