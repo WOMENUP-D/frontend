@@ -34,11 +34,11 @@ export interface SiteContacts {
 }
 
 export const SITE_CONTACTS: SiteContacts = {
-  legalName: null,
+  legalName: "WomanUP",
   address: null,
   // Already published in the footer before this file existed; confirm it.
   email: "info@womanup.uz",
-  phone: null,
+  phone: "+998 93 007 67 77",
   site: "https://womanup.uz",
   social: [
     { label: "Telegram", url: "https://t.me/womanup_uz" },
