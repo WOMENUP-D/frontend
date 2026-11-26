@@ -314,20 +314,6 @@ export default function AssistantPage() {
         </div>
       )}
 
-      <div className="row" style={{ gap: 8 }}>
-        {TABS.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            className={tab === key ? "chip chip-on" : "chip"}
-            onClick={() => setTab(key)}
-            disabled={key === "daily" && !authed}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </div>
-
       {/* The daily card's failure is said here; a failed question is said
           beside the field, where she is looking on a phone (E-03). */}
       {error && tab === "daily" && <ErrorNote message={t(error)} />}
