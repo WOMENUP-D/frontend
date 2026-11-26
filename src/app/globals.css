@@ -2049,8 +2049,16 @@ button.ed-row { cursor: pointer; }
 
 /* Catalogue: a centred head with the search in it, results in a column below. */
 .cat-head {
-  max-width: 720px; margin: 0 auto 34px; text-align: center; gap: 10px;
+  max-width: 1180px; margin: 0 auto 34px; text-align: center; gap: 10px;
   align-items: center;
+}
+/* The heading, lead and search keep a reading width; the chip rows below use
+   the page's width, so sixteen directions sit in two rows instead of four. */
+.cat-head > .muted { max-width: 720px; }
+@media (min-width: 900px) {
+  .cat-head .cat-filters { gap: 6px; }
+  .cat-head .cat-filters .chip { padding: 6px 12px; }
+  .cat-topics { margin-top: 6px; }
 }
 .cat-title { font-size: clamp(1.6rem, 3.4vw, 2.4rem); margin: 2px 0; }
 .cat-search { width: 100%; max-width: 560px; }
