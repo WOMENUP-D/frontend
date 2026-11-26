@@ -1675,7 +1675,8 @@ p { margin: 0; }
    design. Draw our own chevron instead. The mark is inline so it cannot be
    blocked, and it is repainted for the dark theme because a data URI has no
    way to follow `currentColor`. */
-select.input {
+select.input,
+select.jb-select {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 40px;
@@ -1687,13 +1688,16 @@ select.input {
   /* Safari otherwise keeps a 2px inner shadow on the control. */
   box-shadow: none;
 }
-select.input:hover { border-color: var(--navy); }
-[data-theme="dark"] select.input {
+select.input:hover,
+select.jb-select:hover { border-color: var(--navy); }
+[data-theme="dark"] select.input,
+[data-theme="dark"] select.jb-select {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5l5-5' stroke='%23c7b3bd' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 /* The dropdown list itself is drawn by the browser; at least keep it in our
    colours rather than white-on-white in the dark theme. */
-select.input option { background: var(--control); color: var(--ink); }
+select.input option,
+select.jb-select option { background: var(--control); color: var(--ink); }
 
 /* ---------- Tags / badges ---------- */
 .badge {
@@ -5269,6 +5273,21 @@ button.ed-row { cursor: pointer; }
 .jb-kind-pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .jb-kind-pill[aria-pressed="true"]::before { content: "✓" / ""; }
 .jb-kind-n { font-weight: 500; opacity: .8; font-size: .92rem; }
+
+/* The two listing pages sit in the middle of the screen: the heading, the
+   search and the notes are centred, and the filters-and-results block is
+   held to a width that leaves equal margins on both sides. */
+.wrap.jb-list { width: min(1180px, 94%); }
+.jb-list .jb-hero { margin-inline: auto; text-align: center; }
+.jb-list .jb-lead { margin-inline: auto; }
+.jb-list .jb-search { margin-inline: auto; }
+.jb-list .jb-search-input { text-align: start; }
+.jb-list .jb-mine-links { justify-content: center; }
+.jb-list .jb-guest { margin-inline: auto; text-align: center; }
+/* Auto margins centre the pills yet still let the row scroll from its
+   first pill when it is wider than the screen. */
+.jb-list .jb-kinds > :first-child { margin-left: auto; }
+.jb-list .jb-kinds > :last-child { margin-right: auto; }
 
 .jb-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .jb-side { display: none; }

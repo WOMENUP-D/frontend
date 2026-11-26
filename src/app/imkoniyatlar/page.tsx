@@ -163,7 +163,7 @@ function OpportunitiesView() {
   const allCount = kinds.reduce((sum, [, count]) => sum + count, 0);
 
   return (
-    <main className="wrap page jb-page">
+    <main className="wrap page jb-page jb-list">
       <header className="jb-hero">
         <h1 className="jb-h1">{t("job.title")}</h1>
         <p className="jb-lead">{t("job.lead")}</p>
