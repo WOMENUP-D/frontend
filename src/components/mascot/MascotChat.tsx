@@ -83,6 +83,36 @@ export function MascotChat({ onClose }: { onClose: () => void }) {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [turns, busy, live]);
 
+  // On a phone the chat covers the whole screen, yet iOS Safari still scrolls
+  // the page underneath when the conversation is short or the finger lands on
+  // the header or the input. Pin the page in place while the chat is open and
+  // put it back exactly where it was on close.
+  useEffect(() => {
+    if (!window.matchMedia("(max-width: 600px)").matches) return;
+    const { body, documentElement: root } = document;
+    const y = window.scrollY;
+    const saved = {
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      rootOverflow: root.style.overflow,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${y}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    root.style.overflow = "hidden";
+    return () => {
+      body.style.position = saved.position;
+      body.style.top = saved.top;
+      body.style.width = saved.width;
+      body.style.overflow = saved.overflow;
+      root.style.overflow = saved.rootOverflow;
+      window.scrollTo(0, y);
+    };
+  }, []);
+
   // Escape closes; focus comes back to the blossom through the parent.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
