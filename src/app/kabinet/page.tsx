@@ -247,13 +247,15 @@ function ProfileStats({
     [t("cab.totalScore"), score ? Math.round(score.composite) : "—"],
   ];
   return (
-    <div className="pstats">
-      {tiles.map(([label, value]) => (
-        <div className="pstat" key={label}>
-          <div className="pstat-value">{value}</div>
-          <span className="pstat-label">{label}</span>
-        </div>
-      ))}
+    <div className="pstats-wrap">
+      <div className="pstats">
+        {tiles.map(([label, value]) => (
+          <div className="pstat" key={label}>
+            <div className="pstat-value">{value}</div>
+            <span className="pstat-label">{label}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

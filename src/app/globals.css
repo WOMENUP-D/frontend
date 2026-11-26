@@ -3630,7 +3630,7 @@ button.ed-row { cursor: pointer; }
    which made them look like navigation rather than a summary. */
 .pstats {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -3655,6 +3655,14 @@ button.ed-row { cursor: pointer; }
   margin-top: 7px;
   font-size: 0.83rem;
   color: var(--text-dim);
+}
+
+/* Four in a row needs room. The tiles read the width of their own column,
+   not the window, and fall back to two by two when it is narrow. */
+.pstats-wrap { container-type: inline-size; }
+
+@container (max-width: 600px) {
+  .pstats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 520px) {
