@@ -7434,8 +7434,17 @@ body:has(.wu) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); 
    ragged centred column; a card's foot keeps "Batafsil" on the same line
    however many marks wrap beside it. */
 @media (max-width: 600px) {
-  .cat-fine { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
-  .cat-fine .input { width: 100%; min-width: 0; }
+  /* The head centres its children, which shrank this block to its widest
+     label and let the selects ride over each other. Stretch it to the
+     search field's width and give every select the same height. */
+  .cat-fine {
+    display: grid; grid-template-columns: minmax(0, 1fr); justify-items: stretch;
+    align-self: stretch; width: 100%; gap: 10px;
+  }
+  .cat-fine .input {
+    width: 100%; min-width: 0; min-height: 48px; margin: 0;
+    padding-block: 0; line-height: 1.2; font-size: 1rem; text-align: start;
+  }
 }
 .prog-foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .prog-foot > :only-child { grid-column: 1 / -1; }
