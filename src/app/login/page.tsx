@@ -471,6 +471,13 @@ function LoginForm() {
             <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={busy}>
               {t(busy ? "login.working" : mode === "signup" ? "login.doRegister" : "login.doLogin")}
             </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-block btn-sm"
+              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
+            >
+              {t(mode === "signup" ? "login.haveAccount" : "login.noAccount")}
+            </button>
           </form>
 
           {general && (
