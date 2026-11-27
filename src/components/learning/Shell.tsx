@@ -366,8 +366,14 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <aside className="lms-side">
         <Link href="/talim" className="lms-brand">
-          <span className="lms-brand-mark" aria-hidden="true">✿</span>
-          <span className="lms-brand-text">WomanUP</span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- fixed brand asset */}
+          <img
+            className="lms-brand-logo"
+            src="/brand/womanup-wordmark.png"
+            alt="WomanUP"
+            width={707}
+            height={192}
+          />
         </Link>
         <span className="lms-brand-sub">{t("lms.section")}</span>
 

@@ -1401,9 +1401,9 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
   gap: 40px 48px;
   align-items: start;
 }
-.site-footer .brand { gap: 10px; }
-.site-footer .logo-mark, .site-footer .logo-text { color: var(--foot-ink); }
-.site-footer .logo-text { display: inline; font-size: 1.5rem; }
+/* The footer has the room for the whole name at every width. */
+.site-footer .brand-wordmark { display: block; height: 52px; }
+.site-footer .brand-mark { display: none; }
 .footer-tagline { margin: 12px 0 0; color: var(--foot-dim); font-size: .95rem; }
 .footer-contacts {
   font-style: normal; margin-top: 26px;
@@ -1796,19 +1796,12 @@ select.jb-select option { background: var(--control); color: var(--ink); }
   font-weight: 600; box-shadow: var(--shadow-sm);
 }
 
-/* Brand: the blossom from the branch, drawn at 26px, and the name in the
-   display serif. The plum tile it used to sit in belonged to the old palette —
-   on paper the mark is ink on cream like everything else. */
-.brand { display: flex; align-items: center; gap: 9px; }
-.logo-mark {
-  width: 30px; height: 30px; flex-shrink: 0;
-  display: grid; place-items: center; color: var(--ink);
-}
-.logo-text {
-  font-family: var(--font-brand);
-  font-size: 1.34rem; font-weight: 600; letter-spacing: -.02em;
-  color: var(--ink); line-height: 1.1; display: block;
-}
+/* Brand: the logo artwork, sized by height so the name keeps its proportions.
+   The crowned "UP" alone stands in for it where a phone header is too narrow
+   (see the 420px rule below). */
+.brand { display: flex; align-items: center; line-height: 0; }
+.brand-wordmark { display: block; height: 40px; width: auto; }
+.brand-mark { display: none; height: 38px; width: auto; }
 .header-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
 
 /* Wider than a phone, the bar is three columns and the pill sits in the
@@ -1904,8 +1897,8 @@ select.jb-select option { background: var(--control); color: var(--ink); }
 
 @media (max-width: 420px) {
   .nav-inner { width: 94%; gap: 8px; }
-  .logo-text { display: none; }
-  .brand { gap: 0; }
+  .nav .brand-wordmark { display: none; }
+  .nav .brand-mark { display: block; }
   .lang-switch button { padding: 6px 6px; font-size: .7rem; }
   .icon-btn, .nb-button { width: 32px; height: 32px; font-size: .92rem; }
   .header-tools { gap: 6px; }
