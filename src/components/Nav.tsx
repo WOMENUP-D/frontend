@@ -38,25 +38,35 @@ const STAFF_LINKS: ReadonlyArray<{
   { href: "/hamkor", key: "nav.org", roles: ORG_ROLES },
 ];
 
-/** The mark is the blossom off the branch, drawn solid in ink, beside the name
- *  in the display serif. The old plum tile belonged to the old palette: on
- *  paper the mark is the same ink as the headline it sits above. */
-const LOGO_PETAL =
-  "M0 -2 C -7.4 -6.8, -9.6 -15.8, -5.6 -21.8 C -3.6 -20.2, -1.8 -20.6, 0 -18.8 " +
-  "C 1.8 -20.6, 3.6 -20.2, 5.6 -21.8 C 9.6 -15.8, 7.4 -6.8, 0 -2 Z";
-
+/** The WomanUP logo: the script "Woman" in rose and the crowned "UP" in gold,
+ *  drawn from the brand artwork with its paper taken out, so it sits on the
+ *  cream page, the night page and the plum footer alike. Where a phone's
+ *  header has no room for the whole name, the crowned "UP" stands for it —
+ *  the same mark the app icon carries. */
 export function Brand() {
   return (
-    <div className="brand">
-      <span className="logo-mark" aria-hidden="true">
-        <svg width="26" height="26" viewBox="-26 -26 52 52" fill="currentColor">
-          {[0, 72, 144, 216, 288].map((angle) => (
-            <path key={angle} d={LOGO_PETAL} transform={`rotate(${angle})`} />
-          ))}
-        </svg>
-      </span>
-      <span className="logo-text">WomanUP</span>
-    </div>
+    <span className="brand">
+      {/* eslint-disable-next-line @next/next/no-img-element -- a fixed-size
+          brand asset; the image optimiser would only add a round trip. */}
+      <img
+        className="brand-wordmark"
+        src="/brand/womanup-wordmark.png"
+        alt="WomanUP"
+        width={707}
+        height={192}
+        decoding="async"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="brand-mark"
+        src="/brand/womanup-mark.png"
+        alt=""
+        aria-hidden="true"
+        width={192}
+        height={192}
+        decoding="async"
+      />
+    </span>
   );
 }
 

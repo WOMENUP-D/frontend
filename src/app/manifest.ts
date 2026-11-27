@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 /**
  * The web app manifest (QA B-20): installable from the browser, with the
- * WomanUP blossom — the same mark the header draws — as its icon. Uzbek is the
+ * crowned "UP" from the WomanUP logo as its icon. Uzbek is the
  * primary locale, so the names are the Uzbek ones from the page metadata.
  */
 export default function manifest(): MetadataRoute.Manifest {

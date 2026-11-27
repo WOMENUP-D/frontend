@@ -39,11 +39,11 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: "WomanUP",
     alternates: alternatesFor(await currentPath(), locale),
     openGraph: { type: "website", siteName: "WomanUP", title, description, url: localeUrl(await currentPath(), locale) },
-    twitter: { card: "summary", title, description },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
-/* PWA (QA B-20): the manifest, favicon.ico, icon.svg and apple-icon.png are
+/* PWA (QA B-20): the manifest, favicon.ico, icon.png, apple-icon.png and opengraph-image.png are
    file conventions in this folder; Next links them itself. */
 export const viewport: Viewport = {
   themeColor: [
