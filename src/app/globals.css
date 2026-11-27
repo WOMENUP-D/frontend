@@ -7525,3 +7525,31 @@ body:has(.wu) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); 
 [data-theme="dark"] [data-cat="ethics_culture"]       { --cat: #c8b593; }
 [data-theme="dark"] [data-cat="digital_skills"]       { --cat: #a9a9dc; }
 /* ==== end QA phase 2 — learn ===================================== */
+
+/* Landing: the two pinned branches stay at full strength only while the hero
+   is on screen. Past it they drop to the wash the rest of the portal uses, so
+   no heading, card or paragraph is read off a blossom. Placed last so it wins
+   over the per-theme and per-width strengths above. */
+.landing > .sakura-hero,
+.landing > .sakura-corner { transition: opacity .7s ease; }
+.landing.is-past-hero > .sakura-hero,
+.landing.is-past-hero > .sakura-corner,
+[data-theme="dark"] .landing.is-past-hero > .sakura-hero,
+[data-theme="dark"] .landing.is-past-hero > .sakura-corner { opacity: .18; }
+@media (prefers-reduced-motion: reduce) {
+  .landing > .sakura-hero,
+  .landing > .sakura-corner { transition: none; }
+}
+/* In the hero itself the hanging twig crosses the copy column at some widths.
+   The copy gets a soft pool of the page colour under it — the same treatment
+   the narrow layout already uses — so the letters sit on night, not blossom,
+   while the twig still shows either side of the column. */
+@media (min-width: 901px) {
+  .landing .ed-hero-grid > div { position: relative; isolation: isolate; }
+  .landing .ed-hero-grid > div::before {
+    content: ""; position: absolute; inset: -40px -60px -30px -60px;
+    z-index: -1; pointer-events: none;
+    background: radial-gradient(70% 60% at 38% 58%,
+      var(--bg) 45%, color-mix(in srgb, var(--bg) 60%, transparent) 70%, transparent 92%);
+  }
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useI18n } from "@/i18n";
 import { Brand } from "@/components/Nav";
@@ -13,9 +14,26 @@ import { OpportunityShowcase } from "./Showcase";
 
 export default function LandingPage() {
   const { t, tx } = useI18n();
+  const hero = useRef<HTMLElement>(null);
+  const [pastHero, setPastHero] = useState(false);
+
+  /* The branches are pinned to the window, so once the hero has gone they sit
+     under whatever section is passing — headings, card text, the assistant
+     window. Past the first screen they step back to the same wash every other
+     page uses; scrolling back up brings them to full strength again. */
+  useEffect(() => {
+    const node = hero.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setPastHero(entry.intersectionRatio < 0.6 && entry.boundingClientRect.top < 0),
+      { threshold: [0, 0.2, 0.4, 0.6, 0.8, 1] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <main className="landing">
+    <main className={pastHero ? "landing is-past-hero" : "landing"}>
       {/* Pinned to the viewport rather than to the hero, so it stays behind the
           page as it scrolls instead of sliding away with the first screen. */}
       <Sakura />
@@ -31,7 +49,7 @@ export default function LandingPage() {
       <Sakura variant="corner" />
 
       {/* Headline left; the right half is left to the sakura */}
-      <section className="ed-hero">
+      <section className="ed-hero" ref={hero}>
         <div className="wrap ed-hero-grid">
           <div>
             <span className="pill-note">{t("landing.badge")}</span>
