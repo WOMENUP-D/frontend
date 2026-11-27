@@ -25,11 +25,22 @@ import type { StorageLike } from "./tokenStore";
 export const OWNER_KEY = "womanup.owner";
 
 /** Exact keys in localStorage that belong to one person. */
-const LOCAL_KEYS = ["womanup.plan_generating_at", "womanup.diagnostic.v3"];
+const LOCAL_KEYS = [
+  "womanup.plan_generating_at",
+  "womanup.diagnostic.v3",
+  // The assistant's conversation list (app/yordamchi/chatStore.ts).
+  "womanup.assistant.chats.v2",
+];
 /** Key prefixes in localStorage that belong to one person. */
 const LOCAL_PREFIXES = ["womanup.diagnostic.", "womanup.lms.note."];
 /** Keys in sessionStorage that belong to one person. */
-const SESSION_KEYS = ["womanup.mascot.chat", "womanup.google_name"];
+const SESSION_KEYS = [
+  "womanup.mascot.chat",
+  "womanup.google_name",
+  // A visitor's assistant conversations, and the single-thread store before them.
+  "womanup.assistant.chats.v2",
+  "womanup.assistant.chat.v1",
+];
 
 interface Enumerable extends StorageLike {
   readonly length: number;

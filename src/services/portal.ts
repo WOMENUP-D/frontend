@@ -2423,6 +2423,27 @@ export interface AssistantReply {
   degraded?: boolean;
 }
 
+/** A saved assistant conversation (API: /assistant/conversations). */
+export interface ConversationSummary {
+  id: string;
+  tab: string;
+  title: string;
+  updated_at: string;
+  turn_count: number;
+}
+export interface ConversationRead {
+  id: string;
+  tab: string;
+  title: string;
+  updated_at: string;
+  turns: Array<{ id: string; role: "user" | "assistant"; text: string } & Record<string, unknown>>;
+}
+export interface ConversationWrite {
+  tab: string;
+  title: string;
+  turns: unknown[];
+}
+
 export interface AssistantProfile {
   personalised: boolean;
   age_band: "child" | "teen" | "adult" | "unknown";
@@ -2798,6 +2819,13 @@ export const portal = {
   assistantDaily: (language: string) =>
     api.get<AssistantReply>(`/assistant/daily?language=${encodeURIComponent(language)}`),
   assistantProfile: () => api.get<AssistantProfile>("/assistant/profile"),
+  /* Her saved conversations (signed in only): the list without turns, one
+     conversation with them, save after each answer, delete. */
+  conversations: () => api.get<ConversationSummary[]>("/assistant/conversations"),
+  conversation: (id: string) => api.get<ConversationRead>(`/assistant/conversations/${id}`),
+  saveConversation: (id: string, body: ConversationWrite) =>
+    api.put<ConversationRead>(`/assistant/conversations/${id}`, body),
+  deleteConversation: (id: string) => api.delete<unknown>(`/assistant/conversations/${id}`),
 
   /** Practical tasks. Public catalogue; everything personal needs a session. */
   practicalTasks: (params: { skill?: string; level?: string; search?: string } = {}) => {
