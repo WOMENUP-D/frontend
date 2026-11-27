@@ -5285,17 +5285,17 @@ button.ed-row { cursor: pointer; }
 /* The two listing pages sit in the middle of the screen: the heading, the
    search and the notes are centred, and the filters-and-results block is
    held to a width that leaves equal margins on both sides. */
-.wrap.jb-list { width: min(1180px, 94%); }
-.jb-list .jb-hero { margin-inline: auto; text-align: center; }
-.jb-list .jb-lead { margin-inline: auto; }
-.jb-list .jb-search { margin-inline: auto; }
-.jb-list .jb-search-input { text-align: start; }
-.jb-list .jb-mine-links { justify-content: center; }
-.jb-list .jb-guest { margin-inline: auto; text-align: center; }
+.wrap.jb-centred { width: min(1180px, 94%); }
+.jb-centred .jb-hero { margin-inline: auto; text-align: center; }
+.jb-centred .jb-lead { margin-inline: auto; }
+.jb-centred .jb-search { margin-inline: auto; }
+.jb-centred .jb-search-input { text-align: start; }
+.jb-centred .jb-mine-links { justify-content: center; }
+.jb-centred .jb-guest { margin-inline: auto; text-align: center; }
 /* Auto margins centre the pills yet still let the row scroll from its
    first pill when it is wider than the screen. */
-.jb-list .jb-kinds > :first-child { margin-left: auto; }
-.jb-list .jb-kinds > :last-child { margin-right: auto; }
+.jb-centred .jb-kinds > :first-child { margin-left: auto; }
+.jb-centred .jb-kinds > :last-child { margin-right: auto; }
 
 .jb-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 .jb-side { display: none; }
