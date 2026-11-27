@@ -2405,3 +2405,50 @@ html[data-theme="dark"] body[data-section="learning"] .sakura-behind > .sakura {
 @media (max-width: 560px) {
   .lms-dir-step { gap: 12px; }
 }
+
+/* The rail is pinned to the window, not stuck inside the shell. As a sticky
+   child it could only travel as far as `.lms` itself reaches, and the page
+   runs on past it — so near the bottom of a long page the rail was pushed up
+   and the garden showed through underneath. Fixed, it stays whole however far
+   the page scrolls; the grid keeps its first column empty for it. */
+@media (min-width: 861px) {
+  .lms-side {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--rail);
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+  .lms-main { grid-column: 2; }
+}
+
+/* The portal's tabs in the top bar. On a wide screen they take the bar's
+   middle and the crumb gives way to them — the rail already marks where she
+   is inside this section, and a second "Home" beside the portal's "Home"
+   only asked which one was which. In the drawer layout the tabs go and the
+   crumb comes back. */
+.lms-tabs {
+  flex: 1; min-width: 0;
+  display: flex; justify-content: safe center;
+  overflow-x: auto; scrollbar-width: none;
+}
+.lms-tabs::-webkit-scrollbar { display: none; }
+.lms-tabs .nav-pills { flex: none; }
+@media (min-width: 861px) {
+  .lms-crumbs { display: none; }
+  .lms-top .lms-search { width: min(260px, 20vw); }
+}
+@media (max-width: 1280px) and (min-width: 861px) {
+  .lms-tabs .nav-link { padding: 8px 9px; font-size: .84rem; }
+  .lms-top { gap: 10px; }
+  .lms-top .lms-search { width: 190px; }
+}
+@media (max-width: 1160px) and (min-width: 861px) {
+  :root .lms { --rail: 220px; }
+  .lms-top .lms-search { width: 150px; }
+  .lms-tabs .nav-link { padding: 7px 7px; font-size: .8rem; }
+}
+@media (max-width: 860px) {
+  .lms-tabs { display: none; }
+}

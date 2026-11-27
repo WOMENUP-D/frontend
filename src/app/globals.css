@@ -1379,62 +1379,83 @@ h1, h2, h3, .ed-panel-quote, .auth-title {
 }
 
 /* ---------- Site footer ----------
-   Three columns on desktop, stacked on a phone. The footer is the ground the
-   garden ends on: it carries its own page colour, so the pinned branch and the
-   falling petals stop at its edge instead of running through the words. */
+   A solid band in the brand's plum, in both themes: the ground the garden
+   ends on, so the pinned branch and the falling petals stop at its edge. Who
+   we are and how to reach us on the left; the sections in columns on the
+   right, each name set over a short blossom-pink rule. */
 .site-footer {
+  --foot-bg: #3b2236;
+  --foot-ink: #fbf3f6;
+  --foot-text: rgba(251, 243, 246, .84);
+  --foot-dim: rgba(251, 243, 246, .62);
+  --foot-rule: #f0aebd;
   position: relative;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  padding: 52px 0 40px;
+  background: var(--foot-bg); color: var(--foot-text);
+  padding: 64px 0 34px;
   margin-top: 10px;
 }
+[data-theme="dark"] .site-footer { --foot-bg: #2a1a29; }
 .footer-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
-  gap: 34px 28px;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 40px 48px;
   align-items: start;
 }
-.footer-col { display: flex; flex-direction: column; gap: 11px; }
-/* Column names in sentence case at reading size: small spaced capitals in the
-   faintest grey were the hardest thing on the page to read. */
-.footer-col > span:first-child {
-  font-size: .95rem; font-weight: 700; letter-spacing: 0;
-  color: var(--ink); margin-bottom: 3px;
+.site-footer .brand { gap: 10px; }
+.site-footer .logo-mark, .site-footer .logo-text { color: var(--foot-ink); }
+.site-footer .logo-text { display: inline; font-size: 1.5rem; }
+.footer-tagline { margin: 12px 0 0; color: var(--foot-dim); font-size: .95rem; }
+.footer-contacts {
+  font-style: normal; margin-top: 26px;
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 1rem; line-height: 1.55; color: var(--foot-text);
 }
-.footer-col a, .footer-col .footer-line {
-  font-size: 1rem; font-weight: 500; line-height: 1.5; color: var(--text);
+.footer-contacts span { max-width: 32ch; text-wrap: pretty; }
+.footer-contacts a { color: var(--foot-text); text-decoration: none; width: fit-content; }
+.footer-contacts a:hover { color: var(--foot-ink); text-decoration: underline; text-underline-offset: 3px; }
+
+.footer-col { display: flex; flex-direction: column; gap: 14px; }
+.footer-head {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: 1.35rem; line-height: 1.2; color: var(--foot-ink);
+  margin: 0 0 10px; padding-bottom: 14px;
+  /* The rule is the column's mark: drawn under the name, the width of the
+     column, in the blossom's own pink. */
+  border-bottom: 2px solid var(--foot-rule);
 }
-.footer-col .footer-line { text-wrap: pretty; }
-/* The phone header hides the wordmark to fit its row; the footer has the room,
-   so the name stays next to the flower here. */
-.site-footer .brand { gap: 9px; }
-.site-footer .logo-text { display: inline; }
-.footer-col a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
-.footer-col a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
-/* Social profiles as two square buttons: thin border, mark in body ink, the
-   mark darkens on hover. The Instagram glyph cuts its lens out with the
-   button's own background, so it reads on paper and after dark alike. */
-.footer-social { display: flex; gap: 10px; margin-top: 6px; }
-.footer-col a.footer-social-link {
-  --footer-social-bg: var(--bg);
+.footer-col a {
+  font-size: 1rem; font-weight: 500; line-height: 1.45;
+  color: var(--foot-text); text-decoration: none; width: fit-content;
+  transition: color .15s;
+}
+.footer-col a:hover { color: var(--foot-ink); text-decoration: underline; text-underline-offset: 4px; }
+.site-footer a:focus-visible { outline: 2px solid var(--foot-rule); outline-offset: 3px; border-radius: 4px; }
+
+/* Social profiles as two round buttons outlined in the footer's own ink. The
+   Instagram glyph cuts its lens out with the band's colour. */
+.footer-social { display: flex; gap: 10px; margin-top: 22px; }
+.site-footer a.footer-social-link {
+  --footer-social-bg: var(--foot-bg);
   width: 44px; height: 44px; display: inline-grid; place-items: center;
-  border: 1px solid var(--border-strong); border-radius: 12px;
-  background: var(--footer-social-bg); color: var(--text);
-  transition: color .2s, border-color .2s;
+  border: 1px solid rgba(251, 243, 246, .3); border-radius: 50%;
+  color: var(--foot-ink); transition: border-color .2s, background .2s;
 }
-.footer-col a.footer-social-link:hover { color: var(--ink); border-color: var(--ink); text-decoration: none; }
-.footer-col a.footer-social-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.site-footer a.footer-social-link:hover { border-color: var(--foot-rule); background: rgba(240, 174, 189, .12); }
+
+.site-footer .footer-base { margin-top: 52px; }
 .footer-base {
   display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  border-top: 1px solid var(--border); padding-top: 20px;
-  font-size: .9rem; font-weight: 500; color: var(--text-dim);
+  padding-top: 22px;
+  border-top: 1px solid rgba(251, 243, 246, .16);
+  font-size: .88rem; color: var(--foot-dim);
 }
-@media (max-width: 860px) {
-  .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 980px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .footer-about { grid-column: 1 / -1; }
 }
-@media (max-width: 520px) {
-  .footer-grid { grid-template-columns: 1fr; gap: 24px; }
+@media (max-width: 600px) {
+  .site-footer { padding-top: 48px; }
+  .footer-grid { grid-template-columns: 1fr; gap: 34px; }
 }
 
 /* ---------- AI Assistant ----------
@@ -2631,7 +2652,6 @@ button.ed-row { cursor: pointer; }
 [data-theme="dark"] .cta-panel::before,
 [data-theme="dark"] .cta-panel::after { opacity: .22; }
 
-[data-theme="dark"] .site-footer { border-top-color: var(--border); }
 
 /* ---------- Motion ----------
    Slow, and only where it says something. Sections rise as they enter the
@@ -7551,5 +7571,335 @@ body:has(.wu) { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 112px); 
     z-index: -1; pointer-events: none;
     background: radial-gradient(70% 60% at 38% 58%,
       var(--bg) 45%, color-mix(in srgb, var(--bg) 60%, transparent) 70%, transparent 92%);
+  }
+}
+
+/* ---------- Header sections: the panel under a tab ----------
+   A tab that stands for a section opens a band the width of the header: its
+   pages on the left, what the one under the pointer is for on the right, in
+   the display serif. The page below steps back behind a scrim. It hangs off
+   the sticky header, so it stays put while the page scrolls under it. */
+.nav-group {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 0; background: transparent; font-family: inherit; line-height: inherit; cursor: pointer;
+}
+.nav-caret { transition: transform .2s ease; opacity: .7; }
+.nav-group.is-open { color: var(--ink); }
+.nav-group.is-open .nav-caret { transform: rotate(180deg); }
+
+.nav-mega {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 2;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  animation: nav-mega-in .18s ease-out;
+}
+.nav-mega-inner {
+  width: min(880px, 92%); margin: 0 auto;
+  display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 56px; padding: 36px 0 44px;
+}
+.nav-mega-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.nav-mega-link {
+  display: block; padding: 10px 14px; margin-left: -14px; border-radius: 10px;
+  color: var(--text); font-weight: 500; text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.nav-mega-link:hover, .nav-mega-link:focus-visible { background: var(--surface-2); color: var(--ink); }
+.nav-mega-link.active { color: var(--gold); }
+.nav-mega-about { padding-top: 6px; max-width: 46ch; }
+.nav-mega-title {
+  font-family: var(--font-display); font-size: 1.6rem; line-height: 1.15;
+  color: var(--ink); margin: 0 0 12px;
+}
+.nav-mega-desc { color: var(--text-dim); line-height: 1.6; margin: 0; }
+
+.nav-mega-scrim {
+  position: absolute; left: 0; right: 0; top: 100%; height: 100vh; z-index: 1;
+  background: rgba(23, 19, 28, .38);
+  animation: nav-scrim-in .2s ease-out;
+}
+[data-theme="dark"] .nav-mega { background: #201a28; }
+[data-theme="dark"] .nav-mega-scrim { background: rgba(8, 6, 12, .55); }
+
+@keyframes nav-mega-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@keyframes nav-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .nav-mega, .nav-mega-scrim { animation: none; }
+  .nav-caret { transition: none; }
+}
+/* On a phone the sections live in the one menu instead, headed by name. */
+@media (max-width: 600px) {
+  .nav-mega, .nav-mega-scrim { display: none; }
+  .nav-menu-group { display: flex; flex-direction: column; gap: 2px; padding-top: 6px; }
+  .nav-menu-head {
+    padding: 6px 14px 2px; font-size: .8rem; font-weight: 600; color: var(--text-faint);
+  }
+  .nav-menu-group .nav-menu-link { padding-left: 24px; }
+}
+
+/* ---------- AI assistant: one conversation column ----------
+   Empty, the page is a question in the middle of the screen, the field under
+   it and a few ways to begin below — nothing to read before she can type.
+   Once she has asked, the thread runs down the page and the field stays
+   docked at the foot of the window. */
+.asst { width: min(760px, 92%); margin: 0 auto; display: flex; flex-direction: column; }
+.asst-empty {
+  min-height: calc(100vh - var(--header-h, 77px) - 40px);
+  justify-content: center; gap: 22px; padding-bottom: 12vh;
+}
+.asst-chat { min-height: calc(100vh - var(--header-h, 77px)); gap: 18px; padding-bottom: 0; }
+.asst-hello {
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem); line-height: 1.15;
+  text-align: center; color: var(--ink); margin: 0 0 6px;
+}
+.asst-thread { flex: 1; display: flex; flex-direction: column; gap: 18px; padding-top: 8px; }
+.asst-thread .bubble-user { align-self: flex-end; max-width: 80%; }
+.asst-thinking { padding-left: 4px; }
+
+.asst-dock { display: flex; flex-direction: column; gap: 8px; }
+.asst-chat .asst-dock {
+  position: sticky; bottom: 0; z-index: 5;
+  padding: 14px 0 20px;
+}
+.asst-composer {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 60px; padding: 8px 8px 8px 24px;
+  border-radius: 30px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow);
+  transition: border-color .15s;
+}
+.asst-composer:focus-within { border-color: var(--gold); }
+.asst-input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font: inherit; font-size: 1.02rem; color: var(--ink); padding: 8px 0;
+}
+.asst-input::placeholder { color: var(--text-faint); }
+.asst-send {
+  flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--gold); color: var(--bg);
+  transition: opacity .15s, transform .15s;
+}
+.asst-send:disabled { opacity: .35; cursor: default; }
+.asst-send:not(:disabled):hover { transform: translateY(-1px); }
+.asst-send:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.asst-sugg { list-style: none; margin: 4px 0 0; padding: 0 8px; display: flex; flex-direction: column; }
+.asst-sugg button {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  padding: 13px 14px; border: 0; border-radius: 12px; background: transparent;
+  font: inherit; font-size: 1rem; color: var(--text); text-align: left; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.asst-sugg button svg { flex: none; color: var(--text-faint); }
+.asst-sugg button:hover, .asst-sugg button:focus-visible { background: var(--surface-2); color: var(--ink); }
+.asst-sugg button:disabled { opacity: .5; cursor: default; }
+.asst-guest { text-align: center; color: var(--text-dim); font-size: .9rem; margin: 6px 0 0; }
+.asst-guest a { color: var(--gold); font-weight: 600; }
+
+@media (max-width: 600px) {
+  .asst-empty { padding-bottom: 6vh; gap: 16px; }
+  .asst-composer { min-height: 54px; padding-left: 18px; }
+  .asst-sugg { padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asst-send, .asst-composer, .asst-sugg button { transition: none; }
+}
+
+/* ---------- AI assistant: the conversation list ----------
+   On the left, the way a chat app keeps them: "New chat" on top, then her
+   conversations by day. Fixed under the header and scrolling on its own, so
+   a long list never pushes the field out of reach. On a phone it is a drawer
+   behind a "Chats" button. */
+.asst-layout {
+  display: grid; grid-template-columns: 272px minmax(0, 1fr);
+  min-height: calc(100vh - var(--header-h, 77px));
+}
+.asst-layout > .asst { width: min(760px, 92%); margin: 0 auto; padding-top: 28px; }
+.asst-side {
+  position: sticky; top: var(--header-h, 77px);
+  height: calc(100vh - var(--header-h, 77px));
+  overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 18px 12px 24px;
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  border-right: 1px solid var(--border);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+[data-theme="dark"] .asst-side { background: rgba(32, 26, 40, .86); }
+.asst-new {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; min-height: 44px; padding: 0 14px;
+  border: 1px solid var(--border-strong); border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  font: inherit; font-weight: 600; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.asst-new:hover:not(:disabled) { border-color: var(--gold); }
+.asst-new:disabled { opacity: .5; cursor: default; }
+.asst-side-group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.asst-side-head {
+  margin: 0 0 6px; padding: 0 10px;
+  font-family: inherit; font-size: .78rem; font-weight: 600; color: var(--text-faint);
+}
+.asst-side-group li { position: relative; display: flex; align-items: center; border-radius: 10px; }
+.asst-side-group li:hover, .asst-side-group li.is-active { background: var(--surface-2); }
+.asst-side-link {
+  flex: 1; min-width: 0; min-height: 38px; padding: 0 10px;
+  border: 0; background: transparent; color: var(--text); text-align: left;
+  font: inherit; font-size: .92rem; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.asst-side-group li.is-active .asst-side-link { color: var(--ink); font-weight: 600; }
+.asst-side-del {
+  flex: none; width: 32px; height: 32px; margin-right: 3px;
+  display: grid; place-items: center; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text-faint); cursor: pointer;
+  opacity: 0; transition: opacity .15s, color .15s;
+}
+.asst-side-group li:hover .asst-side-del,
+.asst-side-group li.is-active .asst-side-del,
+.asst-side-del:focus-visible { opacity: 1; }
+.asst-side-del:hover { color: var(--danger, #d9534f); }
+.asst-side-link:focus-visible, .asst-side-del:focus-visible, .asst-new:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.asst-side-empty, .asst-side-note { margin: 0; padding: 0 10px; font-size: .86rem; line-height: 1.5; color: var(--text-faint); }
+.asst-side-note { margin-top: auto; }
+.asst-side-scrim { display: none; }
+.asst-side-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: -6px; }
+.asst-icon-btn {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border: 0; border-radius: 10px; background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.asst-icon-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.asst-icon-btn:disabled { opacity: .45; cursor: default; }
+.asst-icon-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The folded state: the list gives its column back and two icons stay at the
+   top left, where the list's own button was. */
+.asst-rail { display: none; }
+.asst-layout.is-side-hidden { grid-template-columns: minmax(0, 1fr); }
+.asst-layout.is-side-hidden .asst-side { display: none; }
+.asst-layout.is-side-hidden .asst-rail {
+  display: flex; gap: 2px; position: fixed; z-index: 6;
+  top: calc(var(--header-h, 77px) + 14px); left: 14px;
+  padding: 3px; border-radius: 13px;
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* No hover on a touch screen: the delete control stays in sight. */
+@media (hover: none) { .asst-side-del { opacity: 1; } }
+
+@media (max-width: 900px) {
+  .asst-layout { grid-template-columns: minmax(0, 1fr); }
+  .asst-side {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 120;
+    width: min(300px, 84vw); height: 100vh; height: 100dvh;
+    transform: translateX(-100%); visibility: hidden;
+    transition: transform .22s ease, visibility 0s linear .22s;
+    background: var(--bg-2); box-shadow: var(--shadow);
+  }
+  [data-theme="dark"] .asst-side { background: #201a28; }
+  .is-history-open .asst-side { transform: none; visibility: visible; transition: transform .22s ease; }
+  .asst-side-scrim {
+    display: block; position: fixed; inset: 0; z-index: 110; border: 0;
+    background: rgba(8, 6, 12, .45);
+  }
+  /* A phone always has the drawer, folded or not on a wide screen. */
+  .asst-layout.is-side-hidden .asst-side { display: flex; }
+  .asst-rail, .asst-layout.is-side-hidden .asst-rail {
+    display: flex; gap: 2px; position: static; align-self: flex-start;
+  }
+  .asst-layout > .asst { padding-top: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asst-side, .is-history-open .asst-side { transition: none; }
+}
+@media (max-width: 900px) {
+  .asst { position: relative; }
+  .asst-empty .asst-rail { position: absolute; top: 10px; left: 0; }
+}
+
+/* ---------- Cabinet: five rooms ----------
+   Tabs under her four figures, set as words on a hairline with the open one
+   underlined in blossom pink — the same mark the footer's column names
+   carry. Scrolls sideways on a phone rather than wrapping to two rows. */
+.cab-tabs {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.cab-tabs::-webkit-scrollbar { display: none; }
+.cab-tab {
+  flex: none; position: relative;
+  padding: 14px 16px 15px; border: 0; background: transparent;
+  font: inherit; font-size: .98rem; font-weight: 500; color: var(--text-dim);
+  cursor: pointer; white-space: nowrap; transition: color .15s;
+}
+.cab-tab:hover { color: var(--ink); }
+.cab-tab[aria-selected="true"] { color: var(--ink); font-weight: 600; }
+.cab-tab[aria-selected="true"]::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px;
+  height: 2px; border-radius: 2px; background: var(--gold);
+}
+[data-theme="dark"] .cab-tab[aria-selected="true"]::after { background: #f0aebd; }
+.cab-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px; border-radius: 8px; }
+.cab-panel { animation: cab-panel-in .18s ease-out; }
+@keyframes cab-panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cab-panel { animation: none; } }
+@media (max-width: 600px) {
+  .cab-tab { padding: 12px 12px 13px; font-size: .92rem; }
+}
+
+/* The score under her card: the ring, its name under it, and the two ways
+   on — the reading and a retake — on one centred row that fits the rail. */
+.cab-score {
+  display: flex; align-items: center; gap: 18px;
+  padding: 16px 18px; border-radius: var(--radius-lg);
+  background: var(--surface); border: 1px solid var(--border);
+}
+.cab-score > :first-child { flex: none; }
+.cab-score-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cab-score .eyebrow { margin: 0; }
+.cab-score-side p { margin: 0; }
+.cab-score-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* The cabinet's left column holds still while the tabs scroll beside it, so
+   it is drawn to fit the window: a tighter card, the score beside its ring,
+   and — on a window too short even for that — a column that scrolls on its
+   own instead of riding off the top. */
+@media (min-width: 901px) {
+  .cab-aside {
+    max-height: calc(100vh - var(--header-h, 78px) - 36px);
+    overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin;
+    gap: 14px !important;
+  }
+  /* A narrow rail: the card at the width it was drawn for, the score card
+     the same, and the rest of the row to the tabs. */
+  .cab-split { grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); gap: 40px; }
+  .cab-aside .profcard { --profcard-pad: 18px; }
+  .cab-aside .profcard-head { padding-top: 18px; padding-bottom: 14px; }
+  .cab-aside .profcard-avatar { width: 54px; height: 54px; font-size: 1.15rem; }
+  .cab-aside .profcard-name { margin-top: 10px; font-size: 1.3rem; }
+  .cab-aside .profcard-sprig { max-width: 170px; }
+  .cab-aside .profcard-facts { margin-bottom: 12px; }
+  .cab-aside .profcard-fact { padding: 7px 0; }
+  .cab-aside .profcard-progress { margin-bottom: 12px; }
+  .cab-aside .profcard-cta { padding: 10px 16px; }
+
+  /* A sticky column can travel no further than its own grid row, and the row
+     ended where the page's bottom padding (and the room kept for the mascot)
+     began — so at the foot of the page the column was pushed up. The same
+     space is moved inside the row: the page is exactly as tall as before,
+     and the row now reaches its bottom. */
+  .cab-page { padding-bottom: 0; }
+  .cab-split > :last-child { padding-bottom: 80px; }
+  body:has(.wu) .cab-page { margin-bottom: calc(-1 * (env(safe-area-inset-bottom, 0px) + 112px)); }
+  body:has(.wu) .cab-split > :last-child {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px) + 112px);
   }
 }

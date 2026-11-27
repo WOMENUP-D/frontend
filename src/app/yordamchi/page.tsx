@@ -16,7 +16,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getAccessToken } from "@/services/api";
 import {
   portal,
-  type AssistantProfile,
   type AssistantReply,
   type CoachContext,
   type CoachReply,
@@ -24,13 +23,23 @@ import {
   isTimeout,
 } from "@/services/portal";
 import { ErrorNote } from "@/components/ui";
-import { CoachPanel, CoachReferences, suggestionText } from "@/components/Coach";
+import { CoachReferences, suggestionText } from "@/components/Coach";
 import { useI18n, type MessageKey } from "@/i18n";
 import { toNewAlphabetIfUzbek } from "@/i18n/uzbek";
 import { RichText } from "@/components/text/RichText";
 import { HelpResources } from "@/components/HelpResources";
 import { stripLeadingNumber } from "@/components/text/markdown";
-import { historyFor, loadChats, ownerOf, saveChats, turnId } from "./chatStore";
+import {
+  conversationId,
+  historyFor,
+  loadConversations,
+  ownerOf,
+  saveConversations,
+  titleFrom,
+  turnId,
+  turnsToKeep,
+  type Conversation,
+} from "./chatStore";
 import { SignInLink } from "@/components/auth/SignInLink";
 import { StreamBrokenError } from "@/services/assistantStream";
 
@@ -105,25 +114,66 @@ export default function AssistantPage() {
   const [tab, setTab] = useState<Tab>(() =>
     typeof window !== "undefined" && !getAccessToken() ? "auto" : "coach",
   );
-  /* One conversation per tab (QA E-16): the health tab must not show career
-     moves. Kept in sessionStorage so a reload does not lose them (QA B-15). */
-  const [chats, setChats] = useState<Partial<Record<Tab, Turn[]>>>({});
+  /* Her conversations, newest first, the way a chat app lists them. Each keeps
+     the capability it was asked in, so a health thread never shows career
+     moves (QA E-16). `activeId` null is a new, still empty conversation: it is
+     only added to the list once she has asked something in it. */
+  const [chats, setChats] = useState<Conversation<Turn>[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [owner, setOwner] = useState<string | null>(null);
-  const turns = chats[tab] ?? [];
-  const appendTo = useCallback((target: Tab, turn: Turn) => {
-    setChats((prev) => ({ ...prev, [target]: [...(prev[target] ?? []), turn] }));
+  const [historyOpen, setHistoryOpen] = useState(false);
+  /* On a wide screen the list can be folded away, the way a chat app does,
+     and stays folded on this device until she opens it again. On a phone the
+     same button opens and closes the drawer. */
+  const [sideHidden, setSideHidden] = useState(false);
+  useEffect(() => {
+    try {
+      setSideHidden(window.localStorage.getItem(SIDE_KEY) === "hidden");
+    } catch {
+      /* storage unavailable: the list starts open */
+    }
   }, []);
-  const patchTurn = useCallback((target: Tab, id: string, patch: Partial<Turn>) => {
-    setChats((prev) => ({
-      ...prev,
-      [target]: (prev[target] ?? []).map((turn) => (turn.id === id ? { ...turn, ...patch } : turn)),
-    }));
+  function toggleSide() {
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      setHistoryOpen((value) => !value);
+      return;
+    }
+    setSideHidden((value) => {
+      try {
+        window.localStorage.setItem(SIDE_KEY, value ? "shown" : "hidden");
+      } catch {
+        /* the choice simply is not remembered */
+      }
+      return !value;
+    });
+  }
+  const active = chats.find((chat) => chat.id === activeId) ?? null;
+  const turns = active?.turns ?? [];
+  /* Conversations changed since they were last saved to the server. */
+  const dirty = useRef<Set<string>>(new Set());
+  const appendTo = useCallback((chatId: string, turn: Turn) => {
+    dirty.current.add(chatId);
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === chatId ? { ...chat, turns: [...chat.turns, turn], updatedAt: Date.now() } : chat,
+      ),
+    );
+  }, []);
+  const patchTurn = useCallback((chatId: string, id: string, patch: Partial<Turn>) => {
+    dirty.current.add(chatId);
+    setChats((prev) =>
+      prev.map((chat) =>
+        chat.id === chatId
+          ? { ...chat, turns: chat.turns.map((turn) => (turn.id === id ? { ...turn, ...patch } : turn)) }
+          : chat,
+      ),
+    );
   }, []);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   /* The answer while it is being written, and the tab it belongs to; null
      until its first words arrive — until then "thinking…" is shown. */
-  const [live, setLive] = useState<{ tab: Tab; text: string } | null>(null);
+  const [live, setLive] = useState<{ chat: string; text: string } | null>(null);
     /* The key, not the sentence. Translating at the moment the request fails
      froze whatever language was current then — and the locale is restored from
      storage in an effect, so a request that failed first put an Uzbek sentence
@@ -133,7 +183,6 @@ export default function AssistantPage() {
   /* The question a timed-out request was for, so "Ask again" can resend it
      (QA H-04). */
   const [retryable, setRetryable] = useState<string | null>(null);
-  const [profile, setProfile] = useState<AssistantProfile | null>(null);
   const [allowance, setAllowance] = useState<GuestAllowance | null>(null);
   const [daily, setDaily] = useState<AssistantReply | null>(null);
   const [coach, setCoach] = useState<CoachContext | null>(null);
@@ -143,22 +192,32 @@ export default function AssistantPage() {
   const [about, setAbout] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  const refreshProfile = useCallback(async () => {
-    if (!getAccessToken()) return;
-    try {
-      setProfile(await portal.assistantProfile());
-    } catch {
-      /* the panel is informative, not load-bearing */
-    }
-  }, []);
-
   useEffect(() => {
     const token = getAccessToken();
     const signedIn = Boolean(token);
     setAuthed(signedIn);
     const who = ownerOf(token);
     setOwner(who);
-    setChats(loadChats<Turn>(who));
+    if (signedIn) {
+      // Her list lives on the server; the turns are fetched when she opens one.
+      portal
+        .conversations()
+        .then((rows) =>
+          setChats(
+            rows.map((row) => ({
+              id: row.id,
+              tab: row.tab,
+              title: row.title,
+              updatedAt: Date.parse(row.updated_at) || 0,
+              turns: [],
+              loaded: false,
+            })),
+          ),
+        )
+        .catch(() => {});
+    } else {
+      setChats(loadConversations<Turn>(who));
+    }
     // A page elsewhere can hand over a question — "what else do I need for
     // this career?" — through `?ask=`. It is only put in the box: nothing is
     // sent to the Coach until she presses send herself.
@@ -172,22 +231,82 @@ export default function AssistantPage() {
     const wanted = TABS.find(([key]) => key === params.get("tab"))?.[0];
     if (signedIn) {
       if (wanted) setTab(wanted);
-      void refreshProfile();
       return;
     }
     setTab(wanted && wanted !== "coach" ? wanted : "auto");
     portal.assistantGuestAllowance().then(setAllowance).catch(() => {});
-  }, [refreshProfile]);
+  }, []);
 
   useEffect(() => {
-    if (owner) saveChats(owner, chats as Record<string, Turn[]>);
+    if (owner === "guest") saveConversations(owner, chats);
   }, [owner, chats]);
+
+  /* Signed in: a conversation is saved once its answer has landed (and again
+     when the cards under it arrive). A failed save stays marked and goes with
+     the next change. */
+  useEffect(() => {
+    if (!owner || owner === "guest" || busy || dirty.current.size === 0) return;
+    for (const id of Array.from(dirty.current)) {
+      const chat = chats.find((item) => item.id === id);
+      if (!chat || chat.turns.length === 0) {
+        dirty.current.delete(id);
+        continue;
+      }
+      dirty.current.delete(id);
+      portal
+        .saveConversation(id, { tab: chat.tab, title: chat.title, turns: turnsToKeep(chat.turns) })
+        .catch(() => dirty.current.add(id));
+    }
+  }, [owner, chats, busy]);
+
+  /* The capability a new conversation opens in: the Coach for an account, the
+     open assistant for a visitor, or what a link asked for (QA D-23). */
+  const [startTab, setStartTab] = useState<Tab | null>(null);
+  useEffect(() => {
+    if (startTab === null && authed !== null) setStartTab(tab);
+  }, [authed, tab, startTab]);
+
+  function newChat() {
+    if (busy) return;
+    setActiveId(null);
+    if (startTab) setTab(startTab);
+    setError(null);
+    setRetryable(null);
+    setInput("");
+    setHistoryOpen(false);
+  }
+  function openChat(chat: Conversation<Turn>) {
+    if (busy) return;
+    if (chat.loaded === false) {
+      portal
+        .conversation(chat.id)
+        .then((read) =>
+          setChats((prev) =>
+            prev.map((item) =>
+              item.id === chat.id ? { ...item, turns: read.turns as unknown as Turn[], loaded: true } : item,
+            ),
+          ),
+        )
+        .catch(() => setError("asst.err"));
+    }
+    setActiveId(chat.id);
+    setTab(chat.tab as Tab);
+    setError(null);
+    setRetryable(null);
+    setHistoryOpen(false);
+  }
+  function deleteChat(id: string) {
+    setChats((prev) => prev.filter((chat) => chat.id !== id));
+    dirty.current.delete(id);
+    if (owner && owner !== "guest") void portal.deleteConversation(id).catch(() => {});
+    if (id === activeId) setActiveId(null);
+  }
 
   const turnCount = turns.length;
   const liveShown = live !== null;
   useEffect(() => {
     if (turnCount) endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [turnCount, tab, liveShown]);
+  }, [turnCount, activeId, liveShown]);
 
   useEffect(() => {
     if (tab !== "daily" || daily || !authed) return;
@@ -215,11 +334,27 @@ export default function AssistantPage() {
       return;
     }
 
-    // The tab she asked from, captured now: if she switches tabs while the
-    // answer is on its way, it still lands in the conversation it belongs to.
+    // The conversation and capability she asked from, captured now: if she
+    // opens another chat while the answer is on its way, it still lands in
+    // the conversation it belongs to.
     const asked = tab;
-    const history = historyFor(chats[asked] ?? []);
-    appendTo(asked, { id: turnId(), role: "user", text: question });
+    let chatId = activeId;
+    const history = historyFor(active?.turns ?? []);
+    if (!chatId) {
+      const created: Conversation<Turn> = {
+        id: conversationId(),
+        tab: asked,
+        title: titleFrom(question),
+        updatedAt: Date.now(),
+        turns: [],
+        loaded: true,
+      };
+      chatId = created.id;
+      setChats((prev) => [created, ...prev]);
+      setActiveId(created.id);
+    }
+    const target = chatId;
+    appendTo(target, { id: turnId(), role: "user", text: question });
     setInput("");
     setBusy(true);
     setLive(null);
@@ -229,7 +364,7 @@ export default function AssistantPage() {
     try {
       if (asked === "coach") {
         const reply = await portal.coachAsk(question, language, about, history);
-        appendTo(asked, { id: turnId(), role: "assistant", text: reply.message, coach: reply });
+        appendTo(target, { id: turnId(), role: "assistant", text: reply.message, coach: reply });
         // Answering may have moved her on — a course enrolled in, a path
         // started — so the panel is re-read rather than left stale.
         portal.coachContext(language).then(setCoach).catch(() => {});
@@ -240,7 +375,7 @@ export default function AssistantPage() {
       // Streamed as it is written. A failure before the first words is retried
       // once, quietly, when it was the network or the server, not the question.
       const reply = await portal.assistantAskStream(question, language, route, history, (text) =>
-        setLive({ tab: asked, text }),
+        setLive({ chat: target, text }),
       );
       if (reply.guest_questions_left !== null) {
         setAllowance({
@@ -254,18 +389,18 @@ export default function AssistantPage() {
       const wantsDetail =
         reply.route === "education" && reply.kind !== "general" && !reply.escalated;
       const id = turnId();
-      appendTo(asked, { id, role: "assistant", text: reply.answer, reply, detailPending: wantsDetail });
+      appendTo(target, { id, role: "assistant", text: reply.answer, reply, detailPending: wantsDetail });
 
       if (wantsDetail) {
         portal
           .assistantDetail(question, reply.answer, reply.kind, language)
-          .then((detail) => patchTurn(asked, id, { detail, detailPending: false }))
-          .catch(() => patchTurn(asked, id, { detailPending: false }));
+          .then((detail) => patchTurn(target, id, { detail, detailPending: false }))
+          .catch(() => patchTurn(target, id, { detailPending: false }));
       }
     } catch (err) {
       // Broken part-way: what she already read stays, with the note under it.
       if (err instanceof StreamBrokenError && err.partial) {
-        appendTo(asked, { id: turnId(), role: "assistant", text: err.partial });
+        appendTo(target, { id: turnId(), role: "assistant", text: err.partial });
       }
       const cause = err instanceof StreamBrokenError && err.partial ? err.reason : err;
       // A model call that ran past 45 s says so and offers to ask again
@@ -285,61 +420,28 @@ export default function AssistantPage() {
   }
 
   const guestLeft = allowance && !allowance.unlimited ? (allowance.left ?? 0) : null;
+  const fetching = active?.loaded === false;
+  const empty = turns.length === 0 && !(busy && activeId) && !fetching;
 
-  return (
-    <main className="wrap page stack" style={{ maxWidth: 880, margin: "0 auto" }}>
-      <div>
-        <span className="eyebrow">{t("asst.nav")}</span>
-        <h1 style={{ fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }}>
-          {t(tab === "coach" ? "coach.title" : "asst.title")}
-        </h1>
-        <p className="muted small" style={{ maxWidth: 620 }}>
-          {t(tab === "coach" ? "coach.lead" : "asst.subtitle")}
-        </p>
-      </div>
+  /* The Coach's questions come from her own state — the server only offers one
+     when the thing it refers to exists, so there is never "what is next on my
+     path" for a woman who is on none. If her state could not be read, the
+     general questions stand in rather than an empty list. */
+  const suggestions: string[] =
+    tab === "coach"
+      ? coach
+        ? coach.suggestions.map((suggestion) => suggestionText(suggestion, t))
+        : coachFailed
+          ? SUGGESTIONS.auto.map((key) => t(key))
+          : []
+      : tab === "daily"
+        ? []
+        : SUGGESTIONS[tab].map((key) => t(key));
 
-      {authed && profile && tab !== "coach" && <KnowsPanel profile={profile} />}
-
-      {authed === false && (
-        <div className="notice notice-warn stack" style={{ gap: 8 }}>
-          <strong className="small">
-            {guestLeft === 0
-              ? t("asst.guestSpent")
-              : t("asst.guestLeft").replace("{n}", String(guestLeft ?? "3"))}
-          </strong>
-          <span className="small">{t("asst.guestHint")}</span>
-          <SignInLink mode="signup" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-            {t("asst.signUp")}
-          </SignInLink>
-        </div>
-      )}
-
-      {/* The daily card's failure is said here; a failed question is said
-          beside the field, where she is looking on a phone (E-03). */}
-      {error && tab === "daily" && <ErrorNote message={t(error)} />}
-
-      {tab === "coach" && authed === false && (
-        <div className="notice notice-warn stack" style={{ gap: 8 }}>
-          <strong className="small">{t("coach.needsAccount")}</strong>
-          <SignInLink mode="signup" className="btn btn-primary" style={{ alignSelf: "flex-start" }}>
-            {t("asst.signUp")}
-          </SignInLink>
-        </div>
-      )}
-
-      {tab === "coach" && authed && (
-        coach ? (
-          <CoachPanel context={coach} />
-        ) : coachFailed ? (
-          <ErrorNote message={t("coach.err")} />
-        ) : (
-          /* Holds roughly the panel's own height, so the chat below does not
-             jump down when it arrives (QA H-01). */
-          <div className="card coach-panel-pending"><p className="muted small">{t("common.loading")}</p></div>
-        )
-      )}
-
-      {tab === "daily" ? (
+  if (tab === "daily") {
+    return (
+      <main className="wrap page asst">
+        {error && <ErrorNote message={t(error)} />}
         <div className="card stack">
           {daily ? (
             <p style={{ fontFamily: "var(--font-serif)", fontSize: "1.2rem" }}>
@@ -349,45 +451,118 @@ export default function AssistantPage() {
             <p className="muted small">{t("asst.thinking")}</p>
           )}
         </div>
-      ) : (
-        <>
-          <div className="card stack" style={{ minHeight: 220, gap: 16 }}>
-            {turns.length === 0 && (
-              <div className="stack" style={{ gap: 10 }}>
-                {tab === "auto" && <p className="muted small">{t("asst.autoHint")}</p>}
-                <div className="row coach-suggestions" style={{ gap: 8 }}>
-                  {/* The Coach's questions come from her own state — the server
-                      only offers one when the thing it refers to exists, so
-                      there is never "what is next on my path" for a woman who
-                      is on none. The other tabs keep their fixed list. */}
-                  {tab === "coach"
-                    ? (coach?.suggestions ?? []).map((suggestion) => {
-                        const text = suggestionText(suggestion, t);
-                        return (
-                          <button
-                            key={suggestion.key}
-                            type="button"
-                            className="chip"
-                            onClick={() => ask(text)}
-                          >
-                            {text}
-                          </button>
-                        );
-                      })
-                    : SUGGESTIONS[tab as Route].map((key) => (
-                        <button
-                          key={key}
-                          type="button"
-                          className="chip"
-                          onClick={() => ask(t(key))}
-                        >
-                          {t(key)}
-                        </button>
-                      ))}
-                </div>
-              </div>
-            )}
+      </main>
+    );
+  }
 
+  /* One column, the way a conversation reads. Empty, it is a single question
+     in the middle of the screen with the field under it and a few ways to
+     begin below that — nothing to read before she can type. Once she has
+     asked, the thread runs top to bottom and the field stays at the foot. */
+  return (
+    <div
+      className={`asst-layout ${historyOpen ? "is-history-open" : ""} ${sideHidden ? "is-side-hidden" : ""}`}
+    >
+      <aside id="asst-history" className="asst-side" aria-label={t("asst.history")}>
+        <div className="asst-side-top">
+          <button
+            type="button"
+            className="asst-icon-btn"
+            onClick={toggleSide}
+            aria-controls="asst-history"
+            aria-expanded="true"
+            aria-label={t("asst.sideClose")}
+            title={t("asst.sideClose")}
+          >
+            <PanelIcon />
+          </button>
+        </div>
+        <button type="button" className="asst-new" onClick={newChat} disabled={busy}>
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+            <path d="M14.5 3.5l2 2L8 14l-3 1 1-3 8.5-8.5zM4 17h12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {t("asst.newChat")}
+        </button>
+        {chats.length === 0 ? (
+          <p className="asst-side-empty">{t("asst.noChats")}</p>
+        ) : (
+          groupByDay(chats).map(([label, items]) => (
+            <section key={label} className="asst-side-group">
+              <h2 className="asst-side-head">{t(label)}</h2>
+              <ul>
+                {items.map((chat) => (
+                  <li key={chat.id} className={chat.id === activeId ? "is-active" : undefined}>
+                    <button
+                      type="button"
+                      className="asst-side-link"
+                      onClick={() => openChat(chat)}
+                      aria-current={chat.id === activeId ? "true" : undefined}
+                      title={chat.title}
+                    >
+                      {chat.title || t("asst.newChat")}
+                    </button>
+                    <button
+                      type="button"
+                      className="asst-side-del"
+                      onClick={() => deleteChat(chat.id)}
+                      aria-label={`${t("asst.deleteChat")}: ${chat.title}`}
+                      title={t("asst.deleteChat")}
+                      disabled={busy && chat.id === activeId}
+                    >
+                      <svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true">
+                        <path d="M5 6h10M8 6V4.5h4V6M6.5 6l.7 9.5h5.6l.7-9.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
+        {authed === false && <p className="asst-side-note">{t("asst.guestHistory")}</p>}
+      </aside>
+      {historyOpen && (
+        <button
+          type="button"
+          className="asst-side-scrim"
+          aria-label={t("lms.nav.close")}
+          onClick={() => setHistoryOpen(false)}
+        />
+      )}
+
+      <main className={`asst ${empty ? "asst-empty" : "asst-chat"}`}>
+        {/* Shown while the list is folded (wide screen) or closed (phone):
+            the panel button to bring it back, and "New chat" beside it. */}
+        <div className="asst-rail">
+          <button
+            type="button"
+            className="asst-icon-btn"
+            onClick={toggleSide}
+            aria-controls="asst-history"
+            aria-expanded="false"
+            aria-label={t("asst.sideOpen")}
+            title={t("asst.sideOpen")}
+          >
+            <PanelIcon />
+          </button>
+          <button
+            type="button"
+            className="asst-icon-btn"
+            onClick={newChat}
+            disabled={busy}
+            aria-label={t("asst.newChat")}
+            title={t("asst.newChat")}
+          >
+            <svg viewBox="0 0 20 20" width="19" height="19" aria-hidden="true">
+              <path d="M14.5 3.5l2 2L8 14l-3 1 1-3 8.5-8.5zM4 17h12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+        {empty ? (
+          <h1 className="asst-hello">{t("asst.ready")}</h1>
+        ) : (
+          <div className="asst-thread">
+            {fetching && <p className="muted small asst-thinking">{t("common.loading")}</p>}
             {turns.map((turn) =>
               turn.role === "user" ? (
                 <p key={turn.id} className="bubble-user">{turn.text}</p>
@@ -395,16 +570,17 @@ export default function AssistantPage() {
                 <AssistantTurn key={turn.id} turn={turn} />
               ),
             )}
-
-            {busy && live?.tab === tab && (
+            {busy && live?.chat === activeId && (
               <AssistantTurn turn={{ id: "live", role: "assistant", text: live.text }} />
             )}
-            {busy && !live && <p className="muted small">{t("asst.thinking")}</p>}
+            {busy && !live && <p className="muted small asst-thinking">{t("asst.thinking")}</p>}
             <div ref={endRef} />
           </div>
+        )}
 
+        <div className="asst-dock">
           {error && (
-            <div role="alert">
+            <div role="alert" className="asst-error">
               <ErrorNote message={t(error).replace("{max}", String(MAX_MESSAGE))} />
               {retryable && (
                 <button
@@ -421,15 +597,14 @@ export default function AssistantPage() {
           )}
 
           <form
-            className="row"
-            style={{ gap: 10 }}
+            className="asst-composer"
             onSubmit={(event) => {
               event.preventDefault();
               void ask(input);
             }}
           >
             <input
-              className="input grow"
+              className="asst-input"
               value={input}
               onChange={(event) => setInput(event.target.value)}
               placeholder={t("asst.placeholder")}
@@ -437,9 +612,18 @@ export default function AssistantPage() {
               disabled={busy || guestLeft === 0}
               maxLength={MAX_MESSAGE}
               aria-describedby="asst-counter"
+              autoFocus
             />
-            <button className="btn btn-primary" type="submit" disabled={busy || guestLeft === 0}>
-              {t("asst.send")}
+            <button
+              className="asst-send"
+              type="submit"
+              disabled={busy || guestLeft === 0 || !input.trim()}
+              aria-label={t("asst.send")}
+              title={t("asst.send")}
+            >
+              <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+                <path d="M10 16V4M4.5 9.5 10 4l5.5 5.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </form>
           {/* Shown once it matters, so an empty field is not a number. */}
@@ -453,44 +637,73 @@ export default function AssistantPage() {
               .replace("{n}", String(input.length))
               .replace("{max}", String(MAX_MESSAGE))}
           </p>
-        </>
-      )}
-
-    </main>
-  );
-}
-
-function KnowsPanel({ profile }: { profile: AssistantProfile }) {
-  const { t } = useI18n();
-  const rows: Array<[MessageKey, string]> = [];
-  if (profile.age) rows.push(["asst.knowsAge", String(profile.age)]);
-  if (profile.interests.length) rows.push(["asst.knowsInterests", profile.interests.join(", ")]);
-  if (profile.goals.length) rows.push(["asst.knowsGoals", profile.goals[0]]);
-  if (profile.in_progress.length) rows.push(["asst.knowsStudying", profile.in_progress[0]]);
-
-  return (
-    <div className="card stack" style={{ gap: 10 }}>
-      <div className="spread">
-        <span className="eyebrow">{t("asst.knows")}</span>
-        <Link href="/welcome" className="btn btn-ghost btn-sm">
-          {t("asst.setup")}
-        </Link>
-      </div>
-      {rows.length ? (
-        <div className="row" style={{ gap: 18, flexWrap: "wrap" }}>
-          {rows.map(([key, value]) => (
-            <span key={key} className="small">
-              <span className="faint">{t(key)}: </span>
-              {value}
-            </span>
-          ))}
         </div>
-      ) : (
-        <p className="muted small">{t("asst.obLead")}</p>
-      )}
+
+        {empty && suggestions.length > 0 && (
+          <ul className="asst-sugg">
+            {suggestions.map((text) => (
+              <li key={text}>
+                <button type="button" onClick={() => void ask(text)} disabled={guestLeft === 0}>
+                  <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+                    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h7A2.5 2.5 0 0 1 16 5.5v5a2.5 2.5 0 0 1-2.5 2.5H9l-3.5 3v-3H6.5A2.5 2.5 0 0 1 4 10.5z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+                  </svg>
+                  <span>{text}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* A visitor learns what she has left and what an account changes in one
+            line under the field, not a warning box above it. */}
+        {authed === false && (
+          <p className="asst-guest">
+            {guestLeft === 0
+              ? t("asst.guestSpent")
+              : t("asst.guestLeft").replace("{n}", String(guestLeft ?? "3"))}
+            {" "}
+            <SignInLink mode="signup">{t("asst.signUp")}</SignInLink>
+          </p>
+        )}
+      </main>
     </div>
   );
 }
+
+const DAY = 24 * 60 * 60 * 1000;
+/** Whether the conversation list is folded away on this device. */
+const SIDE_KEY = "womanup.assistant.sidebar";
+
+/** The panel mark: a window with its left column drawn in. */
+function PanelIcon() {
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+      <rect x="2.75" y="3.75" width="14.5" height="12.5" rx="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7.75 4v12" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/** Today, yesterday, the last seven days, and the rest — the way a chat app
+ *  sorts a list too long to read as one column. Empty groups are left out. */
+function groupByDay<T extends { updatedAt: number }>(chats: readonly T[]): Array<[MessageKey, T[]]> {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const start = midnight.getTime();
+  const groups: Array<[MessageKey, T[]]> = [
+    ["asst.today", []],
+    ["asst.yesterday", []],
+    ["asst.week", []],
+    ["asst.earlier", []],
+  ];
+  for (const chat of [...chats].sort((a, b) => b.updatedAt - a.updatedAt)) {
+    const at = chat.updatedAt;
+    const index = at >= start ? 0 : at >= start - DAY ? 1 : at >= start - 6 * DAY ? 2 : 3;
+    groups[index][1].push(chat);
+  }
+  return groups.filter(([, items]) => items.length > 0);
+}
+
 
 function AssistantTurn({ turn }: { turn: Turn }) {
   const { t } = useI18n();

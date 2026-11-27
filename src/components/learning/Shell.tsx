@@ -26,6 +26,8 @@ import { Icon } from "@/components/ds";
 import { sharedProfile } from "./sharedProfile";
 import { SignInLink } from "@/components/auth/SignInLink";
 import { useSignedIn } from "@/components/auth/useViewer";
+import { sectionItems, useSectionMenu } from "@/components/sectionMenu";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 
 interface NavItem {
   href: string;
@@ -286,6 +288,12 @@ export function Shell({ children }: { children: ReactNode }) {
   // A visitor gets the section without a profile card, an avatar or a bell
   // that belong to nobody (C-18).
   const signedIn = useSignedIn(() => Boolean(getAccessToken()));
+  /* The portal's own tabs, in the bar's empty middle: the rail is this
+     section's pages, the tabs are the rest of the portal — so leaving for
+     the opportunities or the assistant is one click, not "back to the
+     portal" first. */
+  const vacanciesShown = useVacancyBoardShown();
+  const portalMenu = useSectionMenu(sectionItems(Boolean(signedIn), vacanciesShown));
 
   /* The trail, as far as the shell can know it without a second request: the
      section, not the course. The page below carries the course's own name as
@@ -391,7 +399,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="lms-main">
-        <header className="lms-top">
+        <header className="lms-top" onPointerLeave={portalMenu.onLeave}>
           <button
             type="button"
             ref={burger}
@@ -414,6 +422,8 @@ export function Shell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
+          <div className="lms-tabs">{portalMenu.pills}</div>
+
           <div className="lms-top-tools">
             <Search />
             {signedIn && <Notifications />}
@@ -425,6 +435,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <SignInLink className="lms-btn lms-btn-primary lms-btn-sm">{t("nav.signIn")}</SignInLink>
             )}
           </div>
+          {portalMenu.panel}
         </header>
 
         <main className="lms-body">{children}</main>

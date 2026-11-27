@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ApiError, getAccessToken, isStaff, staffHome } from "@/services/api";
 import {
   planInLanguage,
@@ -260,6 +260,29 @@ function ProfileStats({
   );
 }
 
+/** The cabinet in five rooms instead of one long corridor. What she needs
+ *  this week opens first; the reading of her score, her skills, what the
+ *  catalogue offers her and her own record each get a tab of their own. The
+ *  tab is kept in the address, so a link can open one — and the anchors other
+ *  pages already link to (#skills, #career) land in the right room. */
+const CAB_TABS: ReadonlyArray<{ id: CabTab; key: MessageKey }> = [
+  { id: "overview", key: "cab.tab.overview" },
+  { id: "growth", key: "cab.tab.growth" },
+  { id: "skills", key: "cab.tab.skills" },
+  { id: "foryou", key: "cab.tab.foryou" },
+  { id: "profile", key: "cab.tab.profile" },
+];
+type CabTab = "overview" | "growth" | "skills" | "foryou" | "profile";
+/** Anchors inside a tab, mapped to the tab that holds them. */
+const ANCHOR_TAB: Record<string, CabTab> = { career: "profile", skills: "skills" };
+
+function tabFromHash(hash: string): { tab: CabTab; anchor: string | null } {
+  const id = hash.replace(/^#/, "");
+  if (CAB_TABS.some((item) => item.id === id)) return { tab: id as CabTab, anchor: null };
+  if (ANCHOR_TAB[id]) return { tab: ANCHOR_TAB[id], anchor: id };
+  return { tab: "overview", anchor: null };
+}
+
 export default function CabinetPage() {
   const { t, tu, apiLocale } = useI18n();
   const router = useRouter();
@@ -296,6 +319,50 @@ export default function CabinetPage() {
   const [week, setWeek] = useState<WeekRead | null>(null);
   /* What she has done so far, from the one shared answer (J-01). */
   const viewer = useViewer();
+  const [tab, setTab] = useState<CabTab>("overview");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const pendingAnchor = useRef<string | null>(null);
+
+  useEffect(() => {
+    function read() {
+      const { tab: next, anchor } = tabFromHash(window.location.hash);
+      setTab(next);
+      pendingAnchor.current = anchor;
+    }
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+
+  // An anchor such as #career is scrolled to once its tab has drawn it.
+  useEffect(() => {
+    const anchor = pendingAnchor.current;
+    if (!anchor) return;
+    const frame = requestAnimationFrame(() => {
+      const node = document.getElementById(anchor);
+      if (node) {
+        node.scrollIntoView({ block: "start" });
+        pendingAnchor.current = null;
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  });
+
+  function choose(next: CabTab, focus = false) {
+    setTab(next);
+    pendingAnchor.current = null;
+    window.history.replaceState(null, "", next === "overview" ? window.location.pathname : `#${next}`);
+    if (focus) tabRefs.current[next]?.focus();
+  }
+  function onTabKey(event: KeyboardEvent<HTMLDivElement>) {
+    const index = CAB_TABS.findIndex((item) => item.id === tab);
+    const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+    if (event.key === "Home") { event.preventDefault(); choose(CAB_TABS[0].id, true); return; }
+    if (event.key === "End") { event.preventDefault(); choose(CAB_TABS[CAB_TABS.length - 1].id, true); return; }
+    if (!step) return;
+    event.preventDefault();
+    choose(CAB_TABS[(index + step + CAB_TABS.length) % CAB_TABS.length].id, true);
+  }
 
   /* Not through `soft` below: a failure here is shown and can be retried. An
      empty "next step" would read as "nothing to do", which is a different and
@@ -364,7 +431,7 @@ export default function CabinetPage() {
     profile?.full_name || account?.email?.split("@")[0] || account?.phone || t("cab.user");
 
   return (
-    <main className="wrap page">
+    <main className="wrap page cab-page">
       {/* No name or date of birth on record: onboarding was skipped or
           failed, and the age gate treats her as a minor until she says (C-16). */}
       {viewer?.profileIncomplete && (
@@ -381,9 +448,9 @@ export default function CabinetPage() {
           ticked. Never shown to a woman who has started a course (C-26). */}
       <GettingStarted viewer={viewer} />
 
-      <div className="ed-split">
+      <div className="ed-split cab-split">
         {/* Score rides along as the reader scrolls */}
-        <aside className="ed-aside stack" style={{ gap: 16 }}>
+        <aside className="ed-aside cab-aside stack" style={{ gap: 16 }}>
           {/* Her card first — who she is — then how she is doing. */}
           <ProfileSummary
             profile={profile}
@@ -397,192 +464,223 @@ export default function CabinetPage() {
               and on an account with no name filled in it said "Пользователь"
               in display type, which is the page greeting her as a noun. */}
           {score ? (
-            <div className="stack" style={{ gap: 12 }}>
-              <div className="row" style={{ justifyContent: "center" }}>
-                <ScoreRing value={score.composite} size={158} />
-              </div>
+            <div className="cab-score">
+              <ScoreRing value={score.composite} size={112} />
+              <div className="cab-score-side">
+              <span className="eyebrow">{t("cab.score")}</span>
               {/* QA D-20: the ring is today's score — it moves with finished
                   courses — while the result page shows the diagnostic's own
                   number. When they differ, both are named. */}
               {diagnosed !== null && Math.round(diagnosed) !== Math.round(score.composite) && (
-                <p className="faint small center">
+                <p className="faint small">
                   {t("cab.scoreNow")
                     .replace("{now}", String(Math.round(score.composite)))
                     .replace("{then}", String(Math.round(diagnosed)))}
                 </p>
               )}
-              <div className="spread">
-                <span className="eyebrow">{t("cab.score")}</span>
-                {/* The score is retaken on its own diagnostic. The learning
-                    questionnaire on /welcome is a different instrument and
-                    does not change this number. */}
-                <span className="row" style={{ gap: 8 }}>
+              {/* The score is retaken on its own diagnostic. The learning
+                  questionnaire on /welcome is a different instrument and
+                  does not change this number. */}
+              <div className="cab-score-actions">
                   <Link href="/kabinet/diagnostika/natija" className="btn btn-ghost btn-sm">
                     {t("dr.see")}
                   </Link>
                   <Link href="/kabinet/diagnostika" className="btn btn-outline btn-sm">
                     {t("cab.retake")}
                   </Link>
-                </span>
               </div>
-              {/* Each dimension opens to its reading: the band, her own
-                  answers, the gaps she can close here and what would move it. */}
-              <DimensionInsights insights={score} />
-              {score.weakest_dimensions.length > 0 && (
-                <p className="faint">
-                  {t("cab.weakest")}{" "}
-                  <strong>
-                    {score.weakest_dimensions.map((d) => t(dimensionKey(d))).join(", ")}
-                  </strong>
-                  {/* QA D-14: the tail "the plan starts from exactly these" was
-                      false — the plan follows the diagnostic's priorities,
-                      which weigh her goals too. The lowest scores are stated
-                      as what they are. */}
-                </p>
-              )}
+              </div>
             </div>
           ) : null}
 
-          {/* The card lives in the left rail. It is authored horizontal and
-              reads its own width, so at 443px it lays itself out as a column
-              rather than squeezing a 148px portrait against a 150px measure. */}
-          <div className="pcard-slot">
-            <ProfileDetails profile={profile} persona={persona} t={t} />
-          </div>
         </aside>
 
-        <div className="stack" style={{ gap: 26 }}>
+        <div className="stack" style={{ gap: 22 }}>
           <ProfileStats profile={profile} active={active} done={done} score={score} t={t} />
 
-          {/* Her week first: the lesson she left off at, then the next event,
-              task and listing — each a real record or not drawn at all. */}
-          <YourWeek initial={week} />
-
-          {/* The invitation to sit the assessment, on the wide side of the page
-              where it has room to be an invitation rather than a footnote. It
-              is keyed on the questionnaire she actually sat — not on the
-              Development Score, which is a separate record that may not exist
-              yet — so it disappears once she has done it instead of asking
-              again for something already finished. */}
-          {/* Keyed on the diagnostic itself — the Development Score — and it
-              opens the diagnostic, the same place every other "Start the
-              assessment" goes (C-06). */}
-          {!score && viewer?.stage === "registered" && (
-            <Empty
-              title={t("cab.noScore")}
-              hint={t("cab.noScoreHint")}
-              action={
-                <Link href="/kabinet/diagnostika" className="btn btn-primary">
-                  {t("cab.startAssess")}
-                </Link>
-              }
-            />
-          )}
-
-          {/* The learning questionnaire is a different, optional instrument,
-              so it has its own name and its own smaller invitation — offered
-              only once the diagnostic is done. */}
-          {score && !assessed && (
-            <div className="notice stack" style={{ gap: 8 }}>
-              <strong>{t("au.lp.title")}</strong>
-              <span className="small muted">{t("au.lp.hint")}</span>
-              <Link
-                href="/welcome?step=assessment"
-                className="btn btn-outline btn-sm"
-                style={{ alignSelf: "flex-start" }}
-              >
-                {t("au.lp.cta")}
-              </Link>
-            </div>
-          )}
-
-          {/* What to do next, before anything about the past: up to three
-              steps, the first set as the page's one pull quote. A failure is
-              said out loud — an empty space here would read as "nothing to do". */}
-          {recsFailed ? (
-            <div className="stack" style={{ gap: 10 }}>
-              <ErrorNote message={t("cab.recsError")} />
+          <div className="cab-tabs" role="tablist" aria-label={t("nav.cabinet")} onKeyDown={onTabKey}>
+            {CAB_TABS.map((item) => (
               <button
+                key={item.id}
+                ref={(node) => {
+                  tabRefs.current[item.id] = node;
+                }}
                 type="button"
-                className="btn btn-outline btn-sm"
-                style={{ alignSelf: "flex-start" }}
-                onClick={() => void loadRecommendations()}
+                role="tab"
+                id={`cab-tab-${item.id}`}
+                aria-selected={tab === item.id}
+                aria-controls={`cab-panel-${item.id}`}
+                tabIndex={tab === item.id ? 0 : -1}
+                className="cab-tab"
+                onClick={() => choose(item.id)}
               >
-                {t("lms.err.retry")}
+                {t(item.key)}
               </button>
-            </div>
-          ) : (
-            recs && <NextSteps steps={recs.next_steps} />
-          )}
+            ))}
+          </div>
 
-          <div>
-            <div className="spread" style={{ marginBottom: 4 }}>
-              <span className="eyebrow">{t("cab.myPlan")}</span>
-              <Link href="/reja" className="btn btn-outline btn-sm">
-                {t("common.open")}
-              </Link>
-            </div>
-            {plan ? (
-              <EdRows>
-                <EdRow
-                  index="01"
-                  title={tu(plan.title)}
-                  meta={`${plan.items.length} ${t("cab.steps")} · ${plan.progress_percent}%`}
-                  arrow={false}
-                  side={
-                    <span style={{ width: 130 }}>
-                      <span className="bar">
-                        <span style={{ width: `${plan.progress_percent}%` }} />
-                      </span>
-                    </span>
+          <div
+            className="cab-panel stack"
+            role="tabpanel"
+            id={`cab-panel-${tab}`}
+            aria-labelledby={`cab-tab-${tab}`}
+            style={{ gap: 26 }}
+          >
+            {tab === "overview" && (
+              <>
+                {/* Her week first: the lesson she left off at, then the next event,
+                    task and listing — each a real record or not drawn at all. */}
+                <YourWeek initial={week} />
+                {/* The invitation to sit the assessment, on the wide side of the page
+                    where it has room to be an invitation rather than a footnote. It
+                    is keyed on the questionnaire she actually sat — not on the
+                    Development Score, which is a separate record that may not exist
+                    yet — so it disappears once she has done it instead of asking
+                    again for something already finished. */}
+                {/* Keyed on the diagnostic itself — the Development Score — and it
+                    opens the diagnostic, the same place every other "Start the
+                    assessment" goes (C-06). */}
+                {!score && viewer?.stage === "registered" && (
+                  <Empty
+                    title={t("cab.noScore")}
+                    hint={t("cab.noScoreHint")}
+                    action={
+                      <Link href="/kabinet/diagnostika" className="btn btn-primary">
+                        {t("cab.startAssess")}
+                      </Link>
+                    }
+                  />
+                )}
+                {/* The learning questionnaire is a different, optional instrument,
+                    so it has its own name and its own smaller invitation — offered
+                    only once the diagnostic is done. */}
+                {score && !assessed && (
+                  <div className="notice stack" style={{ gap: 8 }}>
+                    <strong>{t("au.lp.title")}</strong>
+                    <span className="small muted">{t("au.lp.hint")}</span>
+                    <Link
+                      href="/welcome?step=assessment"
+                      className="btn btn-outline btn-sm"
+                      style={{ alignSelf: "flex-start" }}
+                    >
+                      {t("au.lp.cta")}
+                    </Link>
+                  </div>
+                )}
+                {/* What to do next, before anything about the past: up to three
+                    steps, the first set as the page's one pull quote. A failure is
+                    said out loud — an empty space here would read as "nothing to do". */}
+                {recsFailed ? (
+                  <div className="stack" style={{ gap: 10 }}>
+                    <ErrorNote message={t("cab.recsError")} />
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ alignSelf: "flex-start" }}
+                      onClick={() => void loadRecommendations()}
+                    >
+                      {t("lms.err.retry")}
+                    </button>
+                  </div>
+                ) : (
+                  recs && <NextSteps steps={recs.next_steps} />
+                )}
+                <div>
+                  <div className="spread" style={{ marginBottom: 4 }}>
+                    <span className="eyebrow">{t("cab.myPlan")}</span>
+                    <Link href="/reja" className="btn btn-outline btn-sm">
+                      {t("common.open")}
+                    </Link>
+                  </div>
+                  {plan ? (
+                    <EdRows>
+                      <EdRow
+                        index="01"
+                        title={tu(plan.title)}
+                        meta={`${plan.items.length} ${t("cab.steps")} · ${plan.progress_percent}%`}
+                        arrow={false}
+                        side={
+                          <span style={{ width: 130 }}>
+                            <span className="bar">
+                              <span style={{ width: `${plan.progress_percent}%` }} />
+                            </span>
+                          </span>
+                        }
+                      />
+                    </EdRows>
+                  ) : (
+                    <p className="muted small" style={{ paddingTop: 8 }}>
+                      {t("cab.noPlanHint")}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {tab === "growth" && (
+              score ? (
+                <div className="stack" style={{ gap: 14 }}>
+                {/* Each dimension opens to its reading: the band, her own
+                    answers, the gaps she can close here and what would move it. */}
+                <DimensionInsights insights={score} />
+                {score.weakest_dimensions.length > 0 && (
+                  <p className="faint">
+                    {t("cab.weakest")}{" "}
+                    <strong>
+                      {score.weakest_dimensions.map((d) => t(dimensionKey(d))).join(", ")}
+                    </strong>
+                    {/* QA D-14: the tail "the plan starts from exactly these" was
+                        false — the plan follows the diagnostic's priorities,
+                        which weigh her goals too. The lowest scores are stated
+                        as what they are. */}
+                  </p>
+                )}
+                </div>
+              ) : (
+                <Empty
+                  title={t("cab.noScore")}
+                  hint={t("cab.noScoreHint")}
+                  action={
+                    <Link href="/kabinet/diagnostika" className="btn btn-primary">
+                      {t("cab.startAssess")}
+                    </Link>
                   }
                 />
-              </EdRows>
-            ) : (
-              <p className="muted small" style={{ paddingTop: 8 }}>
-                {t("cab.noPlanHint")}
-              </p>
+              )
+            )}
+
+            {tab === "skills" && (
+              <div id="skills">
+                <SkillsSection />
+              </div>
+            )}
+
+            {tab === "foryou" && (
+              recsFailed ? (
+                <ErrorNote message={t("cab.recsError")} />
+              ) : recs ? (
+                <ForYou
+                  programs={recs.programs}
+                  opportunities={recs.opportunities}
+                  assessed={recs.assessed}
+                />
+              ) : (
+                <Loading rows={3} />
+              )
+            )}
+
+            {tab === "profile" && (
+              <>
+                <div className="pcard-slot">
+                  <ProfileDetails profile={profile} persona={persona} t={t} />
+                </div>
+                {/* A year of squares: what she has actually been doing. */}
+                <ActivityCalendar />
+                {/* Sign out everywhere (C-17) and delete the account (I-06). */}
+                <AccountSecurity />
+              </>
             )}
           </div>
-
-          {/* What she can do, and how well the platform knows it. It loads on
-              its own, so a slow skills call cannot hold up the page. */}
-          <div id="skills">
-            <SkillsSection />
-          </div>
-
-          {/* The courses and listings behind those steps. Only what the
-              catalogue holds right now; an empty column says so. */}
-          {recs && (
-            <ForYou
-              programs={recs.programs}
-              opportunities={recs.opportunities}
-              assessed={recs.assessed}
-            />
-          )}
-
-          {/* A year of squares: what she has actually been doing. It follows
-              the next steps rather than leading the page, so the cabinet opens
-              on what to do rather than on a record of the past. */}
-          <ActivityCalendar />
-
-
-          <div className="row">
-            <Link href="/dasturlar" className="btn btn-outline btn-sm">
-              {t("nav.programs")}
-            </Link>
-            <Link href="/imkoniyatlar" className="btn btn-outline btn-sm">
-              {t("nav.opportunities")}
-            </Link>
-            {/* One name and a direct link: the navigator route only redirects
-                to the assistant (E-06). */}
-            <Link href="/yordamchi" className="btn btn-outline btn-sm">
-              {t("asst.nav")}
-            </Link>
-          </div>
-
-          {/* Sign out everywhere (C-17) and delete the account (I-06). */}
-          <AccountSecurity />
         </div>
       </div>
     </main>

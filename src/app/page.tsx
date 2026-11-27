@@ -11,9 +11,11 @@ import { PromoSlot } from "@/components/PromoSlot";
 import { AccountLink, ViewerCta } from "@/components/auth/ViewerCta";
 import { AiTeaser, PathCards, Roadmap } from "./Landing";
 import { OpportunityShowcase } from "./Showcase";
+import { useVacancyBoardShown } from "@/services/vacancyBoard";
 
 export default function LandingPage() {
   const { t, tx } = useI18n();
+  const vacanciesShown = useVacancyBoardShown();
   const hero = useRef<HTMLElement>(null);
   const [pastHero, setPastHero] = useState(false);
 
@@ -97,76 +99,68 @@ export default function LandingPage() {
           a decision that has to be made off the page first — and there is no
           billing behind either button. Mounting it is one import and one line. */}
 
+      {/* The ground the garden ends on: a solid band in the brand's plum, who
+          we are and how to reach us on the left, the portal's sections in
+          columns on the right, each headed by name over a blossom rule. */}
       <footer className="site-footer">
-        <div className="wrap stack" style={{ gap: 34 }}>
-          <div className="footer-grid">
-            <div className="footer-col">
-              <Brand />
-              <span className="footer-line">{t("brand.tagline")}</span>
-            </div>
-
-            <div className="footer-col">
-              <span>{t("foot.portal")}</span>
-              <Link href="/dasturlar">{t("nav.programs")}</Link>
-              <Link href="/imkoniyatlar">{t("nav.opportunities")}</Link>
-              <Link href="/yordamchi">{t("asst.nav")}</Link>
-              <AccountLink />
-            </div>
-
-            <div className="footer-col">
-              <span>{t("foot.legal")}</span>
-              <Link href="/maxfiylik">{t("legal.privacyTitle")}</Link>
-            </div>
-
-            <div className="footer-col">
-              <span>{t("foot.contacts")}</span>
-              {/* Contacts are business facts kept in config/site.ts (G-24);
-                  an unset one is hidden rather than printed as a template. */}
+        <div className="wrap footer-grid">
+          <div className="footer-about">
+            <Brand />
+            <p className="footer-tagline">{t("brand.tagline")}</p>
+            <address className="footer-contacts">
+              {(SITE_CONTACTS.office || SITE_CONTACTS.address) && (
+                <span>{SITE_CONTACTS.office ? tx(SITE_CONTACTS.office) : SITE_CONTACTS.address}</span>
+              )}
               {SITE_CONTACTS.phone && (
-                <a className="footer-line" href={`tel:${SITE_CONTACTS.phone.replace(/[^+\d]/g, "")}`}>
-                  {SITE_CONTACTS.phone}
-                </a>
+                <a href={`tel:${SITE_CONTACTS.phone.replace(/[^+\d]/g, "")}`}>{SITE_CONTACTS.phone}</a>
               )}
               {SITE_CONTACTS.email && <a href={`mailto:${SITE_CONTACTS.email}`}>{SITE_CONTACTS.email}</a>}
-            </div>
-
-            {(SITE_CONTACTS.office || SITE_CONTACTS.address || SITE_CONTACTS.social.length > 0) && (
-              <div className="footer-col">
-                {(SITE_CONTACTS.office || SITE_CONTACTS.address) && (
-                  <>
-                    <span>{t("foot.addressLabel")}</span>
-                    <span className="footer-line">
-                      {SITE_CONTACTS.office ? tx(SITE_CONTACTS.office) : SITE_CONTACTS.address}
-                    </span>
-                  </>
-                )}
-                {SITE_CONTACTS.social.length > 0 && (
-                  /* Icons, not words: the two marks are known on sight. Each
-                     keeps its name for a screen reader and as a tooltip. */
-                  <div className="footer-social" aria-label={t("foot.socialLabel")}>
-                    {SITE_CONTACTS.social.map((item) => (
-                      <a
-                        key={item.url}
-                        className="footer-social-link"
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={item.label}
-                        title={item.label}
-                      >
-                        <SocialIcon name={item.label} />
-                      </a>
-                    ))}
-                  </div>
-                )}
+            </address>
+            {SITE_CONTACTS.social.length > 0 && (
+              /* Icons, not words: the two marks are known on sight. Each
+                 keeps its name for a screen reader and as a tooltip. */
+              <div className="footer-social" aria-label={t("foot.socialLabel")}>
+                {SITE_CONTACTS.social.map((item) => (
+                  <a
+                    key={item.url}
+                    className="footer-social-link"
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    title={item.label}
+                  >
+                    <SocialIcon name={item.label} />
+                  </a>
+                ))}
               </div>
             )}
           </div>
 
-          <div className="footer-base">
-            <span>{t("landing.footer")}</span>
-            <span>{t("foot.org")}</span>
-          </div>
+          <nav className="footer-col" aria-label={t("nav.learning")}>
+            <h2 className="footer-head">{t("nav.learning")}</h2>
+            <Link href="/dasturlar">{t("nav.programs")}</Link>
+            <Link href="/yordamchi">{t("asst.nav")}</Link>
+          </nav>
+
+          <nav className="footer-col" aria-label={t("nav.opportunities")}>
+            <h2 className="footer-head">{t("nav.opportunities")}</h2>
+            <Link href="/imkoniyatlar">{t("mm.allOpps")}</Link>
+            {vacanciesShown && <Link href="/vakansiyalar">{t("nav.vacancies")}</Link>}
+            <Link href="/imkoniyatlar/biznes">{t("biz.title")}</Link>
+            <Link href="/tadbirlar">{t("nav.events")}</Link>
+          </nav>
+
+          <nav className="footer-col" aria-label={t("foot.portal")}>
+            <h2 className="footer-head">{t("foot.portal")}</h2>
+            <AccountLink />
+            <Link href="/maxfiylik">{t("legal.privacyTitle")}</Link>
+          </nav>
+        </div>
+
+        <div className="wrap footer-base">
+          <span>{t("landing.footer")}</span>
+          <span>{t("foot.org")}</span>
         </div>
       </footer>
     </main>

@@ -17,6 +17,7 @@ import { LOCALES, useI18n, type MessageKey } from "@/i18n";
 import { LangSwitch } from "./LangSwitch";
 import { NotificationBell } from "./NotificationBell";
 import { ThemeToggle } from "./ThemeToggle";
+import { activeChild, isActive, sectionItems, useSectionMenu, type Shown } from "./sectionMenu";
 
 /** `guest: true` marks what a visitor sees before signing in.
  *
@@ -35,40 +36,6 @@ const STAFF_LINKS: ReadonlyArray<{
 }> = [
   { href: "/admin", key: "nav.admin", roles: PANEL_ROLES },
   { href: "/hamkor", key: "nav.org", roles: ORG_ROLES },
-];
-
-/** Order is the argument this list makes about where a visit starts.
- *
- *  The plan first and the cabinet last. The diagnostic lives inside the
- *  cabinet (`/kabinet/diagnostika`), and the news feed was removed, so
- *  neither has a tab of its own.
- *
- *  The cabinet and the plan carry no `guest` flag:
- *  they are hers, and offering them to someone with no account advertises
- *  doors she cannot open. What a visitor gets is the catalogue, the
- *  opportunities and the assistant — what the portal can show her before she
- *  has an account. */
-const LINKS: ReadonlyArray<{ href: string; key: MessageKey; guest?: boolean }> = [
-  // Named, not only behind the logo: many did not know the logo goes home.
-  { href: "/", key: "nav.home", guest: true },
-  { href: "/reja", key: "nav.plan" },
-  { href: "/dasturlar", key: "nav.programs", guest: true },
-  // Next to the catalogue on purpose: the catalogue is what she can enrol in,
-  // this is where she actually studies. It is hers, so no `guest` flag.
-  { href: "/talim", key: "nav.learning" },
-  { href: "/imkoniyatlar", key: "nav.opportunities", guest: true },
-  // Real listings from the job board, beside the portal's own opportunities:
-  // the same search, a different source. Open to a visitor.
-  { href: "/vakansiyalar", key: "nav.vacancies", guest: true },
-  // Beside the listings: an event is something she attends, not something she
-  // applies to, but it is found the same way. Open to a visitor.
-  { href: "/tadbirlar", key: "nav.events", guest: true },
-  { href: "/yordamchi", key: "asst.nav", guest: true },
-  { href: "/kabinet", key: "nav.cabinet" },
-  // No management link here. It used to sit in this list unguarded, so every
-  // woman who signed in was shown a panel she has no rights to — and clicking
-  // it landed her on a dashboard of zeros and a load error. Staff reach it
-  // through STAFF_LINKS above.
 ];
 
 /** The mark is the blossom off the branch, drawn solid in ink, beside the name
@@ -91,12 +58,6 @@ export function Brand() {
       <span className="logo-text">WomanUP</span>
     </div>
   );
-}
-
-/** A detail page belongs to its section: opening an article or a course card
- *  must not un-highlight the pill she arrived through. */
-function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Nav() {
@@ -168,13 +129,15 @@ export function Nav() {
     strip.scrollLeft += box.left - frame.left - (frame.width - box.width) / 2;
   }, [pathname, authed, staff]);
 
-  const links = staff
-    ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role)))
-    : LINKS.filter(
-        (link) =>
-          (authed || link.guest) &&
-          (vacanciesShown || link.href !== "/vakansiyalar"),
-      );
+  const items: Shown[] = staff
+    ? STAFF_LINKS.filter((link) => link.roles.some((role) => roles.includes(role))).map((link) => ({
+        kind: "link" as const,
+        href: link.href,
+        key: link.key,
+      }))
+    : sectionItems(authed, vacanciesShown);
+
+  const menu = useSectionMenu(items);
 
   const [leaving, setLeaving] = useState(false);
   async function signOut() {
@@ -198,7 +161,10 @@ export function Nav() {
   const onAuthPage = pathname === "/login" || pathname.startsWith("/parol-tiklash");
 
   return (
-    <nav className="nav">
+    <nav
+      className="nav"
+      onPointerLeave={menu.onLeave}
+    >
       <div className="nav-inner">
         {/* Named for a screen reader: on a phone the wordmark is hidden and
             the blossom alone is decoration. */}
@@ -207,18 +173,7 @@ export function Nav() {
         </Link>
 
         <div className="nav-links" ref={pills}>
-          <div className="nav-pills">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`nav-link ${isActive(pathname, link.href) ? "active" : ""}`}
-                aria-current={isActive(pathname, link.href) ? "page" : undefined}
-              >
-                {t(link.key)}
-              </Link>
-            ))}
-          </div>
+          {menu.pills}
         </div>
 
         <div className="header-tools">
@@ -257,19 +212,41 @@ export function Nav() {
         </div>
       </div>
 
+      {menu.panel}
+
       <div id="nav-menu" ref={menuPanel} className="nav-menu" hidden={!menuOpen}>
         <div className="nav-menu-links">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`nav-menu-link ${isActive(pathname, link.href) ? "active" : ""}`}
-              aria-current={isActive(pathname, link.href) ? "page" : undefined}
-              onClick={() => setMenuOpen(false)}
-            >
-              {t(link.key)}
-            </Link>
-          ))}
+          {items.map((item) =>
+            item.kind === "link" ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-menu-link ${(item.href === "/" ? pathname === "/" : isActive(pathname, item.href)) ? "active" : ""}`}
+                aria-current={(item.href === "/" ? pathname === "/" : isActive(pathname, item.href)) ? "page" : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                {t(item.key)}
+              </Link>
+            ) : (
+              <div key={item.id} className="nav-menu-group" role="group" aria-label={t(item.key)}>
+                <span className="nav-menu-head" aria-hidden="true">{t(item.key)}</span>
+                {item.children.map((child) => {
+                  const on = activeChild(pathname, item.children) === child.href;
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={`nav-menu-link ${on ? "active" : ""}`}
+                      aria-current={on ? "page" : undefined}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {t(child.key)}
+                    </Link>
+                  );
+                })}
+              </div>
+            ),
+          )}
         </div>
         <div className="nav-menu-foot">
           <LangSwitch />
