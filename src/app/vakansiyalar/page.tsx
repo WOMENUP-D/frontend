@@ -172,7 +172,7 @@ function VacanciesView() {
   const anything = Boolean(filtersOn || state.q || state.picks.length || state.sort);
 
   return (
-    <main className="wrap page jb-page jb-list vc-page">
+    <main className="wrap page jb-page jb-centred vc-page">
       <header className="jb-hero">
         <h1 className="jb-h1">{t("vac.title")}</h1>
         <p className="jb-lead">{t("vac.lead")}</p>
